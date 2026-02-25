@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gantt de Validación</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --navy:       #1a3a5c;
+    --navy-dark:  #122840;
+    --navy-light: #e8eef5;
+    --bg:         #f2f4f7;
+    --surface:    #ffffff;
+    --surface2:   #f8f9fb;
+    --border:     #dde1e8;
+    --text:       #1e2530;
+    --muted:      #6b7280;
+    --faint:      #9aa3ae;
+    --green:      #1e6e42;
+    --green-bg:   #eaf4ee;
+    --green-bd:   #a8d4b8;
+    --orange:     #a04f00;
+    --orange-bg:  #fdf1e6;
+    --orange-bd:  #e8c8a0;
+    --red:        #b91c1c;
+    --red-bg:     #fee2e2;
+    --red-bd:     #fecaca;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top: 0; z-index: 200;
+    background: var(--navy); border-bottom: 3px solid var(--navy-dark);
+    padding: 0 36px; height: 52px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.15);
+  }
+  .header-left { display: flex; align-items: center; gap: 18px; }
+  .logo-wrap {
+    width: 34px; height: 34px; border-radius: 6px;
+    background:white; border: 1px solid rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: white;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .logo-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
+  .divider-v { width: 1px; height: 26px; background: rgba(255,255,255,0.18); }
+  .header-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #fff; }
+  .header-sub { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .tl-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.5); white-space: nowrap; }
+
+  .tl-wrap { position: relative; }
+  .tl-input {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); color: #fff;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 6px 12px; border-radius: 6px; width: 200px; transition: border-color 0.2s, background 0.2s;
+  }
+  .tl-input::placeholder { color: rgba(255,255,255,0.35); font-weight: 400; font-size: 11px; text-transform: none; letter-spacing: 0; }
+  .tl-input:focus { outline: none; border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.15); }
+  .tl-input.valid { border-color: #4ade80; }
+
+  .tl-dropdown {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15); max-height: 200px; overflow-y: auto;
+    z-index: 999; display: none;
+  }
+  .tl-dropdown.show { display: block; }
+  .tl-option { padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--navy); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.1s; }
+  .tl-option:hover { background: var(--navy-light); }
+  .tl-badge { font-size: 10px; background: var(--navy-light); color: var(--navy); border: 1px solid #c8d8e8; border-radius: 4px; padding: 1px 5px; font-weight: 700; }
+  .tl-option.new-tl { color: var(--green); border-top: 1px solid var(--border); }
+  .tl-option.new-tl .tl-badge { background: var(--green-bg); color: var(--green); border-color: var(--green-bd); }
+
+  .upload-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff;
+    border-radius: 6px; padding: 6px 14px;
+    font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: background 0.18s; white-space: nowrap;
+  }
+  .upload-btn:hover:not(:disabled) { background: rgba(255,255,255,0.22); }
+  .upload-btn:disabled { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); color: rgba(255,255,255,0.25); cursor: not-allowed; }
+  #file-input { display: none; }
+
+  /* ── MAIN ── */
+  main { padding: 16px 36px 0; flex: 1; min-width: 0; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--border);
+    border-radius: 10px; padding: 12px 18px; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04); animation: fadeUp 0.35s ease both;
+  }
+  .stat-card.total { border-top-color: var(--navy); }
+  .stat-card.valid { border-top-color: var(--green); }
+  .stat-card.pend  { border-top-color: var(--orange); }
+  .stat-card.prog  { border-top-color: #6b48c8; }
+  .stat-icon { width: 34px; height: 34px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .stat-card.total .stat-icon { background: var(--navy-light); }
+  .stat-card.valid .stat-icon { background: var(--green-bg); }
+  .stat-card.pend  .stat-icon { background: var(--orange-bg); }
+  .stat-card.prog  .stat-icon { background: #ede9fe; }
+  .stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .stat-value { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; line-height: 1; color: var(--navy); }
+  .stat-card.valid .stat-value { color: var(--green); }
+  .stat-card.pend  .stat-value { color: var(--orange); }
+  .stat-card.prog  .stat-value { color: #6b48c8; }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+  .section-title::before { content: ''; display: block; width: 3px; height: 14px; background: var(--navy); border-radius: 2px; }
+
+  .search-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 13px; padding: 6px 12px; border-radius: 6px; width: 200px; transition: border-color 0.2s, box-shadow 0.2s; }
+  .search-input:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px var(--navy-light); }
+  .search-input::placeholder { color: var(--faint); }
+
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: auto; box-shadow: 0 1px 6px rgba(0,0,0,0.05); max-height: calc(100vh - 220px); }
+  table { width: 100%; border-collapse: collapse; min-width: 700px; }
+  thead { background: var(--navy); position: sticky; top: 0; z-index: 10; }
+  th { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.65); padding: 9px 16px; text-align: left; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+  tbody tr:hover { background: var(--navy-light); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 9px 16px; font-size: 13px; vertical-align: middle; }
+
+  .ruta-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; color: var(--navy); background: var(--navy-light); border: 1px solid #c8d8e8; border-radius: 5px; padding: 2px 9px; display: inline-block; letter-spacing: 0.8px; }
+  .viaje-text { color: var(--muted); font-size: 12px; font-weight: 500; }
+  .click-hint { font-size: 10px; color: var(--faint); margin-left: 6px; cursor: pointer; }
+  .click-hint:hover { color: var(--navy); text-decoration: underline; }
+
+  .progress-cell { min-width: 150px; }
+  .progress-wrap { display: flex; align-items: center; gap: 8px; }
+  .progress-bar-bg { flex: 1; height: 5px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .progress-pct { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; min-width: 34px; text-align: right; }
+
+  .chip { display: inline-block; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+  .chip.pendiente { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-bd); }
+  .chip.concluido { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
+  .chip.faltante { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bd); }
+  .chip.na { background: var(--bg); color: var(--faint); border: 1px solid var(--border); }
+
+  .delete-btn {
+    background: var(--red-bg);
+    color: var(--red);
+    border: 1px solid var(--red-bd);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .delete-btn:hover {
+    background: var(--red);
+    color: white;
+  }
+
+  .empty-state { padding: 60px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .empty-icon { width: 52px; height: 52px; border: 2px dashed var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--faint); }
+  .empty-title { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .empty-sub { font-size: 12px; color: var(--faint); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    z-index: 500; display: none; align-items: center; justify-content: center;
+    padding: 20px; backdrop-filter: blur(3px);
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--surface); border-radius: 14px;
+    width: 100%; max-width: 900px; max-height: 88vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: none; } }
+
+  .modal-header {
+    background: var(--navy); border-radius: 14px 14px 0 0;
+    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+  .modal-meta { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+  .modal-close { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; flex-shrink: 0; }
+  .modal-close:hover { background: rgba(255,255,255,0.25); }
+
+  .modal-body { overflow-y: auto; flex: 1; padding: 16px 20px; }
+
+  /* Almacen section inside modal */
+  .alm-section { margin-bottom: 18px; }
+  .alm-section:last-child { margin-bottom: 0; }
+
+  .alm-header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0; padding: 8px 14px; margin-bottom: 0;
+  }
+  .alm-name { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+  .alm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--navy); flex-shrink: 0; }
+  .alm-count { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+  .alm-table-wrap { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow-x: auto; }
+  .alm-table { width: 100%; border-collapse: collapse; min-width: 650px; }
+  .alm-table th { background: #f0f4f8; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); padding: 7px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .alm-table td { padding: 7px 12px; font-size: 12.5px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+  .alm-table tr:last-child td { border-bottom: none; }
+  .alm-table tr:hover td { background: var(--surface2); }
+
+  .codigo-badge { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; color: var(--navy); }
+  .desc-text { color: var(--text); max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .udm-text { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; }
+  .sdo-text { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); }
+
+  /* Status in modal */
+  .status-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    min-width: 90px;
+    text-align: center;
+  }
+  .status-badge.pendiente {
+    background: var(--orange-bg);
+    color: var(--orange);
+    border: 1px solid var(--orange-bd);
+  }
+  .status-badge.concluido {
+    background: var(--green-bg);
+    color: var(--green);
+    border: 1px solid var(--green-bd);
+  }
+  .status-badge.faltante {
+    background: var(--red-bg);
+    color: var(--red);
+    border: 1px solid var(--red-bd);
+  }
+
+  .btn-confirmar {
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-confirmar:hover {
+    background: #0f4f2f;
+  }
+
+  .modal-footer {
+    border-top: 1px solid var(--border); padding: 10px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; background: var(--surface2); border-radius: 0 0 14px 14px;
+  }
+  .modal-pct-wrap { display: flex; align-items: center; gap: 10px; }
+  .modal-pct-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .modal-pct-bar-bg { width: 160px; height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .modal-pct-bar { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.4s ease; }
+  .modal-pct-val { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--navy); }
+
+  /* ── FOOTER ── */
+  footer { background: var(--navy-dark); border-top: 1px solid rgba(255,255,255,0.08); padding: 7px 36px; display: flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; }
+  .footer-text { font-size: 11px; color: rgba(255,255,255,0.35); font-family: 'Barlow', sans-serif; letter-spacing: 0.4px; }
+  .footer-sep { color: rgba(255,255,255,0.18); font-size: 11px; }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: white; padding: 10px 18px; border-radius: 8px; font-size: 12px; z-index: 9999; animation: slideIn 0.3s ease; box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
+
+  @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeUp  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 1100px) { .tl-input { width: 160px; } }
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    header { padding: 0 16px; gap: 10px; }
+    main { padding: 12px 16px 0; }
+    footer { padding: 7px 16px; }
+    .tl-label { display: none; }
+    .tl-input { width: 140px; }
+    .header-title { font-size: 15px; }
+    .header-sub { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="logo-wrap">
+      <img src="logo.png" alt="Logo" onerror="this.parentElement.innerHTML='<span style=&quot;font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:14px;color:white;&quot;>GV</span>'">
+    </div>
+    <div class="divider-v"></div>
+    <div>
+      <div class="header-title">Gantt de Validación</div>
+      <div class="header-sub">Control de rutas y almacenes</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="tl-label">Team Leader</span>
+    <div class="tl-wrap">
+      <input type="text" id="tlInput" class="tl-input" placeholder="Escribe un nombre..." maxlength="60" autocomplete="off">
+      <div class="tl-dropdown" id="tlDropdown"></div>
+    </div>
+    <button class="upload-btn" id="uploadBtn" disabled>⬆ Cargar XLSX</button>
+    <input type="file" id="file-input" accept=".xlsx,.xls">
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+  <div class="stats-row">
+    <div class="stat-card total">
+      <div class="stat-icon">📋</div>
+      <div><div class="stat-label">Rutas Totales</div><div class="stat-value" id="statTotal">0</div></div>
+    </div>
+    <div class="stat-card valid">
+      <div class="stat-icon">✓</div>
+      <div><div class="stat-label">100% Validadas</div><div class="stat-value" id="statValidadas">0</div></div>
+    </div>
+    <div class="stat-card pend">
+      <div class="stat-icon">⏳</div>
+      <div><div class="stat-label">Pendientes</div><div class="stat-value" id="statPendientes">0</div></div>
+    </div>
+    <div class="stat-card prog">
+      <div class="stat-icon">📈</div>
+      <div><div class="stat-label">Avance Global</div><div class="stat-value" id="statProgreso">0%</div></div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">Seguimiento de Rutas</div>
+    <input class="search-input" type="text" id="searchInput" placeholder="Buscar ruta o viaje...">
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Ruta / Viaje</th>
+          <th class="progress-cell">% Validación</th>
+          <th>Seco</th>
+          <th>Refrigerado</th>
+          <th>Congelado</th>
+          <th>Crítico</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div id="emptyState" class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">Sin datos cargados</div>
+      <div class="empty-sub">Ingresa un Team Leader y carga un archivo XLSX</div>
+    </div>
+  </div>
+</main>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Detalle de Ruta</div>
+        <div class="modal-meta" id="modalMeta"></div>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <div class="modal-pct-wrap">
+        <span class="modal-pct-label">Avance</span>
+        <div class="modal-pct-bar-bg"><div class="modal-pct-bar" id="modalPctBar" style="width:0%"></div></div>
+        <span class="modal-pct-val" id="modalPctVal">0%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-text">© 2026</span>
+  <span class="footer-sep">·</span>
+  <span class="footer-text">E.Lugo</span>
+  <span class="footer-sep">·</span>
+  <span class="footer-text">Todos los derechos reservados</span>
+</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, doc, setDoc, getDocs,
+    onSnapshot, writeBatch, query, orderBy, where, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB1APqzO0tsh1Ow58-e8VBYeTYbdmLxsNI",
+    authDomain: "validacion-2026.firebaseapp.com",
+    projectId: "validacion-2026",
+    storageBucket: "validacion-2026.firebasestorage.app",
+    messagingSenderId: "9004667623",
+    appId: "1:9004667623:web:5331db7cda0b94deacc842"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ── State ───────────────────────────────────────────────────────────
+  let allRoutes = [];
+  let allRawItems = [];
+  let itemStatus = {};
+  let routeAlmStatus = {};
+  let teamLeaderName = '';
+  let knownTLs = [];
+  let currentModalKey = null;
+
+  // ── DOM ─────────────────────────────────────────────────────────────
+  const tlInput = document.getElementById('tlInput');
+  const tlDropdown = document.getElementById('tlDropdown');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const fileInput = document.getElementById('file-input');
+  const searchInput = document.getElementById('searchInput');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalClose = document.getElementById('modalClose');
+
+  // ── Load known TLs ──────────────────────────────────────────────────
+  async function loadKnownTLs() {
+    try {
+      const snap = await getDocs(collection(db, 'team_leaders'));
+      knownTLs = snap.docs.map(d => d.data().nombre).filter(Boolean);
+    } catch (e) { console.warn('TLs:', e); }
+  }
+
+  // ── TL Input ────────────────────────────────────────────────────────
+  tlInput.addEventListener('input', () => {
+    const pos = tlInput.selectionStart;
+    tlInput.value = tlInput.value.toUpperCase();
+    tlInput.setSelectionRange(pos, pos);
+    teamLeaderName = tlInput.value.trim();
+    updateUploadBtn();
+    showSuggestions();
+  });
+
+  tlInput.addEventListener('keydown', e => {
+    if (e.key === 'Escape') hideSuggestions();
+    if (e.key === 'Enter' && teamLeaderName) { hideSuggestions(); tlInput.blur(); }
+  });
+
+  document.addEventListener('click', e => {
+    if (!tlInput.closest('.tl-wrap').contains(e.target)) hideSuggestions();
+  });
+
+  function updateUploadBtn() {
+    const ok = teamLeaderName.length >= 2;
+    uploadBtn.disabled = !ok;
+    tlInput.classList.toggle('valid', ok);
+  }
+
+  function showSuggestions() {
+    const q = teamLeaderName;
+    if (!q) { hideSuggestions(); return; }
+    const matches = knownTLs.filter(tl => tl.includes(q) && tl !== q);
+    const exact = knownTLs.includes(q);
+    let html = matches.map(tl => `<div class="tl-option" data-name="${tl}"><span class="tl-badge">REGISTRADO</span>${tl}</div>`).join('');
+    if (!exact) html += `<div class="tl-option new-tl" data-name="${q}"><span class="tl-badge">NUEVO</span>${q}</div>`;
+    if (!html) { hideSuggestions(); return; }
+    tlDropdown.innerHTML = html;
+    tlDropdown.classList.add('show');
+    tlDropdown.querySelectorAll('.tl-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        tlInput.value = opt.dataset.name;
+        teamLeaderName = opt.dataset.name;
+        updateUploadBtn();
+        hideSuggestions();
+      });
+    });
+  }
+  function hideSuggestions() { tlDropdown.classList.remove('show'); }
+
+  // ── File upload ──────────────────────────────────────────────────────
+  uploadBtn.addEventListener('click', () => {
+    if (teamLeaderName.length < 2) { showToast('⚠ Ingresa el nombre del Team Leader'); return; }
+    fileInput.click();
+  });
+
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+      processData(rows);
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = '';
+  });
+
+  // ── Column helpers ───────────────────────────────────────────────────
+  function normKey(s) {
+    return s.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]/g, '');
+  }
+  function getCol(row, ...names) {
+    const map = {};
+    Object.keys(row).forEach(k => { map[normKey(k)] = row[k]; });
+    for (const n of names) {
+      const v = map[normKey(n)];
+      if (v !== undefined && v !== null && v !== '') return v.toString().trim();
+    }
+    return '';
+  }
+
+  // ── Process XLSX ─────────────────────────────────────────────────────
+  function processData(rows) {
+    if (!rows.length) { showToast('⚠ Archivo vacío'); return; }
+
+    allRawItems = [];
+    const routeMap = {};
+
+    rows.forEach((row, idx) => {
+      const ruta = getCol(row, 'RUTA').toUpperCase();
+      const viaje = getCol(row, 'VIAJE');
+      const codigo = getCol(row, 'CODIGO', 'CÓDIGO');
+      const desc = getCol(row, 'DESCRIPCCION', 'DESCRIPCION', 'DESCRIPCIÓN');
+      const udm = getCol(row, 'UDM');
+      const sdo = getCol(row, 'SDO');
+      const alm = getCol(row, 'ALMACEN', 'ALMACÉN').toUpperCase();
+      if (!ruta) return;
+
+      const itemId = `${ruta}__${viaje}__${alm}__${codigo}__${idx}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      allRawItems.push({ itemId, ruta, viaje, codigo, desc, udm, sdo, alm });
+      if (!(itemId in itemStatus)) itemStatus[itemId] = 'pendiente';
+
+      const key = `${ruta}||${viaje}`;
+      if (!routeMap[key]) routeMap[key] = { ruta, viaje, almacenes: new Set() };
+      if (alm) routeMap[key].almacenes.add(alm);
+    });
+
+    allRoutes = Object.values(routeMap).map(r => ({ ...r, almacenes: [...r.almacenes] }));
+    recalcRouteAlmStatus();
+    renderTable();
+    saveAllToFirestore();
+  }
+
+  // ── Recalc almacen-level status from item statuses ───────────────────
+  function recalcRouteAlmStatus() {
+    routeAlmStatus = {};
+    allRoutes.forEach(r => {
+      r.almacenes.forEach(alm => {
+        const items = allRawItems.filter(it => it.ruta === r.ruta && it.viaje === r.viaje && it.alm === alm);
+        const allDone = items.length > 0 && items.every(it => itemStatus[it.itemId] === 'concluido');
+        const hasFaltantes = items.some(it => itemStatus[it.itemId] === 'faltante');
+
+        if (allDone) {
+          routeAlmStatus[`${r.ruta}||${r.viaje}||${alm}`] = 'concluido';
+        } else if (hasFaltantes) {
+          routeAlmStatus[`${r.ruta}||${r.viaje}||${alm}`] = 'faltante';
+        } else {
+          routeAlmStatus[`${r.ruta}||${r.viaje}||${alm}`] = 'pendiente';
+        }
+      });
+    });
+  }
+
+  // ── Save everything to Firestore ─────────────────────────────────────
+  async function saveAllToFirestore() {
+    try {
+      showToast('⏳ Guardando en Firebase...');
+
+      await setDoc(doc(db, 'team_leaders', teamLeaderName), {
+        nombre: teamLeaderName, actualizadoEn: new Date().toISOString()
+      }, { merge: true });
+
+      const CHUNK = 400;
+      for (let i = 0; i < allRoutes.length; i += CHUNK) {
+        const batch = writeBatch(db);
+        allRoutes.slice(i, i + CHUNK).forEach(r => {
+          const docId = `${r.ruta}__${r.viaje}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+          batch.set(doc(db, 'rutas', docId), {
+            ruta: r.ruta, viaje: r.viaje, almacenes: r.almacenes,
+            teamLeader: teamLeaderName, cargadoEn: new Date().toISOString()
+          }, { merge: true });
+        });
+        await batch.commit();
+      }
+
+      for (let i = 0; i < allRawItems.length; i += CHUNK) {
+        const batch = writeBatch(db);
+        allRawItems.slice(i, i + CHUNK).forEach(it => {
+          batch.set(doc(db, 'items', it.itemId), {
+            ruta: it.ruta, viaje: it.viaje, codigo: it.codigo,
+            descripcion: it.desc, udm: it.udm, sdo: it.sdo,
+            almacen: it.alm, teamLeader: teamLeaderName,
+            estatus: itemStatus[it.itemId] || 'pendiente',
+            cargadoEn: new Date().toISOString()
+          }, { merge: true });
+        });
+        await batch.commit();
+      }
+
+      if (!knownTLs.includes(teamLeaderName)) knownTLs.push(teamLeaderName);
+      showToast(`✅ ${allRawItems.length} ítems guardados en Firebase`);
+    } catch (err) {
+      console.error(err);
+      showToast('❌ Error al guardar en Firebase');
+    }
+  }
+
+  // ── Delete route and all its items ─────────────────────────────────
+  async function deleteRoute(ruta, viaje) {
+    if (!confirm(`¿Estás seguro de eliminar la ruta ${ruta} (Viaje: ${viaje})?\nSe eliminarán todos los productos asociados.`)) {
+      return;
+    }
+
+    try {
+      showToast('⏳ Eliminando ruta...');
+
+      const itemsToDelete = allRawItems.filter(it => it.ruta === ruta && it.viaje === viaje);
+
+      const CHUNK = 400;
+      for (let i = 0; i < itemsToDelete.length; i += CHUNK) {
+        const batch = writeBatch(db);
+        itemsToDelete.slice(i, i + CHUNK).forEach(it => {
+          const docRef = doc(db, 'items', it.itemId);
+          batch.delete(docRef);
+        });
+        await batch.commit();
+      }
+
+      const routeDocId = `${ruta}__${viaje}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+      await deleteDoc(doc(db, 'rutas', routeDocId));
+
+      const sesionesQuery = query(
+        collection(db, 'sesiones_validacion'),
+        where('ruta', '==', ruta),
+        where('viaje', '==', viaje)
+      );
+      const sesionesSnap = await getDocs(sesionesQuery);
+      for (let i = 0; i < sesionesSnap.docs.length; i += CHUNK) {
+        const batch = writeBatch(db);
+        sesionesSnap.docs.slice(i, i + CHUNK).forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+      }
+
+      allRoutes = allRoutes.filter(r => !(r.ruta === ruta && r.viaje === viaje));
+      allRawItems = allRawItems.filter(it => !(it.ruta === ruta && it.viaje === viaje));
+
+      itemsToDelete.forEach(it => {
+        delete itemStatus[it.itemId];
+      });
+
+      recalcRouteAlmStatus();
+      renderTable();
+
+      showToast('✅ Ruta eliminada correctamente');
+    } catch (error) {
+      console.error('Error deleting route:', error);
+      showToast('❌ Error al eliminar la ruta');
+    }
+  }
+
+  // ── Listen Firestore realtime ─────────────────────────────────────────
+  function listenFirestore() {
+    onSnapshot(query(collection(db, 'rutas'), orderBy('cargadoEn', 'desc')), snap => {
+      const map = {};
+      snap.forEach(d => {
+        const data = d.data();
+        const key = `${data.ruta}||${data.viaje}`;
+        if (!map[key]) map[key] = { ruta: data.ruta, viaje: data.viaje, almacenes: data.almacenes || [] };
+      });
+      allRoutes = Object.values(map);
+      recalcRouteAlmStatus();
+      renderTable();
+    });
+
+    onSnapshot(collection(db, 'items'), snap => {
+      snap.docChanges().forEach(change => {
+        const data = change.doc.data();
+        const itemId = change.doc.id;
+
+        if (change.type === 'removed') {
+          const index = allRawItems.findIndex(it => it.itemId === itemId);
+          if (index >= 0) {
+            allRawItems.splice(index, 1);
+          }
+          delete itemStatus[itemId];
+        } else {
+          itemStatus[itemId] = data.estatus || 'pendiente';
+
+          const existingIndex = allRawItems.findIndex(it => it.itemId === itemId);
+          const newItem = {
+            itemId: itemId,
+            ruta: data.ruta,
+            viaje: data.viaje,
+            codigo: data.codigo,
+            desc: data.descripcion,
+            udm: data.udm,
+            sdo: data.sdo,
+            alm: data.almacen
+          };
+
+          if (existingIndex >= 0) {
+            allRawItems[existingIndex] = newItem;
+          } else {
+            allRawItems.push(newItem);
+          }
+        }
+      });
+
+      recalcRouteAlmStatus();
+      renderTable();
+
+      if (currentModalKey) {
+        const [ruta, viaje] = currentModalKey.split('||');
+        const route = allRoutes.find(r => r.ruta === ruta && r.viaje === viaje);
+        if (route) renderModal(route);
+      }
+    });
+  }
+
+  // ── Search / filter ───────────────────────────────────────────────────
+  searchInput.addEventListener('input', renderTable);
+  function getFiltered() {
+    const q = searchInput.value.toLowerCase();
+    if (!q) return allRoutes;
+    return allRoutes.filter(r => r.ruta.toLowerCase().includes(q) || r.viaje.toLowerCase().includes(q));
+  }
+
+  // ── Calc % per route ─────────────────────────────────────────────────
+  function calcRoutePct(route) {
+    const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje);
+    if (!items.length) return 0;
+    const done = items.filter(it => itemStatus[it.itemId] === 'concluido').length;
+    return Math.round(done / items.length * 100);
+  }
+
+  // ── Stats ─────────────────────────────────────────────────────────────
+  function updateStats(routes) {
+    let validadas = 0, tItems = 0, vItems = 0;
+    routes.forEach(r => {
+      const items = allRawItems.filter(it => it.ruta === r.ruta && it.viaje === r.viaje);
+      const done = items.filter(it => itemStatus[it.itemId] === 'concluido').length;
+      tItems += items.length;
+      vItems += done;
+      if (items.length && done === items.length) validadas++;
+    });
+    document.getElementById('statTotal').textContent = routes.length;
+    document.getElementById('statValidadas').textContent = validadas;
+    document.getElementById('statPendientes').textContent = routes.length - validadas;
+    document.getElementById('statProgreso').textContent = tItems ? `${Math.round(vItems / tItems * 100)}%` : '0%';
+  }
+
+  // ── Render main table ─────────────────────────────────────────────────
+  const TYPES = ['SECO', 'REFRIGERADO', 'CONGELADO', 'CRITICO'];
+
+  function renderTable() {
+    const routes = getFiltered();
+    const tbody = document.getElementById('tableBody');
+    const empty = document.getElementById('emptyState');
+
+    if (!allRoutes.length) {
+      tbody.innerHTML = '';
+      empty.style.display = 'flex';
+      return;
+    }
+    empty.style.display = 'none';
+    updateStats(routes);
+
+    if (!routes.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--faint);">Sin resultados</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = routes.map((r, i) => {
+      const pct = calcRoutePct(r);
+      const barColor = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--border)';
+      const pctColor = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--faint)';
+
+      const cols = TYPES.map(type => {
+        const almacenType = type === 'CONGELADO' ? 'FRIO' : type;
+        if (!r.almacenes.includes(almacenType)) return `<td><span class="chip na">N/A</span></td>`;
+        const st = routeAlmStatus[`${r.ruta}||${r.viaje}||${almacenType}`] || 'pendiente';
+        return `<td><span class="chip ${st}">${st}</span></td>`;
+      }).join('');
+
+      return `<tr>
+        <td>
+          <span class="ruta-badge">${r.ruta}</span>
+          <span class="viaje-text">${r.viaje}</span>
+          <span class="click-hint" onclick="openModal('${r.ruta}', '${r.viaje}')">▸ ver detalle</span>
+        </td>
+        <td class="progress-cell">
+          <div class="progress-wrap">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+            <span class="progress-pct" style="color:${pctColor}">${pct}%</span>
+          </div>
+        </td>
+        ${cols}
+        <td>
+          <button class="delete-btn" onclick="deleteRoute('${r.ruta}', '${r.viaje}')">
+            🗑 Eliminar
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Hacer funciones globales
+    window.openModal = (ruta, viaje) => {
+      const route = allRoutes.find(r => r.ruta === ruta && r.viaje === viaje);
+      if (route) openModal(route);
+    };
+
+    window.deleteRoute = (ruta, viaje) => {
+      deleteRoute(ruta, viaje);
+    };
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────────
+  function openModal(route) {
+    currentModalKey = `${route.ruta}||${route.viaje}`;
+    renderModal(route);
+    modalOverlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('show');
+    document.body.style.overflow = '';
+    currentModalKey = null;
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+
+  // Función para cambiar estatus de faltante a concluido
+  async function cambiarEstatusAConcluido(itemId) {
+    try {
+      await setDoc(doc(db, 'items', itemId), {
+        estatus: 'concluido'
+      }, { merge: true });
+      showToast('✅ Producto marcado como concluido');
+    } catch (error) {
+      console.error('Error al actualizar:', error);
+      showToast('❌ Error al actualizar');
+    }
+  }
+
+  function renderModal(route) {
+    document.getElementById('modalTitle').textContent = `Ruta ${route.ruta}`;
+    document.getElementById('modalMeta').textContent = `Viaje: ${route.viaje}`;
+
+    const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje);
+    const done = items.filter(it => itemStatus[it.itemId] === 'concluido').length;
+    const pct = items.length ? Math.round(done / items.length * 100) : 0;
+    const barColor = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--border)';
+
+    document.getElementById('modalPctBar').style.width = `${pct}%`;
+    document.getElementById('modalPctBar').style.background = barColor;
+    document.getElementById('modalPctVal').textContent = `${pct}%`;
+    document.getElementById('modalPctVal').style.color = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--muted)';
+
+    const byAlm = {};
+    items.forEach(it => {
+      const almDisplay = it.alm === 'FRIO' ? 'CONGELADO' : it.alm;
+      if (!byAlm[almDisplay]) byAlm[almDisplay] = [];
+      byAlm[almDisplay].push(it);
+    });
+
+    const ALM_ORDER = ['SECO', 'REFRIGERADO', 'CONGELADO', 'CRITICO'];
+    const almKeys = [...ALM_ORDER.filter(a => byAlm[a]), ...Object.keys(byAlm).filter(a => !ALM_ORDER.includes(a))];
+
+    const ALM_COLORS = {
+      SECO: '#1a3a5c',
+      REFRIGERADO: '#6b48c8',
+      CONGELADO: '#0e7c7c',
+      CRITICO: '#8e1e1e'
+    };
+
+    document.getElementById('modalBody').innerHTML = almKeys.map(alm => {
+      const almItems = byAlm[alm];
+      const almDone = almItems.filter(it => itemStatus[it.itemId] === 'concluido').length;
+      const color = ALM_COLORS[alm] || 'var(--navy)';
+
+      const rows = almItems.map(it => {
+        const st = itemStatus[it.itemId] || 'pendiente';
+        const mostrarBoton = st === 'faltante';
+
+        return `<tr>
+          <td><span class="codigo-badge">${it.codigo}</span></td>
+          <td><span class="desc-text" title="${it.desc}">${it.desc}</span></td>
+          <td><span class="udm-text">${it.udm}</span></td>
+          <td><span class="sdo-text">${it.sdo}</span></td>
+          <td>
+            <span class="status-badge ${st}">${st}</span>
+            ${mostrarBoton ? `<button class="btn-confirmar" onclick="cambiarFaltante('${it.itemId}')">✓ Confirmar</button>` : ''}
+          </td>
+        </tr>`;
+      }).join('');
+
+      return `<div class="alm-section">
+        <div class="alm-header">
+          <div class="alm-name"><span class="alm-dot" style="background:${color}"></span>${alm}</div>
+          <span class="alm-count">${almDone}/${almItems.length} concluidos</span>
+        </div>
+        <div class="alm-table-wrap">
+          <table class="alm-table">
+            <thead><tr><th>Código</th><th>Descripción</th><th>UDM</th><th>SDO</th><th>Estatus</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('');
+
+    window.cambiarFaltante = (itemId) => {
+      cambiarEstatusAConcluido(itemId);
+    };
+  }
+
+  // ── Toast ────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────
+  await loadKnownTLs();
+  listenFirestore();
+  renderTable();
+</script>
+</body>
+</html>

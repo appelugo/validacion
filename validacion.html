@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Validación de Productos</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --navy:       #1a3a5c;
+    --navy-dark:  #122840;
+    --navy-light: #e8eef5;
+    --bg:         #f2f4f7;
+    --surface:    #ffffff;
+    --surface2:   #f8f9fb;
+    --border:     #dde1e8;
+    --text:       #1e2530;
+    --muted:      #6b7280;
+    --faint:      #9aa3ae;
+    --green:      #1e6e42;
+    --green-bg:   #eaf4ee;
+    --green-bd:   #a8d4b8;
+    --orange:     #a04f00;
+    --orange-bg:  #fdf1e6;
+    --orange-bd:  #e8c8a0;
+    --red:        #b91c1c;
+    --red-bg:     #fee2e2;
+    --red-bd:     #fecaca;
+    --blue:       #2563eb;
+    --blue-bg:    #dbeafe;
+    --congelado:  #0e7c7c;
+    --congelado-bg: #e0f0f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    font-family: 'Barlow', sans-serif; 
+    background: var(--bg); 
+    color: var(--text); 
+    min-height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+  }
+
+  /* ── HEADER SIMPLE ── */
+  header {
+    background: var(--navy);
+    border-bottom: 3px solid var(--navy-dark);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.15);
+  }
+  .logo-wrap {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid rgba(255,255,255,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .logo-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+  .logo-wrap span { 
+    font-family: 'Barlow Condensed', sans-serif; 
+    font-size: 24px; 
+    font-weight: 700; 
+    color: white; 
+  }
+  .header-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  /* ── MAIN ── */
+  main { padding: 16px 16px 0; flex: 1; min-width: 0; max-width: 600px; margin: 0 auto; width: 100%; }
+
+  .search-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .search-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-input:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px var(--navy-light);
+  }
+  .search-input::placeholder { color: var(--faint); }
+
+  .route-result {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--navy-light);
+    border-radius: 8px;
+    border-left: 4px solid var(--navy);
+    font-weight: 600;
+    display: none;
+  }
+  .route-result.show { display: block; }
+
+  /* ── ALMACENES GRID ── */
+  .almacenes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .alm-btn {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 30px;
+    padding: 10px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--navy);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex: 0 0 auto;
+  }
+  .alm-btn.active {
+    background: var(--navy);
+    border-color: var(--navy-dark);
+    color: white;
+  }
+  .alm-btn:active { transform: scale(0.97); }
+  .alm-btn.completed {
+    background: var(--green-bg);
+    border-color: var(--green);
+    color: var(--green);
+    opacity: 0.8;
+    cursor: not-allowed;
+    position: relative;
+    padding-right: 30px;
+  }
+  .alm-btn.completed::after {
+    content: "✓";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+  }
+  .alm-btn.faltantes {
+    background: var(--orange-bg);
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+  .alm-btn.congelado {
+    background: var(--congelado-bg);
+    border-color: var(--congelado);
+    color: var(--congelado);
+  }
+
+  /* ── CAMPOS INICIALES ── */
+  .initial-fields {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .initial-fields.show { display: block; }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field-group label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+  .field-group input, .field-group select {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    transition: border-color 0.2s;
+  }
+  .field-group input:focus, .field-group select:focus {
+    outline: none;
+    border-color: var(--navy);
+  }
+  .field-group input.uppercase { text-transform: uppercase; }
+
+  .btn-primary {
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 14px 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    margin-top: 12px;
+  }
+  .btn-primary:active { background: var(--navy-dark); }
+  .btn-primary:disabled {
+    background: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: var(--orange);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 14px 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  /* ── VALIDACION SECTION ── */
+  .validacion-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .validacion-section.show { display: block; }
+
+  .tiempo-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--navy-light);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+  .tiempo-inicio { color: var(--navy); font-weight: 600; }
+  .tiempo-transcurrido { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); }
+
+  .product-search {
+    margin-bottom: 16px;
+  }
+  .product-search-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 30px;
+    padding: 12px 18px;
+    font-size: 15px;
+  }
+
+  .productos-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    padding: 4px;
+  }
+
+  .producto-card {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    transition: all 0.15s;
+  }
+  .producto-card.validado {
+    display: none;
+  }
+  .producto-card.coincide {
+    border-color: var(--green);
+    background: var(--green-bg);
+  }
+  .producto-card.no-coincide {
+    border-color: var(--red);
+    background: var(--red-bg);
+  }
+
+  .producto-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .producto-codigo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .producto-udm {
+    font-size: 12px;
+    color: var(--muted);
+    background: white;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+  .producto-desc {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  .cantidad-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  /* ── SOBRANTES ── */
+  .sobrantes-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .sobrantes-section.show { display: block; }
+
+  .toggle-sobrantes-btn {
+    background: var(--surface2);
+    border: 2px dashed var(--border);
+    border-radius: 30px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+    cursor: pointer;
+    width: 100%;
+    margin: 8px 0;
+    transition: all 0.15s;
+  }
+  .toggle-sobrantes-btn:hover {
+    background: var(--navy-light);
+    border-color: var(--navy);
+  }
+
+  .sobrantes-container {
+    display: none;
+    margin-top: 12px;
+  }
+  .sobrantes-container.show { display: block; }
+
+  .sobrante-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 0.5fr 0.5fr;
+    gap: 6px;
+    margin-bottom: 8px;
+    align-items: center;
+  }
+  .sobrante-row input {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 13px;
+    width: 100%;
+  }
+  .sobrante-row input.uppercase { text-transform: uppercase; }
+  .btn-add-sobrante {
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin: 8px 0;
+  }
+
+  .btn-finalizar {
+    background: var(--orange);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    width: 100%;
+    margin: 16px 0;
+  }
+
+  /* ── MODAL FALTANTES ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    background: var(--navy);
+    color: white;
+    padding: 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+  }
+
+  .modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    max-height: 60vh;
+  }
+
+  .faltante-item {
+    background: var(--red-bg);
+    border: 1px solid var(--red-bd);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .faltante-item .codigo {
+    font-weight: 700;
+    color: var(--red);
+  }
+
+  .footer {
+    background: var(--navy-dark);
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    padding: 12px;
+    font-size: 11px;
+    margin-top: 20px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 16px;
+    right: 16px;
+    background: var(--navy);
+    color: white;
+    padding: 14px 18px;
+    border-radius: 30px;
+    font-size: 14px;
+    z-index: 9999;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+    text-align: center;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <img src="logo.png" alt="Logo" onerror="this.parentElement.innerHTML='<span>GV</span>'">
+  </div>
+  <div class="header-title">Validación</div>
+</header>
+
+<main>
+  <!-- BÚSQUEDA DE RUTA -->
+  <div class="search-section">
+    <div class="search-label">BUSCAR RUTA</div>
+    <input type="text" id="rutaSearch" class="search-input" placeholder="Ingresa código de ruta..." autocomplete="off">
+    <div id="routeResult" class="route-result"></div>
+  </div>
+
+  <!-- ALMACENES (se muestran cuando hay ruta) -->
+  <div id="almacenesContainer" style="display: none;">
+    <div class="search-label">ALMACENES DISPONIBLES</div>
+    <div id="almacenesGrid" class="almacenes-grid"></div>
+    <button id="verFaltantesBtn" class="btn-secondary" style="display: none;">🔍 VER PRODUCTOS FALTANTES</button>
+  </div>
+
+  <!-- CAMPOS INICIALES (validador, tarimas, anden, tipo) -->
+  <div id="initialFields" class="initial-fields">
+    <div class="search-label">DATOS DE VALIDACIÓN</div>
+    <div class="field-grid">
+      <div class="field-group">
+        <label>VALIDADOR</label>
+        <div class="tl-wrap" style="position: relative;">
+          <input type="text" id="validadorInput" class="search-input uppercase" placeholder="NOMBRE" maxlength="60" autocomplete="off" style="padding: 10px;">
+          <div class="tl-dropdown" id="validadorDropdown" style="top: 100%; background: white; border: 1px solid var(--border); border-radius: 8px; max-height: 200px; overflow-y: auto; display: none; position: absolute; width: 100%; z-index: 100;"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>TARIMAS</label>
+        <input type="number" id="tarimasInput" class="search-input" placeholder="0" min="0" step="1">
+      </div>
+      <div class="field-group">
+        <label>ANDEN</label>
+        <input type="text" id="andenInput" class="search-input uppercase" placeholder="Ej: 3A" maxlength="10">
+      </div>
+      <div class="field-group">
+        <label>TIPO</label>
+        <select id="tipoSelect" class="search-input">
+          <option value="">SELECCIONAR</option>
+          <option value="PRECARGA">PRECARGA</option>
+          <option value="AEROPUERTO">AEROPUERTO</option>
+          <option value="QUINTA">QUINTA</option>
+          <option value="NO TOP">NO TOP</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary" id="iniciarValidacionBtn" disabled>INICIAR VALIDACIÓN</button>
+  </div>
+
+  <!-- SECCIÓN DE VALIDACIÓN (productos) -->
+  <div id="validacionSection" class="validacion-section">
+    <div class="tiempo-info">
+      <span class="tiempo-inicio" id="tiempoInicioDisplay">--:--:--</span>
+      <span class="tiempo-transcurrido" id="tiempoTranscurrido">00:00:00</span>
+    </div>
+    
+    <div class="product-search">
+      <input type="text" id="productoSearch" class="product-search-input" placeholder="🔍 Buscar por código o descripción...">
+    </div>
+
+    <div id="productosLista" class="productos-lista"></div>
+
+    <!-- SOBRANTES (toggle) -->
+    <div class="sobrantes-section" id="sobrantesSection">
+      <button class="toggle-sobrantes-btn" id="toggleSobrantesBtn">➕ AGREGAR SOBRANTE</button>
+      
+      <div id="sobrantesContainer" class="sobrantes-container">
+        <!-- Se generan 4 filas por JS -->
+        <div id="sobrantesFilas"></div>
+        <button class="btn-add-sobrante" id="agregarSobranteBtn">💾 GUARDAR SOBRANTES</button>
+      </div>
+    </div>
+
+    <button class="btn-finalizar" id="finalizarValidacionBtn">FINALIZAR VALIDACIÓN</button>
+  </div>
+</main>
+
+<!-- MODAL DE FALTANTES -->
+<div class="modal-overlay" id="modalFaltantes">
+  <div class="modal">
+    <div class="modal-header">
+      <span>PRODUCTOS FALTANTES</span>
+      <button class="modal-close" id="modalFaltantesClose">&times;</button>
+    </div>
+    <div class="modal-body" id="modalFaltantesBody">
+      <!-- Se llena con JS -->
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  © 2026 · E.Lugo · Todos los derechos reservados
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, doc, setDoc, getDocs, getDoc,
+    query, where, writeBatch, onSnapshot, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyB1APqzO0tsh1Ow58-e8VBYeTYbdmLxsNI",
+    authDomain:        "validacion-2026.firebaseapp.com",
+    projectId:         "validacion-2026",
+    storageBucket:     "validacion-2026.firebasestorage.app",
+    messagingSenderId: "9004667623",
+    appId:             "1:9004667623:web:5331db7cda0b94deacc842"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ========== STATE ==========
+  let currentRoute = null;           // { ruta, viaje, almacenes }
+  let currentAlmacen = null;
+  let almacenesCompletados = [];     // almacenes que ya tienen todos los productos concluidos
+  let almacenesConFaltantes = [];    // almacenes que tienen productos faltantes
+  let almacenesConSesion = [];       // almacenes que ya tienen registro de inicio/fin en sesiones_validacion
+  let productos = [];                // items del almacén actual
+  let validadores = [];              // lista de team_leaders
+  let sesionValidacion = {
+    inicio: null,
+    fin: null,
+    validador: '',
+    tarimas: 0,
+    anden: '',
+    tipo: '',
+    ruta: '',
+    viaje: '',
+    almacen: ''
+  };
+  let timerInterval = null;
+  let vozFemenina = null;            // Voz seleccionada automáticamente
+
+  // ========== DOM ELEMENTS ==========
+  const rutaSearch = document.getElementById('rutaSearch');
+  const routeResult = document.getElementById('routeResult');
+  const almacenesContainer = document.getElementById('almacenesContainer');
+  const almacenesGrid = document.getElementById('almacenesGrid');
+  const verFaltantesBtn = document.getElementById('verFaltantesBtn');
+  const initialFields = document.getElementById('initialFields');
+  const validadorInput = document.getElementById('validadorInput');
+  const validadorDropdown = document.getElementById('validadorDropdown');
+  const tarimasInput = document.getElementById('tarimasInput');
+  const andenInput = document.getElementById('andenInput');
+  const tipoSelect = document.getElementById('tipoSelect');
+  const iniciarValidacionBtn = document.getElementById('iniciarValidacionBtn');
+  const validacionSection = document.getElementById('validacionSection');
+  const productoSearch = document.getElementById('productoSearch');
+  const productosLista = document.getElementById('productosLista');
+  const sobrantesSection = document.getElementById('sobrantesSection');
+  const toggleSobrantesBtn = document.getElementById('toggleSobrantesBtn');
+  const sobrantesContainer = document.getElementById('sobrantesContainer');
+  const sobrantesFilas = document.getElementById('sobrantesFilas');
+  const agregarSobranteBtn = document.getElementById('agregarSobranteBtn');
+  const finalizarValidacionBtn = document.getElementById('finalizarValidacionBtn');
+  const tiempoInicioDisplay = document.getElementById('tiempoInicioDisplay');
+  const tiempoTranscurrido = document.getElementById('tiempoTranscurrido');
+  const modalFaltantes = document.getElementById('modalFaltantes');
+  const modalFaltantesBody = document.getElementById('modalFaltantesBody');
+  const modalFaltantesClose = document.getElementById('modalFaltantesClose');
+
+  // ========== SELECCIÓN AUTOMÁTICA DE VOZ FEMENINA ==========
+  function seleccionarVozFemenina() {
+    return new Promise((resolve) => {
+      // Intentar obtener voces inmediatamente
+      let voces = window.speechSynthesis.getVoices();
+      
+      if (voces.length > 0) {
+        const voz = encontrarMejorVozFemenina(voces);
+        resolve(voz);
+      } else {
+        // Si no hay voces, esperar a que carguen
+        window.speechSynthesis.onvoiceschanged = () => {
+          voces = window.speechSynthesis.getVoices();
+          const voz = encontrarMejorVozFemenina(voces);
+          resolve(voz);
+        };
+      }
+    });
+  }
+
+  function encontrarMejorVozFemenina(voces) {
+    console.log('🎤 Voces disponibles:', voces.map(v => v.name).join(', '));
+    
+    // Lista priorizada de voces femeninas en español
+    const prioridadVoces = [
+      // Microsoft voces mexicanas/latinas (Windows)
+      { name: 'Sabina', lang: 'es-MX' },
+      { name: 'Paulina', lang: 'es-MX' },
+      { name: 'Mónica', lang: 'es-MX' },
+      { name: 'Laura', lang: 'es-MX' },
+      { name: 'Helena', lang: 'es-MX' },
+      
+      // Google voces (multi-plataforma)
+      { name: 'Google español femenina', lang: 'es' },
+      { name: 'Google español de Estados Unidos', lang: 'es-US' },
+      { name: 'Google español', lang: 'es' },
+      
+      // Otras voces femeninas en español
+      { name: 'Spanish Female', lang: 'es' },
+      { name: 'es-MX Female', lang: 'es-MX' },
+      
+      // Fallback: cualquier voz femenina en español
+      { pattern: /female/i, lang: /es/ }
+    ];
+
+    // Buscar por orden de prioridad
+    for (const criterio of prioridadVoces) {
+      let voz = null;
+      
+      if (criterio.name) {
+        voz = voces.find(v => 
+          v.name.includes(criterio.name) && 
+          v.lang.startsWith(criterio.lang)
+        );
+      } else if (criterio.pattern) {
+        voz = voces.find(v => 
+          v.name.match(criterio.pattern) && 
+          v.lang.match(criterio.lang)
+        );
+      }
+      
+      if (voz) {
+        console.log('✅ Voz seleccionada:', voz.name);
+        return voz;
+      }
+    }
+    
+    // Último recurso: primera voz femenina en español
+    const vozFemeninaEspañol = voces.find(v => 
+      v.lang.startsWith('es') && 
+      (v.name.includes('Female') || v.name.includes('femenina') || v.name.includes('Mujer'))
+    );
+    
+    if (vozFemeninaEspañol) {
+      console.log('✅ Voz femenina encontrada:', vozFemeninaEspañol.name);
+      return vozFemeninaEspañol;
+    }
+    
+    // Fallback extremo: primera voz en español
+    const vozEspañol = voces.find(v => v.lang.startsWith('es'));
+    if (vozEspañol) {
+      console.log('⚠️ Usando voz en español (sin garantía femenina):', vozEspañol.name);
+      return vozEspañol;
+    }
+    
+    console.log('⚠️ No se encontró voz en español, usando voz por defecto');
+    return null;
+  }
+
+  // ========== SINTESIS DE VOZ ==========
+  async function hablar(texto) {
+    return new Promise(async (resolve) => {
+      // Si aún no tenemos voz seleccionada, seleccionarla
+      if (!vozFemenina) {
+        vozFemenina = await seleccionarVozFemenina();
+      }
+      
+      const utterance = new SpeechSynthesisUtterance(texto);
+      utterance.lang = 'es-MX';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      
+      if (vozFemenina) {
+        utterance.voice = vozFemenina;
+      }
+      
+      utterance.onend = resolve;
+      utterance.onerror = resolve;
+      
+      // Cancelar cualquier voz anterior
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    });
+  }
+
+  function sonidoError() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.2);
+  }
+
+  // ========== INICIALIZAR SOBRANTES (4 FILAS) ==========
+  function initSobrantes() {
+    let html = '';
+    for (let i = 0; i < 4; i++) {
+      html += `
+        <div class="sobrante-row">
+          <input type="text" class="codigo-sobrante uppercase" placeholder="CÓDIGO" maxlength="50">
+          <input type="text" class="desc-sobrante uppercase" placeholder="DESCRIPCIÓN" maxlength="100">
+          <input type="text" class="udm-sobrante uppercase" placeholder="UDM" maxlength="10">
+          <input type="number" class="sdo-sobrante" placeholder="SDO" min="0" step="1">
+        </div>
+      `;
+    }
+    sobrantesFilas.innerHTML = html;
+  }
+  initSobrantes();
+
+  // Toggle mostrar/ocultar sobrantes
+  toggleSobrantesBtn.addEventListener('click', () => {
+    sobrantesContainer.classList.toggle('show');
+    toggleSobrantesBtn.textContent = sobrantesContainer.classList.contains('show') ? '🔽 OCULTAR SOBRANTES' : '➕ AGREGAR SOBRANTE';
+  });
+
+  // ========== CARGAR VALIDADORES ==========
+  async function loadValidadores() {
+    try {
+      const snap = await getDocs(collection(db, 'team_leaders'));
+      validadores = snap.docs.map(d => d.data().nombre).filter(Boolean);
+    } catch(e) { console.warn('Error cargando validadores:', e); }
+  }
+  loadValidadores();
+
+  // ========== AUTOCOMPLETE VALIDADOR ==========
+  validadorInput.addEventListener('input', () => {
+    const val = validadorInput.value.toUpperCase();
+    validadorInput.value = val;
+    
+    if (val.length < 1) {
+      validadorDropdown.style.display = 'none';
+      return;
+    }
+
+    const matches = validadores.filter(v => v.includes(val));
+    let html = '';
+    matches.forEach(v => {
+      html += `<div class="tl-option" style="padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border);" data-name="${v}">${v}</div>`;
+    });
+    
+    if (!validadores.includes(val)) {
+      html += `<div class="tl-option new-tl" style="padding: 10px; cursor: pointer; color: var(--green);" data-name="${val}">➕ NUEVO: ${val}</div>`;
+    }
+
+    validadorDropdown.innerHTML = html;
+    validadorDropdown.style.display = 'block';
+
+    validadorDropdown.querySelectorAll('.tl-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        validadorInput.value = opt.dataset.name;
+        validadorDropdown.style.display = 'none';
+        checkIniciarValidacion();
+      });
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!validadorInput.contains(e.target) && !validadorDropdown.contains(e.target)) {
+      validadorDropdown.style.display = 'none';
+    }
+  });
+
+  // ========== BUSCAR RUTA EN FIREBASE ==========
+  rutaSearch.addEventListener('input', async (e) => {
+    const rutaCodigo = e.target.value.toUpperCase();
+    rutaSearch.value = rutaCodigo;
+
+    if (rutaCodigo.length < 2) {
+      routeResult.classList.remove('show');
+      almacenesContainer.style.display = 'none';
+      initialFields.classList.remove('show');
+      return;
+    }
+
+    try {
+      // Buscar en colección rutas
+      const q = query(collection(db, 'rutas'), where('ruta', '==', rutaCodigo));
+      const snap = await getDocs(q);
+      
+      if (snap.empty) {
+        routeResult.textContent = `❌ Ruta ${rutaCodigo} no encontrada`;
+        routeResult.classList.add('show');
+        almacenesContainer.style.display = 'none';
+        initialFields.classList.remove('show');
+        return;
+      }
+
+      // Tomar la primera ruta (puede haber múltiples viajes, tomamos el más reciente)
+      const data = snap.docs[0].data();
+      currentRoute = {
+        ruta: data.ruta,
+        viaje: data.viaje,
+        almacenes: (data.almacenes || []).map(alm => alm === 'FRIO' ? 'CONGELADO' : alm)
+      };
+
+      // Verificar estado de los almacenes
+      await verificarEstadoAlmacenes();
+
+      routeResult.textContent = `✅ Ruta: ${currentRoute.ruta} | Viaje: ${currentRoute.viaje}`;
+      routeResult.classList.add('show');
+
+      // Mostrar almacenes con su estado
+      renderAlmacenesConEstado();
+      almacenesContainer.style.display = 'block';
+      
+      // Solo mostrar campos iniciales si hay almacenes disponibles NO completados
+      const almacenesDisponibles = currentRoute.almacenes.filter(alm => 
+        !almacenesCompletados.includes(alm) && !almacenesConSesion.includes(alm)
+      );
+      
+      if (almacenesDisponibles.length > 0) {
+        initialFields.classList.add('show');
+      } else {
+        initialFields.classList.remove('show');
+      }
+      
+    } catch (error) {
+      console.error('Error buscando ruta:', error);
+      showToast('Error al buscar ruta');
+    }
+  });
+
+  async function verificarEstadoAlmacenes() {
+    if (!currentRoute) return;
+    
+    almacenesCompletados = [];
+    almacenesConFaltantes = [];
+    almacenesConSesion = [];
+
+    // Verificar sesiones de validación (inicio y fin)
+    const sesionesQuery = query(
+      collection(db, 'sesiones_validacion'),
+      where('ruta', '==', currentRoute.ruta),
+      where('viaje', '==', currentRoute.viaje)
+    );
+    
+    const sesionesSnap = await getDocs(sesionesQuery);
+    sesionesSnap.forEach(doc => {
+      const data = doc.data();
+      if (data.almacen && data.inicio && data.fin) {
+        const almacen = data.almacen === 'FRIO' ? 'CONGELADO' : data.almacen;
+        almacenesConSesion.push(almacen);
+      }
+    });
+
+    for (const alm of currentRoute.almacenes) {
+      const almacenOriginal = alm === 'CONGELADO' ? 'FRIO' : alm;
+      
+      const q = query(
+        collection(db, 'items'),
+        where('ruta', '==', currentRoute.ruta),
+        where('viaje', '==', currentRoute.viaje),
+        where('almacen', '==', almacenOriginal)
+      );
+      
+      const snap = await getDocs(q);
+      let totalItems = 0;
+      let concluidos = 0;
+      let faltantes = 0;
+
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (data.tipo !== 'SOBRANTE') {
+          totalItems++;
+          if (data.estatus === 'concluido') concluidos++;
+          if (data.estatus === 'faltante') faltantes++;
+        }
+      });
+
+      if (totalItems > 0 && concluidos === totalItems) {
+        almacenesCompletados.push(alm);
+      }
+      
+      if (faltantes > 0) {
+        almacenesConFaltantes.push(alm);
+      }
+    }
+  }
+
+  function renderAlmacenesConEstado() {
+    almacenesGrid.innerHTML = '';
+    
+    currentRoute.almacenes.forEach(alm => {
+      const btn = document.createElement('button');
+      btn.className = 'alm-btn';
+      
+      // Aplicar estilo especial para CONGELADO
+      if (alm === 'CONGELADO') {
+        btn.classList.add('congelado');
+      }
+      
+      if (almacenesCompletados.includes(alm) || almacenesConSesion.includes(alm)) {
+        btn.classList.add('completed');
+        btn.textContent = alm;
+        btn.disabled = true;
+      } else {
+        btn.textContent = alm;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.alm-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentAlmacen = alm;
+          sesionValidacion.almacen = alm;
+          checkIniciarValidacion();
+        });
+      }
+      
+      almacenesGrid.appendChild(btn);
+    });
+
+    // Mostrar botón de faltantes si hay
+    if (almacenesConFaltantes.length > 0) {
+      verFaltantesBtn.style.display = 'block';
+    } else {
+      verFaltantesBtn.style.display = 'none';
+    }
+  }
+
+  // ========== VER FALTANTES ==========
+  verFaltantesBtn.addEventListener('click', async () => {
+    if (!currentRoute) return;
+
+    const q = query(
+      collection(db, 'items'),
+      where('ruta', '==', currentRoute.ruta),
+      where('viaje', '==', currentRoute.viaje),
+      where('estatus', '==', 'faltante')
+    );
+
+    const snap = await getDocs(q);
+    const faltantes = [];
+
+    snap.forEach(doc => {
+      const data = doc.data();
+      faltantes.push(data);
+    });
+
+    if (faltantes.length === 0) {
+      modalFaltantesBody.innerHTML = '<p style="text-align:center;color:var(--green);">✅ No hay productos faltantes</p>';
+    } else {
+      modalFaltantesBody.innerHTML = faltantes.map(f => `
+        <div class="faltante-item">
+          <div class="codigo">${f.codigo}</div>
+          <div>${f.descripcion || ''}</div>
+          <div style="font-size:12px;color:var(--muted);">Almacén: ${f.almacen === 'FRIO' ? 'CONGELADO' : f.almacen} | UDM: ${f.udm || 'N/A'}</div>
+        </div>
+      `).join('');
+    }
+
+    modalFaltantes.classList.add('show');
+  });
+
+  modalFaltantesClose.addEventListener('click', () => {
+    modalFaltantes.classList.remove('show');
+  });
+
+  modalFaltantes.addEventListener('click', (e) => {
+    if (e.target === modalFaltantes) {
+      modalFaltantes.classList.remove('show');
+    }
+  });
+
+  // ========== VALIDAR CAMPOS PARA HABILITAR INICIO ==========
+  function checkIniciarValidacion() {
+    const validadorOk = validadorInput.value.trim().length >= 2;
+    const tarimasOk = tarimasInput.value !== '';
+    const andenOk = andenInput.value.trim().length > 0;
+    const tipoOk = tipoSelect.value !== '';
+    const almacenOk = currentAlmacen !== null && 
+                     !almacenesCompletados.includes(currentAlmacen) && 
+                     !almacenesConSesion.includes(currentAlmacen);
+
+    iniciarValidacionBtn.disabled = !(validadorOk && tarimasOk && andenOk && tipoOk && almacenOk);
+  }
+
+  [validadorInput, tarimasInput, andenInput, tipoSelect].forEach(input => {
+    input.addEventListener('input', checkIniciarValidacion);
+    input.addEventListener('change', checkIniciarValidacion);
+  });
+
+  // ========== INICIAR VALIDACIÓN ==========
+  iniciarValidacionBtn.addEventListener('click', async () => {
+    // Guardar datos de sesión
+    sesionValidacion = {
+      inicio: new Date(),
+      fin: null,
+      validador: validadorInput.value.trim().toUpperCase(),
+      tarimas: parseInt(tarimasInput.value) || 0,
+      anden: andenInput.value.trim().toUpperCase(),
+      tipo: tipoSelect.value,
+      ruta: currentRoute.ruta,
+      viaje: currentRoute.viaje,
+      almacen: currentAlmacen
+    };
+
+    // Registrar validador si es nuevo
+    if (!validadores.includes(sesionValidacion.validador)) {
+      try {
+        await setDoc(doc(db, 'team_leaders', sesionValidacion.validador), {
+          nombre: sesionValidacion.validador,
+          actualizadoEn: new Date().toISOString()
+        });
+        validadores.push(sesionValidacion.validador);
+      } catch(e) { console.warn(e); }
+    }
+
+    // Mostrar tiempo de inicio
+    tiempoInicioDisplay.textContent = formatearHora(sesionValidacion.inicio);
+    iniciarTimer();
+
+    // Cargar productos del almacén
+    await cargarProductos();
+
+    // Mostrar secciones
+    validacionSection.classList.add('show');
+    
+    showToast('✅ Validación iniciada');
+    hablar('Validación iniciada');
+  });
+
+  function formatearHora(date) {
+    return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function iniciarTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (!sesionValidacion.inicio) return;
+      const ahora = new Date();
+      const diff = Math.floor((ahora - sesionValidacion.inicio) / 1000);
+      const horas = Math.floor(diff / 3600).toString().padStart(2, '0');
+      const minutos = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+      const segundos = (diff % 60).toString().padStart(2, '0');
+      tiempoTranscurrido.textContent = `${horas}:${minutos}:${segundos}`;
+    }, 1000);
+  }
+
+  // ========== CARGAR PRODUCTOS DESDE FIREBASE ==========
+  async function cargarProductos() {
+    if (!currentRoute || !currentAlmacen) return;
+
+    const almacenOriginal = currentAlmacen === 'CONGELADO' ? 'FRIO' : currentAlmacen;
+
+    try {
+      const q = query(
+        collection(db, 'items'),
+        where('ruta', '==', currentRoute.ruta),
+        where('viaje', '==', currentRoute.viaje),
+        where('almacen', '==', almacenOriginal)
+      );
+      const snap = await getDocs(q);
+      
+      productos = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (data.estatus !== 'concluido' && data.tipo !== 'SOBRANTE') { // Solo pendientes o faltantes
+          productos.push({
+            id: doc.id,
+            ...data
+          });
+        }
+      });
+
+      renderProductos(productos);
+    } catch (error) {
+      console.error('Error cargando productos:', error);
+      showToast('Error al cargar productos');
+    }
+  }
+
+  // ========== RENDER PRODUCTOS ==========
+  function renderProductos(productosArray) {
+    if (!productosArray.length) {
+      productosLista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">✅ No hay productos pendientes</div>';
+      return;
+    }
+
+    productosLista.innerHTML = productosArray.map(p => `
+      <div class="producto-card" data-id="${p.id}" data-codigo="${p.codigo}" data-desc="${p.descripcion || ''}" data-sdo="${p.sdo || 0}">
+        <div class="producto-header">
+          <span class="producto-codigo">${p.codigo}</span>
+          <span class="producto-udm">${p.udm || 'N/A'}</span>
+        </div>
+        <div class="producto-desc">${p.descripcion || ''}</div>
+        <input type="number" class="cantidad-input" placeholder="Ingresa cantidad validada" min="0" step="1" value="" autocomplete="off">
+      </div>
+    `).join('');
+
+    // Agregar listeners a los inputs de cantidad
+    document.querySelectorAll('.producto-card').forEach(card => {
+      const input = card.querySelector('.cantidad-input');
+      const sdo = parseFloat(card.dataset.sdo);
+      const productoId = card.dataset.id;
+      const producto = productos.find(p => p.id === productoId);
+
+      input.addEventListener('input', async (e) => {
+        const cantidad = parseFloat(e.target.value) || 0;
+        const coincide = Math.abs(cantidad - sdo) < 0.01; // Tolerancia
+
+        if (coincide) {
+          card.classList.add('coincide');
+          card.classList.remove('no-coincide');
+          
+          // Feedback de voz
+          hablar(`Producto ${producto.codigo} validado`);
+          
+          // Actualizar en Firebase
+          try {
+            await setDoc(doc(db, 'items', productoId), {
+              ...producto,
+              estatus: 'concluido',
+              validadoPor: sesionValidacion.validador,
+              fechaValidacion: new Date().toISOString()
+            }, { merge: true });
+            
+            // Ocultar card después de 1 segundo
+            setTimeout(() => {
+              card.classList.add('validado');
+              // Remover de productos local
+              productos = productos.filter(p => p.id !== productoId);
+            }, 1000);
+          } catch(e) {
+            console.warn(e);
+            showToast('Error al actualizar');
+          }
+        } else {
+          card.classList.add('no-coincide');
+          card.classList.remove('coincide');
+          sonidoError();
+        }
+      });
+    });
+  }
+
+  // ========== FILTRO DE PRODUCTOS ==========
+  productoSearch.addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.producto-card');
+    
+    cards.forEach(card => {
+      if (card.classList.contains('validado')) return;
+      
+      const codigo = card.dataset.codigo?.toLowerCase() || '';
+      const desc = card.dataset.desc?.toLowerCase() || '';
+      
+      if (codigo.includes(term) || desc.includes(term)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+
+  // ========== AGREGAR SOBRANTE ==========
+  agregarSobranteBtn.addEventListener('click', async () => {
+    const filas = document.querySelectorAll('.sobrante-row');
+    const sobrantesParaGuardar = [];
+
+    filas.forEach(fila => {
+      const codigo = fila.querySelector('.codigo-sobrante')?.value.trim().toUpperCase();
+      const desc = fila.querySelector('.desc-sobrante')?.value.trim().toUpperCase();
+      const udm = fila.querySelector('.udm-sobrante')?.value.trim().toUpperCase();
+      const sdo = fila.querySelector('.sdo-sobrante')?.value;
+
+      if (codigo && desc && udm && sdo) {
+        sobrantesParaGuardar.push({ codigo, desc, udm, sdo: parseInt(sdo) });
+      }
+    });
+
+    if (sobrantesParaGuardar.length === 0) {
+      showToast('⚠ Completa al menos un sobrante');
+      return;
+    }
+
+    const almacenOriginal = currentAlmacen === 'CONGELADO' ? 'FRIO' : currentAlmacen;
+
+    try {
+      for (const sob of sobrantesParaGuardar) {
+        const itemId = `${currentRoute.ruta}_${currentRoute.viaje}_${almacenOriginal}_${sob.codigo}_${Date.now()}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+        
+        await setDoc(doc(db, 'items', itemId), {
+          ruta: currentRoute.ruta,
+          viaje: currentRoute.viaje,
+          almacen: almacenOriginal,
+          codigo: sob.codigo,
+          descripcion: sob.desc,
+          udm: sob.udm,
+          sdo: sob.sdo,
+          estatus: 'concluido',
+          tipo: 'SOBRANTE',
+          validadoPor: sesionValidacion.validador,
+          fechaValidacion: new Date().toISOString(),
+          tarimas: sesionValidacion.tarimas,
+          anden: sesionValidacion.anden,
+          tipoValidacion: sesionValidacion.tipo
+        });
+      }
+
+      showToast(`✅ ${sobrantesParaGuardar.length} sobrante(s) agregado(s)`);
+      initSobrantes(); // Limpiar campos
+      sobrantesContainer.classList.remove('show');
+      toggleSobrantesBtn.textContent = '➕ AGREGAR SOBRANTE';
+    } catch (error) {
+      console.error(error);
+      showToast('❌ Error al guardar sobrantes');
+    }
+  });
+
+  // ========== FINALIZAR VALIDACIÓN ==========
+  finalizarValidacionBtn.addEventListener('click', async () => {
+    if (!confirm('¿Finalizar validación? Los productos pendientes quedarán como faltantes.')) return;
+
+    sesionValidacion.fin = new Date();
+    if (timerInterval) clearInterval(timerInterval);
+
+    // Calcular tiempo transcurrido
+    const diffSeg = Math.floor((sesionValidacion.fin - sesionValidacion.inicio) / 1000);
+    const horas = Math.floor(diffSeg / 3600).toString().padStart(2, '0');
+    const minutos = Math.floor((diffSeg % 3600) / 60).toString().padStart(2, '0');
+    const segundos = (diffSeg % 60).toString().padStart(2, '0');
+    const tiempoTotal = `${horas}:${minutos}:${segundos}`;
+
+    const almacenOriginal = currentAlmacen === 'CONGELADO' ? 'FRIO' : currentAlmacen;
+
+    try {
+      // Actualizar productos pendientes a faltantes
+      const productosPendientes = productos.filter(p => p.estatus !== 'concluido');
+      
+      for (const p of productosPendientes) {
+        await setDoc(doc(db, 'items', p.id), {
+          ...p,
+          estatus: 'faltante',
+          validadoPor: sesionValidacion.validador,
+          fechaValidacion: sesionValidacion.fin.toISOString()
+        }, { merge: true });
+      }
+
+      // Guardar metadata de la sesión
+      const sesionId = `${currentRoute.ruta}_${currentRoute.viaje}_${almacenOriginal}_${sesionValidacion.inicio.getTime()}`;
+      await setDoc(doc(db, 'sesiones_validacion', sesionId), {
+        ruta: currentRoute.ruta,
+        viaje: currentRoute.viaje,
+        almacen: almacenOriginal,
+        validador: sesionValidacion.validador,
+        tarimas: sesionValidacion.tarimas,
+        anden: sesionValidacion.anden,
+        tipo: sesionValidacion.tipo,
+        inicio: sesionValidacion.inicio.toISOString(),
+        fin: sesionValidacion.fin.toISOString(),
+        tiempoTotal,
+        productosTotales: productos.length,
+        productosConcluidos: productos.filter(p => p.estatus === 'concluido').length,
+        productosFaltantes: productosPendientes.length
+      });
+
+      showToast(`✅ Validación finalizada - Tiempo: ${tiempoTotal}`);
+      hablar("Validación finalizada");
+
+      // Resetear vista
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+
+    } catch (error) {
+      console.error(error);
+      showToast('❌ Error al finalizar');
+    }
+  });
+
+  // ========== TOAST ==========
+  function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  // Inicializar selección de voz al cargar la página
+  window.speechSynthesis.onvoiceschanged = () => {
+    seleccionarVozFemenina().then(voz => {
+      vozFemenina = voz;
+      console.log('🎤 Voz femenina lista:', voz?.name);
+    });
+  };
+  
+  // Intentar seleccionar voz inmediatamente
+  seleccionarVozFemenina().then(voz => {
+    vozFemenina = voz;
+  });
+
+  // Escuchar cambios en items para actualizar vista en tiempo real
+  onSnapshot(collection(db, 'items'), () => {
+    if (currentRoute && currentAlmacen && validacionSection.classList.contains('show')) {
+      cargarProductos(); // Recargar productos silenciosamente
+    }
+  });
+
+</script>
+</body>
+</html>
