@@ -6,6 +6,7 @@
 <title>Gantt de Validación</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root {
     --navy:       #1a3a5c;
@@ -27,6 +28,11 @@
     --red:        #b91c1c;
     --red-bg:     #fee2e2;
     --red-bd:     #fecaca;
+    --purple:     #8b5cf6;
+    --purple-bg:  #ede9fe;
+    --purple-bd:  #c4b5fd;
+    --pdf-red:    #e74c3c;
+    --pdf-blue:   #2980b9;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -42,11 +48,15 @@
   }
   .header-left { display: flex; align-items: center; gap: 18px; }
   .logo-wrap {
-    width: 34px; height: 34px; border-radius: 6px;
-    background:white; border: 1px solid rgba(255,255,255,0.18);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: white;
-    overflow: hidden; flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    background: white;
+    border: 1px solid rgba(255,255,255,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
   }
   .logo-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
   .divider-v { width: 1px; height: 26px; background: rgba(255,255,255,0.18); }
@@ -102,17 +112,17 @@
   .stat-card.total { border-top-color: var(--navy); }
   .stat-card.valid { border-top-color: var(--green); }
   .stat-card.pend  { border-top-color: var(--orange); }
-  .stat-card.prog  { border-top-color: #6b48c8; }
+  .stat-card.prog  { border-top-color: var(--purple); }
   .stat-icon { width: 34px; height: 34px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
   .stat-card.total .stat-icon { background: var(--navy-light); }
   .stat-card.valid .stat-icon { background: var(--green-bg); }
   .stat-card.pend  .stat-icon { background: var(--orange-bg); }
-  .stat-card.prog  .stat-icon { background: #ede9fe; }
+  .stat-card.prog  .stat-icon { background: var(--purple-bg); }
   .stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
   .stat-value { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; line-height: 1; color: var(--navy); }
   .stat-card.valid .stat-value { color: var(--green); }
   .stat-card.pend  .stat-value { color: var(--orange); }
-  .stat-card.prog  .stat-value { color: #6b48c8; }
+  .stat-card.prog  .stat-value { color: var(--purple); }
 
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); display: flex; align-items: center; gap: 10px; }
@@ -123,7 +133,7 @@
   .search-input::placeholder { color: var(--faint); }
 
   .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: auto; box-shadow: 0 1px 6px rgba(0,0,0,0.05); max-height: calc(100vh - 220px); }
-  table { width: 100%; border-collapse: collapse; min-width: 700px; }
+  table { width: 100%; border-collapse: collapse; min-width: 800px; }
   thead { background: var(--navy); position: sticky; top: 0; z-index: 10; }
   th { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.65); padding: 9px 16px; text-align: left; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
@@ -132,9 +142,29 @@
   td { padding: 9px 16px; font-size: 13px; vertical-align: middle; }
 
   .ruta-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; color: var(--navy); background: var(--navy-light); border: 1px solid #c8d8e8; border-radius: 5px; padding: 2px 9px; display: inline-block; letter-spacing: 0.8px; }
-  .viaje-text { color: var(--muted); font-size: 12px; font-weight: 500; }
-  .click-hint { font-size: 10px; color: var(--faint); margin-left: 6px; cursor: pointer; }
+  .viaje-text { color: var(--muted); font-size: 12px; font-weight: 500; margin-left: 5px; }
+  .action-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: 10px;
+  }
+  .click-hint { font-size: 10px; color: var(--faint); cursor: pointer; }
   .click-hint:hover { color: var(--navy); text-decoration: underline; }
+  .pdf-icon {
+    font-size: 18px;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .pdf-icon:hover {
+    transform: scale(1.15);
+  }
+  .pdf-icon.red {
+    color: var(--pdf-red);
+  }
+  .pdf-icon.blue {
+    color: var(--pdf-blue);
+  }
 
   .progress-cell { min-width: 150px; }
   .progress-wrap { display: flex; align-items: center; gap: 8px; }
@@ -146,6 +176,7 @@
   .chip.pendiente { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-bd); }
   .chip.concluido { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
   .chip.faltante { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bd); }
+  .chip.faltante-confirmado { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-bd); }
   .chip.na { background: var(--bg); color: var(--faint); border: 1px solid var(--border); }
 
   .delete-btn {
@@ -183,7 +214,7 @@
 
   .modal {
     background: var(--surface); border-radius: 14px;
-    width: 100%; max-width: 900px; max-height: 88vh;
+    width: 100%; max-width: 1100px; max-height: 88vh;
     display: flex; flex-direction: column;
     box-shadow: 0 20px 60px rgba(0,0,0,0.25);
     animation: modalIn 0.2s ease;
@@ -201,6 +232,34 @@
 
   .modal-body { overflow-y: auto; flex: 1; padding: 16px 20px; }
 
+  /* Info de validación en modal */
+  .validacion-info {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .info-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .info-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+  .info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
   /* Almacen section inside modal */
   .alm-section { margin-bottom: 18px; }
   .alm-section:last-child { margin-bottom: 0; }
@@ -215,14 +274,25 @@
   .alm-count { font-size: 11px; color: var(--muted); font-weight: 500; }
 
   .alm-table-wrap { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow-x: auto; }
-  .alm-table { width: 100%; border-collapse: collapse; min-width: 650px; }
-  .alm-table th { background: #f0f4f8; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); padding: 7px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .alm-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+  .alm-table th { 
+    background: #1a3a5c; 
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif; 
+    font-size: 11px; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    letter-spacing: 1.2px; 
+    padding: 8px 12px; 
+    text-align: left; 
+    border-bottom: 1px solid var(--border); 
+  }
   .alm-table td { padding: 7px 12px; font-size: 12.5px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
   .alm-table tr:last-child td { border-bottom: none; }
   .alm-table tr:hover td { background: var(--surface2); }
 
   .codigo-badge { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; color: var(--navy); }
-  .desc-text { color: var(--text); max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .desc-text { color: var(--text); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .udm-text { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; }
   .sdo-text { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); }
 
@@ -253,9 +323,14 @@
     color: var(--red);
     border: 1px solid var(--red-bd);
   }
+  .status-badge.faltante-confirmado {
+    background: var(--purple-bg);
+    color: var(--purple);
+    border: 1px solid var(--purple-bd);
+  }
 
   .btn-confirmar {
-    background: var(--green);
+    background: var(--purple);
     color: white;
     border: none;
     border-radius: 4px;
@@ -268,7 +343,7 @@
     white-space: nowrap;
   }
   .btn-confirmar:hover {
-    background: #0f4f2f;
+    background: #6d28d9;
   }
 
   .modal-footer {
@@ -279,7 +354,7 @@
   .modal-pct-wrap { display: flex; align-items: center; gap: 10px; }
   .modal-pct-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
   .modal-pct-bar-bg { width: 160px; height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; }
-  .modal-pct-bar { height: 100%; background: var(--green); border-radius: 4px; transition: width 0.4s ease; }
+  .modal-pct-bar { height: 100%; background: var(--purple); border-radius: 4px; transition: width 0.4s ease; }
   .modal-pct-val { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--navy); }
 
   /* ── FOOTER ── */
@@ -436,6 +511,7 @@
   let teamLeaderName = '';
   let knownTLs = [];
   let currentModalKey = null;
+  let sesionesPorRuta = {}; // Cache de sesiones por ruta
 
   // ── DOM ─────────────────────────────────────────────────────────────
   const tlInput = document.getElementById('tlInput');
@@ -572,13 +648,19 @@
     allRoutes.forEach(r => {
       r.almacenes.forEach(alm => {
         const items = allRawItems.filter(it => it.ruta === r.ruta && it.viaje === r.viaje && it.alm === alm);
-        const allDone = items.length > 0 && items.every(it => itemStatus[it.itemId] === 'concluido');
+        const allDone = items.length > 0 && items.every(it => 
+          itemStatus[it.itemId] === 'concluido' || 
+          itemStatus[it.itemId] === 'faltante-confirmado'
+        );
         const hasFaltantes = items.some(it => itemStatus[it.itemId] === 'faltante');
+        const hasFaltantesConfirmados = items.some(it => itemStatus[it.itemId] === 'faltante-confirmado');
 
         if (allDone) {
           routeAlmStatus[`${r.ruta}||${r.viaje}||${alm}`] = 'concluido';
         } else if (hasFaltantes) {
           routeAlmStatus[`${r.ruta}||${r.viaje}||${alm}`] = 'faltante';
+        } else if (hasFaltantesConfirmados) {
+          routeAlmStatus[`${r.ruta}||${r.viaje}||${alm}`] = 'faltante-confirmado';
         } else {
           routeAlmStatus[`${r.ruta}||${r.viaje}||${alm}`] = 'pendiente';
         }
@@ -685,6 +767,1071 @@
     }
   }
 
+  // ── Función para confirmar faltante ─────────────────────────────────
+  async function confirmarFaltante(itemId) {
+    try {
+      await setDoc(doc(db, 'items', itemId), {
+        estatus: 'faltante-confirmado'
+      }, { merge: true });
+      showToast('✅ Faltante confirmado');
+    } catch (error) {
+      console.error('Error al confirmar faltante:', error);
+      showToast('❌ Error al confirmar');
+    }
+  }
+
+  // ── Función para cargar sesiones de una ruta ───────────────────────
+  async function cargarSesionesRuta(ruta, viaje) {
+    const key = `${ruta}||${viaje}`;
+    if (sesionesPorRuta[key]) return sesionesPorRuta[key];
+
+    try {
+      const sesionesQuery = query(
+        collection(db, 'sesiones_validacion'),
+        where('ruta', '==', ruta),
+        where('viaje', '==', viaje)
+      );
+      const sesionesSnap = await getDocs(sesionesQuery);
+      const sesiones = sesionesSnap.docs.map(d => d.data());
+      
+      // Organizar por almacén (más reciente)
+      const sesionPorAlmacen = {};
+      sesiones.forEach(s => {
+        const almacen = s.almacen;
+        if (!sesionPorAlmacen[almacen] || new Date(s.inicio) > new Date(sesionPorAlmacen[almacen].inicio)) {
+          sesionPorAlmacen[almacen] = s;
+        }
+      });
+
+      sesionesPorRuta[key] = { todas: sesiones, porAlmacen: sesionPorAlmacen };
+      return sesionesPorRuta[key];
+    } catch (error) {
+      console.error('Error cargando sesiones:', error);
+      return { todas: [], porAlmacen: {} };
+    }
+  }
+
+  // ── Función para calcular tiempo transcurrido ──────────────────────
+  function calcularTiempoTranscurrido(inicio, fin) {
+    if (!inicio || !fin) return 'N/A';
+    const diff = Math.floor((new Date(fin) - new Date(inicio)) / 1000);
+    const horas = Math.floor(diff / 3600).toString().padStart(2, '0');
+    const minutos = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+    const segundos = (diff % 60).toString().padStart(2, '0');
+    return `${horas}:${minutos}:${segundos}`;
+  }
+
+  // ── Función para generar vista previa de productos (nueva pestaña) ───
+async function generarPDFProductos(ruta, viaje) {
+  showToast('⏳ Generando vista previa...');
+  
+  try {
+    const items = allRawItems.filter(it => it.ruta === ruta && it.viaje === viaje);
+    
+    const { todas: sesiones } = await cargarSesionesRuta(ruta, viaje);
+
+    const almacenes = {
+      SECO: items.filter(i => i.alm === 'SECO'),
+      REFRIGERADO: items.filter(i => i.alm === 'REFRIGERADO'),
+      CONGELADO: items.filter(i => i.alm === 'FRIO'),
+      CRITICO: items.filter(i => i.alm === 'CRITICO')
+    };
+
+    const totalItems = items.length;
+    const concluidos = items.filter(i => 
+      itemStatus[i.itemId] === 'concluido' || 
+      itemStatus[i.itemId] === 'faltante-confirmado'
+    ).length;
+
+    const fecha = new Date().toLocaleDateString('es-MX');
+    const hora = new Date().toLocaleTimeString('es-MX');
+
+    // Generar HTML completo con estilos para impresión
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Lista de Productos - Ruta ${ruta}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: 'Barlow', Arial, sans-serif; 
+            background: white; 
+            color: #1e2530; 
+            padding: 20px;
+            font-size: 10px;
+          }
+          .container {
+            max-width: 1100px;
+            margin: 0 auto;
+          }
+          h1 {
+            font-family: 'Barlow Condensed', sans-serif;
+            color: #1a3a5c;
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 5px;
+          }
+          h2 {
+            font-family: 'Barlow Condensed', sans-serif;
+            color: #6b7280;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 400;
+          }
+          .header-line {
+            border-bottom: 2px solid #1a3a5c;
+            margin-bottom: 15px;
+          }
+          .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            background: #f8f9fb;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+          }
+          .alm-section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+          }
+          .alm-header {
+            background: #1a3a5c;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px 4px 0 0;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+          }
+          table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            border: 1px solid #dde1e8;
+            font-size: 9px;
+          }
+          colgroup col:nth-child(1) { width: 120px; }
+          colgroup col:nth-child(2) { width: 400px; }
+          colgroup col:nth-child(3) { width: 60px; }
+          colgroup col:nth-child(4) { width: 60px; }
+          colgroup col:nth-child(5) { width: 160px; }
+          th {
+            background: #2c3e50;
+            color: white;
+            font-weight: 600;
+            padding: 5px;
+            text-align: left;
+            border: 1px solid #1a3a5c;
+          }
+          td {
+            padding: 4px 5px;
+            border: 1px solid #dde1e8;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          .text-right { text-align: right; }
+          .status-pendiente { background-color: #fdf1e6; }
+          .status-concluido { background-color: #eaf4ee; }
+          .status-faltante { background-color: #fee2e2; }
+          .status-faltante-confirmado { background-color: #ede9fe; }
+          .sin-productos {
+            padding: 20px;
+            text-align: center;
+            color: #999;
+            border: 1px solid #dde1e8;
+          }
+          .sesiones-box {
+            margin-top: 20px;
+            background: #f8f9fb;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 9px;
+          }
+          .sesion-item {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #dde1e8;
+          }
+          .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 8px;
+            color: #9aa3ae;
+          }
+          @media print {
+            body { padding: 10px; }
+            .no-print { display: none; }
+            button { display: none; }
+          }
+          .print-button {
+            background: #1a3a5c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 15px;
+          }
+          .print-button:hover {
+            background: #122840;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="no-print" style="text-align: right; margin-bottom: 10px;">
+            <button class="print-button" onclick="window.print()">🖨️ Imprimir</button>
+          </div>
+          
+          <h1>LISTA DE PRODUCTOS POR ALMACÉN</h1>
+          <h2>Ruta: ${ruta} | Viaje: ${viaje}</h2>
+          <div class="header-line"></div>
+          
+          <div class="stats-grid">
+            <div><strong>Fecha:</strong> ${fecha}</div>
+            <div><strong>Hora:</strong> ${hora}</div>
+            <div><strong>Total:</strong> ${totalItems}</div>
+            <div><strong>Concluidos:</strong> ${concluidos} (${totalItems ? Math.round(concluidos/totalItems*100) : 0}%)</div>
+          </div>
+
+          <!-- SECO -->
+          <div class="alm-section">
+            <div class="alm-header">
+              <span>SECO</span>
+              <span>${almacenes.SECO.filter(i => itemStatus[i.itemId] === 'concluido' || itemStatus[i.itemId] === 'faltante-confirmado').length}/${almacenes.SECO.length} concluidos</span>
+            </div>
+            <table>
+              <colgroup>
+                <col><col><col><col><col>
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th>UDM</th>
+                  <th>SDO</th>
+                  <th>Estatus</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${almacenes.SECO.map(item => {
+                  const estatus = itemStatus[item.itemId] || 'pendiente';
+                  let textoEstatus = estatus;
+                  if (estatus === 'faltante-confirmado') textoEstatus = 'faltante confirmado';
+                  
+                  let statusClass = '';
+                  if (estatus === 'concluido') statusClass = 'status-concluido';
+                  else if (estatus === 'faltante') statusClass = 'status-faltante';
+                  else if (estatus === 'faltante-confirmado') statusClass = 'status-faltante-confirmado';
+                  else statusClass = 'status-pendiente';
+                  
+                  return `
+                    <tr class="${statusClass}">
+                      <td style="font-weight: 600;">${item.codigo}</td>
+                      <td>${item.desc || ''}</td>
+                      <td>${item.udm || 'N/A'}</td>
+                      <td class="text-right">${item.sdo || 0}</td>
+                      <td style="text-transform: uppercase;">${textoEstatus}</td>
+                    </tr>
+                  `;
+                }).join('')}
+                ${almacenes.SECO.length === 0 ? `
+                  <tr>
+                    <td colspan="5" class="sin-productos">Sin productos</td>
+                  </tr>
+                ` : ''}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- REFRIGERADO -->
+          <div class="alm-section">
+            <div class="alm-header">
+              <span>REFRIGERADO</span>
+              <span>${almacenes.REFRIGERADO.filter(i => itemStatus[i.itemId] === 'concluido' || itemStatus[i.itemId] === 'faltante-confirmado').length}/${almacenes.REFRIGERADO.length} concluidos</span>
+            </div>
+            <table>
+              <colgroup>
+                <col><col><col><col><col>
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th>UDM</th>
+                  <th>SDO</th>
+                  <th>Estatus</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${almacenes.REFRIGERADO.map(item => {
+                  const estatus = itemStatus[item.itemId] || 'pendiente';
+                  let textoEstatus = estatus;
+                  if (estatus === 'faltante-confirmado') textoEstatus = 'faltante confirmado';
+                  
+                  let statusClass = '';
+                  if (estatus === 'concluido') statusClass = 'status-concluido';
+                  else if (estatus === 'faltante') statusClass = 'status-faltante';
+                  else if (estatus === 'faltante-confirmado') statusClass = 'status-faltante-confirmado';
+                  else statusClass = 'status-pendiente';
+                  
+                  return `
+                    <tr class="${statusClass}">
+                      <td style="font-weight: 600;">${item.codigo}</td>
+                      <td>${item.desc || ''}</td>
+                      <td>${item.udm || 'N/A'}</td>
+                      <td class="text-right">${item.sdo || 0}</td>
+                      <td style="text-transform: uppercase;">${textoEstatus}</td>
+                    </tr>
+                  `;
+                }).join('')}
+                ${almacenes.REFRIGERADO.length === 0 ? `
+                  <tr>
+                    <td colspan="5" class="sin-productos">Sin productos</td>
+                  </tr>
+                ` : ''}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- CONGELADO -->
+          <div class="alm-section">
+            <div class="alm-header">
+              <span>CONGELADO</span>
+              <span>${almacenes.CONGELADO.filter(i => itemStatus[i.itemId] === 'concluido' || itemStatus[i.itemId] === 'faltante-confirmado').length}/${almacenes.CONGELADO.length} concluidos</span>
+            </div>
+            <table>
+              <colgroup>
+                <col><col><col><col><col>
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th>UDM</th>
+                  <th>SDO</th>
+                  <th>Estatus</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${almacenes.CONGELADO.map(item => {
+                  const estatus = itemStatus[item.itemId] || 'pendiente';
+                  let textoEstatus = estatus;
+                  if (estatus === 'faltante-confirmado') textoEstatus = 'faltante confirmado';
+                  
+                  let statusClass = '';
+                  if (estatus === 'concluido') statusClass = 'status-concluido';
+                  else if (estatus === 'faltante') statusClass = 'status-faltante';
+                  else if (estatus === 'faltante-confirmado') statusClass = 'status-faltante-confirmado';
+                  else statusClass = 'status-pendiente';
+                  
+                  return `
+                    <tr class="${statusClass}">
+                      <td style="font-weight: 600;">${item.codigo}</td>
+                      <td>${item.desc || ''}</td>
+                      <td>${item.udm || 'N/A'}</td>
+                      <td class="text-right">${item.sdo || 0}</td>
+                      <td style="text-transform: uppercase;">${textoEstatus}</td>
+                    </tr>
+                  `;
+                }).join('')}
+                ${almacenes.CONGELADO.length === 0 ? `
+                  <tr>
+                    <td colspan="5" class="sin-productos">Sin productos</td>
+                  </tr>
+                ` : ''}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- CRÍTICO -->
+          <div class="alm-section">
+            <div class="alm-header">
+              <span>CRÍTICO</span>
+              <span>${almacenes.CRITICO.filter(i => itemStatus[i.itemId] === 'concluido' || itemStatus[i.itemId] === 'faltante-confirmado').length}/${almacenes.CRITICO.length} concluidos</span>
+            </div>
+            <table>
+              <colgroup>
+                <col><col><col><col><col>
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th>UDM</th>
+                  <th>SDO</th>
+                  <th>Estatus</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${almacenes.CRITICO.map(item => {
+                  const estatus = itemStatus[item.itemId] || 'pendiente';
+                  let textoEstatus = estatus;
+                  if (estatus === 'faltante-confirmado') textoEstatus = 'faltante confirmado';
+                  
+                  let statusClass = '';
+                  if (estatus === 'concluido') statusClass = 'status-concluido';
+                  else if (estatus === 'faltante') statusClass = 'status-faltante';
+                  else if (estatus === 'faltante-confirmado') statusClass = 'status-faltante-confirmado';
+                  else statusClass = 'status-pendiente';
+                  
+                  return `
+                    <tr class="${statusClass}">
+                      <td style="font-weight: 600;">${item.codigo}</td>
+                      <td>${item.desc || ''}</td>
+                      <td>${item.udm || 'N/A'}</td>
+                      <td class="text-right">${item.sdo || 0}</td>
+                      <td style="text-transform: uppercase;">${textoEstatus}</td>
+                    </tr>
+                  `;
+                }).join('')}
+                ${almacenes.CRITICO.length === 0 ? `
+                  <tr>
+                    <td colspan="5" class="sin-productos">Sin productos</td>
+                  </tr>
+                ` : ''}
+              </tbody>
+            </table>
+          </div>
+
+          ${sesiones.length > 0 ? `
+            <div class="sesiones-box">
+              <h3 style="font-family: 'Barlow Condensed', sans-serif; color: #1a3a5c; margin: 0 0 10px; font-size: 14px;">Sesiones de Validación</h3>
+              ${sesiones.map(s => `
+                <div class="sesion-item">
+                  <div><strong>Validador:</strong> ${s.validador || 'N/A'}</div>
+                  <div><strong>Almacén:</strong> ${s.almacen === 'FRIO' ? 'CONGELADO' : s.almacen}</div>
+                  <div><strong>Inicio:</strong> ${s.inicio ? new Date(s.inicio).toLocaleString() : 'N/A'}</div>
+                  <div><strong>Fin:</strong> ${s.fin ? new Date(s.fin).toLocaleString() : 'N/A'}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          <div class="footer">
+            Documento generado el ${fecha} a las ${hora}
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Abrir nueva pestaña con el contenido
+    const ventana = window.open('', '_blank');
+    ventana.document.write(htmlContent);
+    ventana.document.close();
+    
+    showToast('✅ Vista previa abierta en nueva pestaña');
+  } catch (error) {
+    console.error('Error generando vista previa:', error);
+    showToast('❌ Error al generar vista previa');
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ── Función para generar formato de calidad EXACTO (nueva pestaña) ───
+async function generarPDFCalidad(ruta, viaje) {
+  showToast('⏳ Generando vista previa del formato de calidad...');
+  
+  try {
+    const items = allRawItems.filter(it => it.ruta === ruta && it.viaje === viaje);
+    const { porAlmacen: sesionPorAlmacen } = await cargarSesionesRuta(ruta, viaje);
+
+    // Determinar tipo de ruta (de la primera sesión)
+    const sesiones = Object.values(sesionPorAlmacen);
+    const tipoRuta = sesiones.length > 0 ? sesiones[0].tipo : '';
+    
+    // Determinar checkboxes de crítico
+    const palabrasCritico = {
+      tumbler: ['TUMBLER'],
+      vino: ['VINO'],
+      vam: ['VAM'],
+      grisinnis: ['GRISINNIS'],
+      tazas: ['TAZAS'],
+      tarjeta: ['TARJETA']
+    };
+
+    const criticosMarcados = {
+      tumbler: false,
+      vino: false,
+      vam: false,
+      grisinnis: false,
+      tazas: false,
+      tarjeta: false,
+      otros: false,
+      sinCritico: true
+    };
+
+    items.forEach(item => {
+      const texto = `${item.codigo} ${item.desc || ''}`.toUpperCase();
+      let encontrado = false;
+      
+      Object.entries(palabrasCritico).forEach(([key, palabras]) => {
+        if (palabras.some(p => texto.includes(p))) {
+          criticosMarcados[key] = true;
+          criticosMarcados.sinCritico = false;
+          encontrado = true;
+        }
+      });
+      
+      if (encontrado) {
+        criticosMarcados.otros = true;
+      }
+    });
+
+    // Contar faltantes y sobrantes por almacén
+    const conteo = {
+      SECO: { faltante: 0, sobrante: 0 },
+      REFRIGERADO: { faltante: 0, sobrante: 0 },
+      FRIO: { faltante: 0, sobrante: 0 },
+      CRITICO: { faltante: 0, sobrante: 0 }
+    };
+
+    items.forEach(item => {
+      const alm = item.alm;
+      if (conteo[alm]) {
+        if (itemStatus[item.itemId] === 'faltante' || itemStatus[item.itemId] === 'faltante-confirmado') {
+          conteo[alm].faltante++;
+        }
+        if (item.tipo === 'SOBRANTE') {
+          conteo[alm].sobrante++;
+        }
+      }
+    });
+
+    const fecha = new Date().toLocaleDateString('es-MX').split('/').map(n => n.padStart(2, '0')).join('/');
+    const hora = new Date().toLocaleTimeString('es-MX');
+
+    // Generar HTML completo con estilos para impresión
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Formato de Calidad - Ruta ${ruta}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Verdana&display=swap" rel="stylesheet">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: 'Verdana', Arial, sans-serif; 
+            background: white; 
+            color: #000; 
+            padding: 20px;
+            font-size: 10px;
+          }
+          .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+          }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+          }
+          td {
+            border: 1px solid #000;
+            padding: 4px;
+            vertical-align: middle;
+          }
+          .check-box {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 1px solid #000;
+            margin-right: 3px;
+            background: white;
+          }
+          .check-box.checked {
+            background: #000;
+          }
+          .bpd-box {
+            border: 1px solid #000;
+            padding: 5px;
+            margin: 10px 0;
+          }
+          .ruta-box {
+            border: 1px solid #000;
+            padding: 4px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+          .observaciones-box {
+            border: 1px solid #000;
+            padding: 4px;
+            margin: 10px 0;
+            width: 300px;
+            margin-left: auto;
+          }
+          .observaciones-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .observaciones-line {
+            height: 20px;
+            border-bottom: 1px solid #000;
+            margin-bottom: 5px;
+          }
+          .tipo-ruta-box {
+            border: 1px solid #000;
+            padding: 5px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+          }
+          .critico-box {
+            border: 1px solid #000;
+            padding: 5px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+          }
+          .firmas-section {
+            margin-top: 30px;
+          }
+          .firma-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+          }
+          .firma-item {
+            width: 30%;
+            text-align: center;
+          }
+          .firma-line {
+            border-top: 1px solid #000;
+            width: 100%;
+            margin: 5px 0;
+          }
+          .operador-box {
+            margin-top: 20px;
+            text-align: center;
+          }
+          .operador-line {
+            border-top: 1px solid #000;
+            width: 50%;
+            margin: 5px auto;
+          }
+          .print-button-container {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .print-button {
+            background: #1a3a5c;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-block;
+          }
+          .print-button:hover {
+            background: #122840;
+          }
+          
+          /* ESTILOS DE IMPRESIÓN - CORREGIDO */
+@media print {
+  body { 
+    padding: 5px; 
+    margin: 0;
+    background: white;
+    font-size: 7px;
+  }
+  .no-print { 
+    display: none; 
+  }
+  button { 
+    display: none; 
+  }
+  .print-button { 
+    display: none; 
+  }
+  
+  /* NO forzar bordes en todas las tablas - esto causaba el problema */
+  table {
+    border-collapse: collapse;
+  }
+  
+  /* Forzar color gris en encabezados */
+  td[style*="background-color: #D9D9D9"], td[bgcolor="#D9D9D9"] {
+    background-color: #D9D9D9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Para el cuadro de Observaciones - mantener solo bordes perimetrales */
+  td[colspan="10"][style*="border-left"] {
+    border-left: 1px solid #000 !important;
+    border-right: 1px solid #000 !important;
+  }
+  
+  /* Para la primera fila de Observaciones (título) */
+  td[colspan="10"][style*="border-top"]:not([style*="border-bottom"]) {
+    border-top: 1px solid #000 !important;
+    border-bottom: none !important;
+    border-left: 1px solid #000 !important;
+    border-right: 1px solid #000 !important;
+  }
+  
+  /* Para las filas intermedias de Observaciones (sin bordes horizontales) */
+  td[colspan="10"][style*="border-left"][style*="border-right"]:not([style*="border-top"]):not([style*="border-bottom"]) {
+    border-top: none !important;
+    border-bottom: none !important;
+    border-left: 1px solid #000 !important;
+    border-right: 1px solid #000 !important;
+  }
+  
+  /* Para la última fila de Observaciones */
+  td[colspan="10"][style*="border-bottom"]:not([style*="border-top"]) {
+    border-bottom: 1px solid #000 !important;
+    border-top: none !important;
+    border-left: 1px solid #000 !important;
+    border-right: 1px solid #000 !important;
+  }
+  
+  /* Para la celda de Ruta (solo borde inferior) */
+  td[style*="border-bottom: 1px solid #000"]:not([style*="border-left"]):not([style*="border-right"]):not([style*="border-top"]) {
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    border-bottom: 1px solid #000 !important;
+  }
+  
+  /* Para celdas sin borde */
+  td[style*="border: none"], td[style*="border:none"] {
+    border: none !important;
+  }
+  
+  /* Forzar checkboxes */
+  .check-box {
+    border: 1px solid #000 !important;
+    background-color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .check-box.checked {
+    background-color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Forzar fondo del logo */
+  [style*="position: absolute"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-color: white !important;
+  }
+  
+  /* Asegurar colores en todos los elementos */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="no-print print-button-container">
+            <button class="print-button" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+          </div>
+
+          <!-- ENCABEZADO PRINCIPAL - Tabla de 27 columnas x 4 filas -->
+          <div style="position: relative; margin-bottom: 20px; width: 100%;">
+            <!-- Logo (columna 23-27, filas 1-4) -->
+            <div style="position: absolute; top: 0; right: 0; width: 18.5%; height: 100%; border: 1px solid #000; display: flex; align-items: center; justify-content: center; background: white; z-index: 10;">
+              <img src="logo.png" alt="Logo" style="max-width: 90%; max-height: 90%;" onerror="this.style.display='none'; this.parentElement.innerHTML='LOGO'">
+            </div>
+
+            <!-- Tabla principal de 27 columnas -->
+            <table style="width: 100%; border-collapse: collapse; font-family: 'Verdana', sans-serif; font-size: 10px; table-layout: fixed;">
+              <!-- Fila 1 - Encabezados -->
+              <tr>
+                <td colspan="11" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px; vertical-align: middle;" bgcolor="#D9D9D9">Nombre del documento</td>
+                <td colspan="6" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px; vertical-align: middle;" bgcolor="#D9D9D9">Código del Documento</td>
+                <td colspan="5" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px; vertical-align: middle;" bgcolor="#D9D9D9">Emisión</td>
+                <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: #D9D9D9;" bgcolor="#D9D9D9"></td>
+              </tr>
+              
+              <!-- Fila 2 - Datos -->
+              <tr>
+                <td colspan="11" style="border: 1px solid #000; text-align: center; padding: 4px; vertical-align: middle; background-color: white;" bgcolor="white">FORMATO DE VALIDACIÓN DE RUTAS</td>
+                <td colspan="6" style="border: 1px solid #000; text-align: center; padding: 4px; vertical-align: middle; background-color: white;" bgcolor="white">FOR-CDS-CYD-CDC-287</td>
+                <td colspan="5" style="border: 1px solid #000; text-align: center; padding: 4px; vertical-align: middle; background-color: white;" bgcolor="white">09/01/26</td>
+                <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: white;" bgcolor="white"></td>
+              </tr>
+              
+              <!-- Fila 3 - Encabezados segunda línea -->
+              <tr>
+                <td colspan="4" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px; vertical-align: middle;" bgcolor="#D9D9D9">Proceso</td>
+                <td colspan="4" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px; vertical-align: middle;" bgcolor="#D9D9D9">Área</td>
+                <td colspan="3" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px; vertical-align: middle;" bgcolor="#D9D9D9">Línea</td>
+                <td colspan="6" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px; vertical-align: middle;" bgcolor="#D9D9D9">Versión</td>
+                <td colspan="5" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px; vertical-align: middle;" bgcolor="#D9D9D9">Próxima revisión</td>
+                <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: #D9D9D9;" bgcolor="#D9D9D9"></td>
+              </tr>
+              
+              <!-- Fila 4 - Datos segunda línea -->
+              <tr>
+                <td colspan="4" style="border: 1px solid #000; text-align: center; padding: 4px; vertical-align: middle; background-color: white;" bgcolor="white">Finanzas</td>
+                <td colspan="4" style="border: 1px solid #000; text-align: center; padding: 4px; vertical-align: middle; background-color: white;" bgcolor="white">Mesa de Control</td>
+                <td colspan="3" style="border: 1px solid #000; text-align: center; padding: 4px; vertical-align: middle; background-color: white;" bgcolor="white">Almacén</td>
+                <td colspan="6" style="border: 1px solid #000; text-align: center; padding: 4px; vertical-align: middle; background-color: white;" bgcolor="white">04</td>
+                <td colspan="5" style="border: 1px solid #000; text-align: center; padding: 4px; vertical-align: middle; background-color: white;" bgcolor="white">08/01/29</td>
+                <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: white;" bgcolor="white"></td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- DESCRIPCIÓN BPD's -->
+<div style="margin: 5px 0;">
+  <div style="font-size: 10px; margin-bottom: 2px;">
+    Cumplimiento de los lineamientos de BPD´s : Aplica a todo el personal del Área de Validación se deberá colocar si cumple (✓),
+  </div>
+  <div style="font-size: 10px;">
+    no cumple (✗) o no aplica (N/A). El formato deberá realizarse cada vez que se inicie una ruta .
+  </div>
+  <div style="display: flex; gap: 20px; margin-top: 5px; font-size: 10px;">
+  </div>
+</div>
+
+         <!-- RUTA VALIDADA y OBSERVACIONES (6 filas, 27 columnas) -->
+<div style="width: 100%; margin: 5px 0;">
+
+  <!-- Tabla de 27 columnas x 6 filas -->
+  <table style="width: 100%; border-collapse: collapse; font-family: 'Verdana', sans-serif; font-size: 10px; table-layout: fixed;">
+    
+    <!-- FILA 1 - Encabezados de la sección -->
+<tr>
+  <!-- Espacio izquierdo (columnas 1-17) vacío -->
+  <td colspan="17" style="border: none;"></td>
+  <!-- Título Observaciones (columnas 18-27) -->
+  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: 1px solid #000; border-bottom: none; padding: 4px; font-weight: bold; text-align: center; background-color: #D9D9D9;" bgcolor="#D9D9D9">
+    Observaciones
+  </td>
+</tr>
+    
+    <!-- FILA 2 -->
+    <tr>
+      <!-- Espacio izquierdo (columnas 1-17) vacío -->
+      <td colspan="17" style="border: none;"></td>
+      <!-- Cuadro observaciones fila 2 (solo bordes laterales) -->
+      <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
+    </tr>
+    
+    <!-- FILA 3 -->
+    <tr>
+      <!-- Espacio izquierdo (columnas 1-17) vacío -->
+      <td colspan="17" style="border: none;"></td>
+      <!-- Cuadro observaciones fila 3 (solo bordes laterales) -->
+      <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
+    </tr>
+    
+    <!-- FILA 4 - Ruta Validada -->
+    <tr>
+      <!-- Texto "Ruta Validada:" (columnas 1-3) -->
+      <td colspan="3" style="border: none; padding: 4px 2px; vertical-align: bottom;">
+        <span style="font-size: 10px;">Ruta Validada:</span>
+      </td>
+      <!-- Valor de la ruta (columnas 4-7) con borde inferior -->
+      <td colspan="4" style="border-left: none; border-right: none; border-top: none; border-bottom: 1px solid #000; padding: 4px 2px 0 2px; vertical-align: bottom;">
+        <span style="font-size: 12px; font-weight: bold;">${ruta}</span>
+      </td>
+      <!-- Espacio restante (columnas 8-17) -->
+      <td colspan="10" style="border: none;"></td>
+      <!-- Cuadro observaciones fila 4 (solo bordes laterales) -->
+      <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
+    </tr>
+    
+    <!-- FILA 5 -->
+    <tr>
+      <!-- Espacio izquierdo (columnas 1-17) vacío -->
+      <td colspan="17" style="border: none;"></td>
+      <!-- Cuadro observaciones fila 5 (solo bordes laterales) -->
+      <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
+    </tr>
+    
+    <!-- FILA 6 - Cierre del cuadro de observaciones -->
+    <tr>
+      <!-- Espacio izquierdo (columnas 1-17) vacío -->
+      <td colspan="17" style="border: none;"></td>
+      <!-- Cuadro observaciones fila 6 (borde inferior) -->
+      <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: 1px solid #000; height: 15px;"></td>
+    </tr>
+  </table>
+</div>
+
+          <!-- TIPO DE RUTA (checkboxes) -->
+          <div class="tipo-ruta-box">
+            <strong>Tipo de Ruta:</strong>
+            <span><span class="check-box ${tipoRuta === 'AEROPUERTO' ? 'checked' : ''}"></span> Aeropuerto</span>
+            <span><span class="check-box ${tipoRuta === 'PRECARGA' ? 'checked' : ''}"></span> Precarga</span>
+            <span><span class="check-box ${tipoRuta === 'QUINTA' ? 'checked' : ''}"></span> Quinta</span>
+            <span><span class="check-box ${tipoRuta === 'NO TOP' ? 'checked' : ''}"></span> Ruta No Top</span>
+          </div>
+
+          <!-- CRÍTICO (checkboxes) -->
+          <div class="critico-box">
+            <strong>Critico:</strong>
+            <span><span class="check-box ${criticosMarcados.tumbler ? 'checked' : ''}"></span> Tumbler</span>
+            <span><span class="check-box ${criticosMarcados.vino ? 'checked' : ''}"></span> Vino</span>
+            <span><span class="check-box ${criticosMarcados.vam ? 'checked' : ''}"></span> Vam</span>
+            <span><span class="check-box ${criticosMarcados.grisinnis ? 'checked' : ''}"></span> Grisinnis</span>
+            <span><span class="check-box ${criticosMarcados.tazas ? 'checked' : ''}"></span> Tazas</span>
+            <span><span class="check-box ${criticosMarcados.tarjeta ? 'checked' : ''}"></span> Tarjeta</span>
+            <span><span class="check-box ${criticosMarcados.otros ? 'checked' : ''}"></span> Otros</span>
+            <span><span class="check-box ${criticosMarcados.sinCritico ? 'checked' : ''}"></span> Sin Critico</span>
+          </div>
+
+          <!-- TABLA PRINCIPAL DE VALIDACIÓN -->
+          <table style="margin: 15px 0;">
+            <thead>
+              <tr>
+                <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Ambiente Validado</th>
+                <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Fecha</th>
+                <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Hora de Inicio</th>
+                <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Hora de Termino</th>
+                <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Nombre del Validador</th>
+                <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">N° Tarimas</th>
+                <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Anden</th>
+                <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Faltante</th>
+                <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Sobrante</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- SECO -->
+              <tr>
+                <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Seco</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? new Date(sesionPorAlmacen.SECO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? new Date(sesionPorAlmacen.SECO.inicio).toLocaleTimeString() : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO && sesionPorAlmacen.SECO.fin ? new Date(sesionPorAlmacen.SECO.fin).toLocaleTimeString() : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.validador : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.tarimas : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.anden : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.SECO.faltante || ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.SECO.sobrante || ''}</td>
+              </tr>
+              <!-- REFRIGERADO -->
+              <tr>
+                <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Refrigerado</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? new Date(sesionPorAlmacen.REFRIGERADO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? new Date(sesionPorAlmacen.REFRIGERADO.inicio).toLocaleTimeString() : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO && sesionPorAlmacen.REFRIGERADO.fin ? new Date(sesionPorAlmacen.REFRIGERADO.fin).toLocaleTimeString() : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.validador : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.tarimas : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.anden : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.REFRIGERADO.faltante || ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.REFRIGERADO.sobrante || ''}</td>
+              </tr>
+              <!-- CONGE (Congelado) -->
+              <tr>
+                <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Conge</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? new Date(sesionPorAlmacen.FRIO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? new Date(sesionPorAlmacen.FRIO.inicio).toLocaleTimeString() : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO && sesionPorAlmacen.FRIO.fin ? new Date(sesionPorAlmacen.FRIO.fin).toLocaleTimeString() : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.validador : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.tarimas : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.anden : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.FRIO.faltante || ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.FRIO.sobrante || ''}</td>
+              </tr>
+              <!-- CRÍTICO -->
+              <tr>
+                <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Crítico</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? new Date(sesionPorAlmacen.CRITICO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? new Date(sesionPorAlmacen.CRITICO.inicio).toLocaleTimeString() : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO && sesionPorAlmacen.CRITICO.fin ? new Date(sesionPorAlmacen.CRITICO.fin).toLocaleTimeString() : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.validador : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.tarimas : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.anden : ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.CRITICO.faltante || ''}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.CRITICO.sobrante || ''}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- 6 FILAS ANTES DE FIRMAS -->
+          <div style="height: 60px;"></div>
+
+          <!-- SECCIÓN DE FIRMAS TEAM (3) -->
+<div class="firmas-section">
+  <div class="firma-row">
+    <div class="firma-item">
+      <div class="firma-line"></div>
+      <strong>Firma del TEAM</strong>
+    </div>
+    <div class="firma-item">
+      <div class="firma-line"></div>
+      <strong>Firma del TEAM</strong>
+    </div>
+    <div class="firma-item">
+      <div class="firma-line"></div>
+      <strong>Firma del TEAM</strong>
+    </div>
+  </div>
+
+  <!-- 3 FILAS ANTES DE OPERADOR -->
+  <div style="height: 10px;"></div>
+
+  <!-- NOMBRE Y FIRMA DE OPERADOR MANIOBRA -->
+  <div class="operador-box">
+    <div class="operador-line"></div>
+    <strong>Nombre y Firma de Operador Maniobra</strong>
+  </div>
+
+  <!-- LEYENDA DE COPIA NO CONTROLADA -->
+  <div style="margin-top: 10px; font-size: 6.5px; text-align: center; border-top: 1px solid #000; padding-top: 3px;">
+    Las copias impresas de este documento son consideradas COPIA NO CONTROLADA, a menos que cuenten con un sello de DOCUMENTO CONTROLADO.
+  </div>
+</div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Abrir nueva pestaña con el contenido
+    const ventana = window.open('', '_blank');
+    ventana.document.write(htmlContent);
+    ventana.document.close();
+    
+    showToast('✅ Vista previa del formato de calidad abierta');
+  } catch (error) {
+    console.error('Error generando formato:', error);
+    showToast('❌ Error al generar formato');
+  }
+}
+
+
   // ── Listen Firestore realtime ─────────────────────────────────────────
   function listenFirestore() {
     onSnapshot(query(collection(db, 'rutas'), orderBy('cargadoEn', 'desc')), snap => {
@@ -735,7 +1882,12 @@
 
       recalcRouteAlmStatus();
       renderTable();
+    });
 
+    // Escuchar sesiones de validación
+    onSnapshot(collection(db, 'sesiones_validacion'), snap => {
+      // Limpiar caché cuando hay cambios
+      sesionesPorRuta = {};
       if (currentModalKey) {
         const [ruta, viaje] = currentModalKey.split('||');
         const route = allRoutes.find(r => r.ruta === ruta && r.viaje === viaje);
@@ -756,8 +1908,21 @@
   function calcRoutePct(route) {
     const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje);
     if (!items.length) return 0;
-    const done = items.filter(it => itemStatus[it.itemId] === 'concluido').length;
+    const done = items.filter(it => 
+      itemStatus[it.itemId] === 'concluido' || 
+      itemStatus[it.itemId] === 'faltante-confirmado'
+    ).length;
     return Math.round(done / items.length * 100);
+  }
+
+  // ── Check if route is complete ──────────────────────────────────────
+  function rutaEstaCompleta(route) {
+    const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje);
+    if (items.length === 0) return false;
+    return items.every(it => 
+      itemStatus[it.itemId] === 'concluido' || 
+      itemStatus[it.itemId] === 'faltante-confirmado'
+    );
   }
 
   // ── Stats ─────────────────────────────────────────────────────────────
@@ -765,7 +1930,10 @@
     let validadas = 0, tItems = 0, vItems = 0;
     routes.forEach(r => {
       const items = allRawItems.filter(it => it.ruta === r.ruta && it.viaje === r.viaje);
-      const done = items.filter(it => itemStatus[it.itemId] === 'concluido').length;
+      const done = items.filter(it => 
+        itemStatus[it.itemId] === 'concluido' || 
+        itemStatus[it.itemId] === 'faltante-confirmado'
+      ).length;
       tItems += items.length;
       vItems += done;
       if (items.length && done === items.length) validadas++;
@@ -801,19 +1969,28 @@
       const pct = calcRoutePct(r);
       const barColor = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--border)';
       const pctColor = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--faint)';
+      const completa = rutaEstaCompleta(r);
 
       const cols = TYPES.map(type => {
         const almacenType = type === 'CONGELADO' ? 'FRIO' : type;
         if (!r.almacenes.includes(almacenType)) return `<td><span class="chip na">N/A</span></td>`;
         const st = routeAlmStatus[`${r.ruta}||${r.viaje}||${almacenType}`] || 'pendiente';
-        return `<td><span class="chip ${st}">${st}</span></td>`;
+        let chipClass = st;
+        if (st === 'faltante-confirmado') chipClass = 'faltante-confirmado';
+        return `<td><span class="chip ${chipClass}">${st === 'faltante-confirmado' ? 'faltante confirmado' : st}</span></td>`;
       }).join('');
 
       return `<tr>
         <td>
           <span class="ruta-badge">${r.ruta}</span>
           <span class="viaje-text">${r.viaje}</span>
-          <span class="click-hint" onclick="openModal('${r.ruta}', '${r.viaje}')">▸ ver detalle</span>
+          <div class="action-icons">
+            <span class="click-hint" onclick="openModal('${r.ruta}', '${r.viaje}')">▸ ver detalle</span>
+            ${completa ? `
+              <span class="pdf-icon red" onclick="generarPDFProductos('${r.ruta}', '${r.viaje}')" title="Descargar lista de productos">📄</span>
+              <span class="pdf-icon blue" onclick="generarPDFCalidad('${r.ruta}', '${r.viaje}')" title="Descargar formato de calidad">📋</span>
+            ` : ''}
+          </div>
         </td>
         <td class="progress-cell">
           <div class="progress-wrap">
@@ -824,7 +2001,7 @@
         ${cols}
         <td>
           <button class="delete-btn" onclick="deleteRoute('${r.ruta}', '${r.viaje}')">
-            🗑 Eliminar
+            ❌
           </button>
         </td>
       </tr>`;
@@ -839,12 +2016,20 @@
     window.deleteRoute = (ruta, viaje) => {
       deleteRoute(ruta, viaje);
     };
+
+    window.generarPDFProductos = (ruta, viaje) => {
+      generarPDFProductos(ruta, viaje);
+    };
+
+    window.generarPDFCalidad = (ruta, viaje) => {
+      generarPDFCalidad(ruta, viaje);
+    };
   }
 
-  // ── Modal ─────────────────────────────────────────────────────────────
-  function openModal(route) {
+  // ── Modal con datos de validación ────────────────────────────────────
+  async function openModal(route) {
     currentModalKey = `${route.ruta}||${route.viaje}`;
-    renderModal(route);
+    await renderModal(route);
     modalOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
   }
@@ -858,25 +2043,17 @@
   modalClose.addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 
-  // Función para cambiar estatus de faltante a concluido
-  async function cambiarEstatusAConcluido(itemId) {
-    try {
-      await setDoc(doc(db, 'items', itemId), {
-        estatus: 'concluido'
-      }, { merge: true });
-      showToast('✅ Producto marcado como concluido');
-    } catch (error) {
-      console.error('Error al actualizar:', error);
-      showToast('❌ Error al actualizar');
-    }
-  }
-
-  function renderModal(route) {
+  async function renderModal(route) {
     document.getElementById('modalTitle').textContent = `Ruta ${route.ruta}`;
     document.getElementById('modalMeta').textContent = `Viaje: ${route.viaje}`;
 
     const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje);
-    const done = items.filter(it => itemStatus[it.itemId] === 'concluido').length;
+    const { porAlmacen: sesionPorAlmacen, todas: sesiones } = await cargarSesionesRuta(route.ruta, route.viaje);
+
+    const done = items.filter(it => 
+      itemStatus[it.itemId] === 'concluido' || 
+      itemStatus[it.itemId] === 'faltante-confirmado'
+    ).length;
     const pct = items.length ? Math.round(done / items.length * 100) : 0;
     const barColor = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--border)';
 
@@ -885,6 +2062,45 @@
     document.getElementById('modalPctVal').textContent = `${pct}%`;
     document.getElementById('modalPctVal').style.color = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--muted)';
 
+    // Info de validación
+    const sesionInfo = sesiones.length > 0 ? sesiones[0] : null;
+    const tiempoTotal = sesiones.length > 0 && sesiones[0].inicio && sesiones[0].fin ? 
+      calcularTiempoTranscurrido(sesiones[0].inicio, sesiones[0].fin) : 'N/A';
+
+    const validacionHTML = `
+      <div class="validacion-info">
+        <div class="info-item">
+          <span class="info-label">Hora de Inicio</span>
+          <span class="info-value">${sesionInfo?.inicio ? new Date(sesionInfo.inicio).toLocaleTimeString() : 'N/A'}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Hora de Fin</span>
+          <span class="info-value">${sesionInfo?.fin ? new Date(sesionInfo.fin).toLocaleTimeString() : 'N/A'}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Tiempo Transcurrido</span>
+          <span class="info-value">${tiempoTotal}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Validador</span>
+          <span class="info-value">${sesionInfo?.validador || 'N/A'}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Tarimas</span>
+          <span class="info-value">${sesionInfo?.tarimas || '0'}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Anden</span>
+          <span class="info-value">${sesionInfo?.anden || 'N/A'}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Tipo de Ruta</span>
+          <span class="info-value">${sesionInfo?.tipo || 'N/A'}</span>
+        </div>
+      </div>
+    `;
+
+    // Group by almacen
     const byAlm = {};
     items.forEach(it => {
       const almDisplay = it.alm === 'FRIO' ? 'CONGELADO' : it.alm;
@@ -902,14 +2118,25 @@
       CRITICO: '#8e1e1e'
     };
 
-    document.getElementById('modalBody').innerHTML = almKeys.map(alm => {
+    const almacenesHTML = almKeys.map(alm => {
       const almItems = byAlm[alm];
-      const almDone = almItems.filter(it => itemStatus[it.itemId] === 'concluido').length;
+      const almDone = almItems.filter(it => 
+        itemStatus[it.itemId] === 'concluido' || 
+        itemStatus[it.itemId] === 'faltante-confirmado'
+      ).length;
       const color = ALM_COLORS[alm] || 'var(--navy)';
 
       const rows = almItems.map(it => {
         const st = itemStatus[it.itemId] || 'pendiente';
         const mostrarBoton = st === 'faltante';
+        
+        let textoEstatus = st;
+        if (st === 'faltante-confirmado') {
+          textoEstatus = 'faltante confirmado';
+        }
+        
+        let badgeClass = st;
+        if (st === 'faltante-confirmado') badgeClass = 'faltante-confirmado';
 
         return `<tr>
           <td><span class="codigo-badge">${it.codigo}</span></td>
@@ -917,8 +2144,8 @@
           <td><span class="udm-text">${it.udm}</span></td>
           <td><span class="sdo-text">${it.sdo}</span></td>
           <td>
-            <span class="status-badge ${st}">${st}</span>
-            ${mostrarBoton ? `<button class="btn-confirmar" onclick="cambiarFaltante('${it.itemId}')">✓ Confirmar</button>` : ''}
+            <span class="status-badge ${badgeClass}">${textoEstatus}</span>
+            ${mostrarBoton ? `<button class="btn-confirmar" onclick="confirmarFaltante('${it.itemId}')">✓ Confirmar Faltante</button>` : ''}
           </td>
         </tr>`;
       }).join('');
@@ -937,8 +2164,10 @@
       </div>`;
     }).join('');
 
-    window.cambiarFaltante = (itemId) => {
-      cambiarEstatusAConcluido(itemId);
+    document.getElementById('modalBody').innerHTML = validacionHTML + almacenesHTML;
+
+    window.confirmarFaltante = (itemId) => {
+      confirmarFaltante(itemId);
     };
   }
 
