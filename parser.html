@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alsea · Load Sheet Parser</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Paleta corporativa azul / gris / blanco / negro */
+  --blue:       #1B3F6E;   /* azul marino principal */
+  --blue2:      #14305a;   /* azul oscuro hover     */
+  --blue-light: #E8EEF6;   /* azul muy claro fondo  */
+  --blue-mid:   #4A72A8;   /* azul medio accento    */
+  --black:      #111318;   /* negro texto principal */
+  --gray-dark:  #4B5563;   /* gris oscuro subtexto  */
+  --gray-mid:   #9CA3AF;   /* gris medio            */
+  --gray-light: #F3F5F8;   /* gris fondo página     */
+  --gray-line:  #E2E6ED;   /* gris bordes           */
+  --white:      #FFFFFF;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  background: var(--gray-light);
+  color: var(--black);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--white);
+  border-top: 4px solid var(--blue);
+  border-bottom: 1px solid var(--gray-line);
+  height: 68px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 36px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  position: sticky; top: 0; z-index: 200;
+}
+.hdr-left { display: flex; align-items: center; gap: 18px; }
+#logo-img  { height: 42px; width: auto; object-fit: contain; }
+.hdr-div   { width: 2px; height: 34px; background: var(--blue); border-radius: 2px; }
+.hdr-title h1 { font-size: 16px; font-weight: 700; color: var(--black); letter-spacing: -.2px; }
+.hdr-title p  { font-size: 10px; color: var(--gray-dark); text-transform: uppercase; letter-spacing: .8px; margin-top: 2px; }
+
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.badge {
+  background: var(--gray-light);
+  border: 1px solid var(--gray-line);
+  border-radius: 8px; padding: 5px 14px; text-align: center; min-width: 88px;
+}
+.badge .lbl { font-size: 9px; color: var(--gray-mid); text-transform: uppercase; letter-spacing: .7px; display: block; }
+.badge .val { font-size: 15px; font-weight: 700; color: var(--blue); display: block; margin-top: 1px; }
+
+/* ── MAIN ── */
+main { max-width: 1520px; margin: 0 auto; padding: 28px 24px 60px; }
+
+/* ── DROP ZONE ── */
+#drop-zone {
+  background: var(--white);
+  border: 2px dashed var(--gray-line);
+  border-radius: 14px; padding: 64px 32px; text-align: center;
+  cursor: pointer; transition: all .2s; margin-bottom: 22px;
+}
+#drop-zone:hover, #drop-zone.drag-over {
+  border-color: var(--blue-mid);
+  background: var(--blue-light);
+}
+#drop-zone .dz-icon { font-size: 50px; margin-bottom: 14px; }
+#drop-zone h2 { font-size: 19px; font-weight: 600; color: var(--black); margin-bottom: 6px; }
+#drop-zone p  { font-size: 13px; color: var(--gray-dark); margin-bottom: 22px; }
+#drop-zone small { font-size: 11px; color: var(--gray-mid); display: block; margin-top: 10px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: none; border-radius: 8px; padding: 10px 22px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background .18s, transform .1s; font-family: inherit;
+}
+.btn:active { transform: translateY(1px); }
+
+/* Primario: azul marino */
+.btn-primary { background: var(--blue); color: var(--white); }
+.btn-primary:hover { background: var(--blue2); }
+
+/* Secundario: negro */
+.btn-dark { background: var(--black); color: var(--white); }
+.btn-dark:hover { background: #2a2d35; }
+
+/* Outline: borde azul */
+.btn-outline { background: var(--white); color: var(--blue); border: 2px solid var(--blue); }
+.btn-outline:hover { background: var(--blue-light); }
+
+/* Gris neutro */
+.btn-gray { background: var(--gray-light); color: var(--black); border: 1px solid var(--gray-line); }
+.btn-gray:hover { background: var(--gray-line); }
+
+#file-input { display: none; }
+
+/* ── PROGRESS ── */
+#progress-wrap {
+  display: none; background: var(--white); border-radius: 12px;
+  padding: 26px 30px; margin-bottom: 22px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  border: 1px solid var(--gray-line);
+}
+.prog-head   { display: flex; justify-content: space-between; font-size: 13px; color: var(--gray-dark); margin-bottom: 10px; }
+.prog-bg     { background: var(--gray-light); border-radius: 100px; height: 7px; overflow: hidden; }
+.prog-fill   { height: 100%; background: var(--blue); border-radius: 100px; width: 0%; transition: width .3s; }
+.prog-status { font-size: 11px; color: var(--gray-mid); font-style: italic; margin-top: 7px; }
+
+/* ── CONTROLS BAR ── */
+#controls-wrap {
+  display: none; background: var(--white); border-radius: 12px;
+  padding: 14px 20px; margin-bottom: 14px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06); border: 1px solid var(--gray-line);
+  align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.ctrl-left  { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ctrl-right { display: flex; align-items: center; gap: 10px; }
+
+.search-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--gray-light); border: 1px solid var(--gray-line);
+  border-radius: 8px; padding: 8px 14px;
+  transition: border-color .15s;
+}
+.search-wrap:focus-within { border-color: var(--blue-mid); background: var(--white); }
+.search-wrap input {
+  border: none; background: transparent; font-size: 13px;
+  color: var(--black); outline: none; width: 220px; font-family: inherit;
+}
+
+select.fsel {
+  border: 1px solid var(--gray-line); border-radius: 8px;
+  padding: 8px 12px; font-size: 13px; background: var(--white);
+  color: var(--black); cursor: pointer; outline: none; font-family: inherit;
+  transition: border-color .15s;
+}
+select.fsel:focus { border-color: var(--blue-mid); }
+
+.row-info { font-size: 12px; color: var(--gray-dark); white-space: nowrap; }
+.row-info strong { color: var(--black); font-weight: 600; }
+
+/* ── TABLE ── */
+#table-wrap {
+  display: none; background: var(--white); border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  border: 1px solid var(--gray-line); overflow: hidden;
+}
+.tbl-scroll { overflow-x: auto; max-height: 580px; overflow-y: auto; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { position: sticky; top: 0; z-index: 10; }
+
+/* Header tabla: azul marino */
+thead tr { background: var(--blue); }
+thead th {
+  padding: 12px 14px; font-weight: 600; text-align: left; color: var(--white);
+  white-space: nowrap; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .5px; cursor: pointer; user-select: none;
+}
+thead th:hover { background: var(--blue2); }
+thead th.sorted-asc::after  { content: ' ↑'; opacity: .8; }
+thead th.sorted-desc::after { content: ' ↓'; opacity: .8; }
+
+/* Subheader de sección: gris oscuro */
+tbody tr { border-bottom: 1px solid var(--gray-line); transition: background .1s; }
+tbody tr:hover { background: var(--blue-light); }
+tbody tr:nth-child(even) { background: #FAFBFC; }
+tbody tr:nth-child(even):hover { background: var(--blue-light); }
+tbody td { padding: 9px 14px; vertical-align: middle; color: var(--black); }
+
+.td-cod    { font-family: 'Courier New', monospace; font-weight: 700; color: var(--blue); font-size: 12px; white-space: nowrap; }
+.td-desc   { max-width: 300px; min-width: 180px; white-space: normal; line-height: 1.4; font-size: 12px; color: var(--gray-dark); }
+.td-cant   { font-weight: 700; font-size: 15px; text-align: center; color: var(--black); }
+.td-tienda { font-size: 12px; min-width: 190px; color: var(--gray-dark); }
+.td-udm    { white-space: nowrap; font-size: 12px; color: var(--gray-dark); }
+.td-ruta, .td-viaje { font-size: 12px; color: var(--gray-mid); }
+
+/* ── BADGES DE ALMACÉN ── */
+.alm-badge {
+  display: inline-block; padding: 3px 12px; border-radius: 6px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+}
+/* CONGELADO: azul marino */
+.alm-CONGE { background: var(--blue); color: var(--white); }
+/* REFRIGERADO: negro */
+.alm-REFRI { background: var(--black); color: var(--white); }
+/* SECO: gris claro con borde */
+.alm-SECO  { background: var(--gray-light); color: var(--black); border: 1px solid var(--gray-line); }
+
+/* ── MISC ── */
+.empty { text-align: center; padding: 60px; color: var(--gray-mid); }
+.empty .ei { font-size: 50px; margin-bottom: 14px; opacity: .4; }
+.empty p { font-size: 14px; }
+
+#alert-box {
+  display: none; background: #EEF2FF; border: 1px solid var(--blue-mid);
+  border-radius: 10px; padding: 14px 20px; margin-bottom: 18px;
+  font-size: 13px; color: var(--blue);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-left">
+    <img id="logo-img" src="./logo.png" alt="Logo">
+    <div class="hdr-div"></div>
+    <div class="hdr-title">
+      <h1>Load Sheet Parser</h1>
+      <p>Consolidador de rutas de surtido</p>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="badge"><span class="lbl">Ruta</span>    <span class="val" id="h-ruta">—</span></div>
+    <div class="badge"><span class="lbl">Viaje</span>   <span class="val" id="h-viaje">—</span></div>
+    <div class="badge"><span class="lbl">Tiendas</span> <span class="val" id="h-tiendas">0</span></div>
+    <div class="badge"><span class="lbl">Registros</span><span class="val" id="h-total">0</span></div>
+  </div>
+</header>
+
+<main>
+
+  <div id="drop-zone">
+    <div class="dz-icon">📊</div>
+    <h2>Carga tu Load Sheet en Excel</h2>
+    <p>Arrastra y suelta el archivo aquí, o haz clic para seleccionarlo</p>
+    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+      📂 Seleccionar archivo .xlsx
+    </button>
+    <small>Formato soportado: .xlsx — Load Sheet exportado de WMS (cualquier número de tiendas)</small>
+    <input type="file" id="file-input" accept=".xlsx,.xls">
+  </div>
+
+  <div id="alert-box"></div>
+
+  <div id="progress-wrap">
+    <div class="prog-head">
+      <span>Procesando archivo...</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="prog-bg"><div class="prog-fill" id="prog-fill"></div></div>
+    <div class="prog-status" id="prog-status">Leyendo archivo...</div>
+  </div>
+
+  <div id="controls-wrap">
+    <div class="ctrl-left">
+      <div class="search-wrap">
+        🔍
+        <input type="text" id="inp-search" placeholder="Buscar código, descripción o tienda...">
+      </div>
+      <select class="fsel" id="sel-alm">
+        <option value="">Todos los almacenes</option>
+        <option value="CONGE">CONGELADO</option>
+        <option value="REFRI">REFRIGERADO</option>
+        <option value="SECO">SECO</option>
+      </select>
+      <select class="fsel" id="sel-tienda">
+        <option value="">Todas las tiendas</option>
+      </select>
+    </div>
+    <div class="ctrl-right">
+      <span class="row-info">Mostrando <strong id="c-show">0</strong> de <strong id="c-total">0</strong> registros</span>
+      <button class="btn btn-dark"    onclick="exportExcel()">📊 Exportar Excel</button>
+      <button class="btn btn-outline" onclick="resetAll()">🔄 Nuevo archivo</button>
+    </div>
+  </div>
+
+  <div id="table-wrap">
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr id="thead-row">
+            <th onclick="sortBy(0)">Ruta</th>
+            <th onclick="sortBy(1)">Viaje</th>
+            <th onclick="sortBy(2)">Código</th>
+            <th onclick="sortBy(3)">Descripción</th>
+            <th onclick="sortBy(4)">Almacén</th>
+            <th onclick="sortBy(5)">UDM</th>
+            <th onclick="sortBy(6)">Tienda</th>
+            <th onclick="sortBy(7)">Cantidad</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── STATE ──
+let allRows = [], filtered = [], sortCol = -1, sortAsc = true;
+
+// ── FILE INPUT / DRAG ──
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) processFile(e.target.files[0]);
+});
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+});
+
+// ══════════════════════════════════════════════════════════
+//  PARSER PRINCIPAL
+//  Lógica:
+//  1. Leer todo el Excel como array de filas (raw)
+//  2. Buscar TODOS los bloques detectando filas donde col A = "Código"
+//     → la fila anterior a cada "Código" contiene las tiendas del bloque
+//  3. Para cada bloque, mapear columnas de tiendas y sus SDO
+//  4. Recorrer las filas de datos del bloque y extraer SDO por tienda
+// ══════════════════════════════════════════════════════════
+function processFile(file) {
+  showAlert('');
+  dz.style.display = 'none';
+  showProgress(5, 'Leyendo archivo Excel...');
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      showProgress(20, 'Parseando hoja...');
+      const wb  = XLSX.read(e.target.result, { type: 'array' });
+      const ws  = wb.Sheets[wb.SheetNames[0]];
+      // defval: null para celdas vacías, raw:false para leer strings tal cual
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+
+      showProgress(30, 'Extrayendo Ruta y Viaje...');
+
+      // ── RUTA y VIAJE (fila índice 1) ──
+      const hdrRow = raw[1] || [];
+      let ruta = '', viaje = '';
+      for (let c = 0; c < hdrRow.length; c++) {
+        const v = String(hdrRow[c] ?? '').trim();
+        if (v === 'Ruta:') {
+          ruta = String(hdrRow[c + 1] ?? '').trim();
+        }
+        if (v === 'Viaje:') {
+          for (let k = c + 1; k < hdrRow.length; k++) {
+            const vk = hdrRow[k];
+            if (vk !== null && String(vk).trim() !== '') {
+              viaje = String(vk).trim();
+              break;
+            }
+          }
+        }
+      }
+
+      showProgress(40, 'Detectando bloques de tiendas...');
+
+      // ── DETECTAR TODOS LOS BLOQUES ──
+      // Un bloque comienza cuando col[0] === 'Código'
+      // La fila ANTERIOR al header contiene los nombres de las tiendas
+      // La fila POSTERIOR al header inicia los datos de ese bloque
+      // El bloque termina justo antes del siguiente header (o al final del archivo)
+
+      const blocks = []; // { storeRow: rowIndex, dataStart: rowIndex, dataEnd: rowIndex }
+
+      for (let i = 0; i < raw.length; i++) {
+        const row = raw[i];
+        if (!row) continue;
+        const colA = String(row[0] ?? '').trim();
+        if (colA === 'Código') {
+          blocks.push({
+            storeRowIdx: i - 1,   // fila con nombres de tiendas
+            dataStart:   i + 1,   // primera fila de datos
+            dataEnd:     null      // se rellena abajo
+          });
+        }
+      }
+
+      // Completar dataEnd de cada bloque
+      for (let b = 0; b < blocks.length; b++) {
+        if (b + 1 < blocks.length) {
+          // El bloque termina en la fila de "Pág." del siguiente bloque
+          // que es storeRowIdx del siguiente bloque
+          blocks[b].dataEnd = blocks[b + 1].storeRowIdx - 1;
+        } else {
+          blocks[b].dataEnd = raw.length - 1;
+        }
+      }
+
+      showProgress(50, `${blocks.length} bloques encontrados. Mapeando tiendas...`);
+
+      // ── MAPEAR TIENDAS POR BLOQUE ──
+      // Para cada bloque, escanear la fila de tiendas y encontrar
+      // celdas que cumplan patrón: número de 5 dígitos seguido de nombre
+      // SDO = columna de la tienda + 1
+
+      // Colectar tiendas únicas para el filtro
+      const allStoreNames = new Set();
+
+      // Procesar cada bloque
+      allRows = [];
+      const totalBlocks = blocks.length;
+
+      blocks.forEach((block, bi) => {
+        const pct = 50 + Math.round((bi / totalBlocks) * 45);
+        showProgress(pct, `Procesando bloque ${bi + 1} de ${totalBlocks}...`);
+
+        const storeRow = raw[block.storeRowIdx] || [];
+
+        // Detectar tiendas en esta fila
+        const stores = []; // { name, sdoCol (0-based) }
+        for (let c = 0; c < storeRow.length; c++) {
+          const v = String(storeRow[c] ?? '').trim();
+          // Patrón: 5 dígitos, espacio, al menos un carácter
+          if (/^\d{5}\s+\S/.test(v)) {
+            stores.push({ name: v, sdoCol: c + 1 });
+            allStoreNames.add(v);
+          }
+        }
+
+        if (stores.length === 0) return; // bloque sin tiendas detectadas, saltar
+
+        // Recorrer filas de datos del bloque
+        for (let ri = block.dataStart; ri <= block.dataEnd; ri++) {
+          const row = raw[ri];
+          if (!row) continue;
+
+          const codigoRaw = row[0];
+          if (codigoRaw === null || codigoRaw === undefined) continue;
+
+          const codStr = String(codigoRaw).trim();
+          // Omitir filas de encabezado repetido, página, o no numéricas
+          if (!codStr || codStr === 'Código' || codStr.startsWith('Pág') || isNaN(codStr)) continue;
+
+          const descripcion = String(row[2] ?? '').trim();
+          const almacen     = String(row[4] ?? '').trim();
+          const udm         = String(row[5] ?? '').trim();
+
+          if (!descripcion || !almacen) continue;
+
+          const codigo = codStr.padStart(6, '0');
+
+          // Por cada tienda del bloque, leer SDO
+          stores.forEach(st => {
+            const sdo = row[st.sdoCol];
+            if (sdo !== null && sdo !== undefined && sdo !== '' && !isNaN(sdo) && Number(sdo) > 0) {
+              allRows.push({
+                ruta, viaje, codigo, descripcion, almacen, udm,
+                tienda:   st.name,
+                cantidad: Number(sdo)
+              });
+            }
+          });
+        }
+      });
+
+      showProgress(97, 'Construyendo tabla...');
+
+      // ── Actualizar encabezado ──
+      document.getElementById('h-ruta').textContent    = ruta  || '—';
+      document.getElementById('h-viaje').textContent   = viaje || '—';
+      document.getElementById('h-tiendas').textContent = allStoreNames.size;
+      document.getElementById('h-total').textContent   = allRows.length;
+      document.getElementById('c-total').textContent   = allRows.length;
+
+      // ── Poblar filtro de tiendas ──
+      const sel = document.getElementById('sel-tienda');
+      while (sel.options.length > 1) sel.remove(1);
+      [...allStoreNames].sort().forEach(t => {
+        const o = document.createElement('option');
+        o.value = t; o.textContent = t; sel.appendChild(o);
+      });
+
+      filtered = [...allRows];
+
+      setTimeout(() => {
+        showProgress(100, '¡Procesamiento completado!');
+        setTimeout(() => {
+          document.getElementById('progress-wrap').style.display = 'none';
+          document.getElementById('controls-wrap').style.display = 'flex';
+          document.getElementById('table-wrap').style.display    = 'block';
+          renderTable(filtered);
+
+          document.getElementById('inp-search').oninput  = applyFilters;
+          document.getElementById('sel-alm').onchange    = applyFilters;
+          document.getElementById('sel-tienda').onchange = applyFilters;
+        }, 300);
+      }, 100);
+
+    } catch(err) {
+      document.getElementById('progress-wrap').style.display = 'none';
+      dz.style.display = 'block';
+      showAlert('❌ Error al procesar el archivo: ' + err.message);
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── RENDER ──
+function renderTable(rows) {
+  const tbody = document.getElementById('tbl-body');
+  document.getElementById('c-show').textContent = rows.length;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="ei">🔍</div><p>Sin resultados para los filtros aplicados.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.ruta}</td>
+      <td>${r.viaje}</td>
+      <td class="td-cod">${r.codigo}</td>
+      <td class="td-desc">${r.descripcion}</td>
+      <td><span class="alm-badge alm-${r.almacen}">${r.almacen==='CONGE'?'CONGELADO':r.almacen==='REFRI'?'REFRIGERADO':r.almacen}</span></td>
+      <td class="td-udm">${r.udm}</td>
+      <td class="td-tienda">${r.tienda}</td>
+      <td class="td-cant">${r.cantidad}</td>
+    </tr>`).join('');
+}
+
+// ── FILTROS ──
+function applyFilters() {
+  const q      = document.getElementById('inp-search').value.toLowerCase();
+  const alm    = document.getElementById('sel-alm').value;
+  const tienda = document.getElementById('sel-tienda').value;
+
+  filtered = allRows.filter(r =>
+    (!q      || r.codigo.includes(q) || r.descripcion.toLowerCase().includes(q) || r.tienda.toLowerCase().includes(q)) &&
+    (!alm    || r.almacen === alm) &&
+    (!tienda || r.tienda  === tienda)
+  );
+  renderTable(filtered);
+}
+
+// ── ORDENAR ──
+function sortBy(col) {
+  // Limpiar clases anteriores
+  document.querySelectorAll('#thead-row th').forEach((th, i) => {
+    th.classList.remove('sorted-asc', 'sorted-desc');
+    if (i === col) th.classList.add(sortCol === col && sortAsc ? 'sorted-desc' : 'sorted-asc');
+  });
+
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+
+  const keys = ['ruta','viaje','codigo','descripcion','almacen','udm','tienda','cantidad'];
+  filtered.sort((a, b) => {
+    let va = a[keys[col]], vb = b[keys[col]];
+    if (col === 7) { va = +va; vb = +vb; }
+    else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+    if (va < vb) return sortAsc ? -1 :  1;
+    if (va > vb) return sortAsc ?  1 : -1;
+    return 0;
+  });
+  renderTable(filtered);
+}
+
+// ── EXPORTAR EXCEL ──
+function exportExcel() {
+  const data = [['RUTA','VIAJE','CODIGO','DESCRIPCION','ALMACEN','UDM','TIENDA','CANTIDAD']];
+  filtered.forEach(r => {
+    const almLabel = r.almacen === 'CONGE' ? 'CONGELADO' : r.almacen === 'REFRI' ? 'REFRIGERADO' : r.almacen;
+    data.push([r.ruta, r.viaje, r.codigo, r.descripcion, almLabel, r.udm, r.tienda, r.cantidad]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:12},{wch:14},{wch:10},{wch:50},{wch:8},{wch:10},{wch:28},{wch:10}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'LoadSheet');
+
+  const ruta  = document.getElementById('h-ruta').textContent;
+  const viaje = document.getElementById('h-viaje').textContent;
+  XLSX.writeFile(wb, `LoadSheet_${ruta}_${viaje}.xlsx`);
+}
+
+// ── RESET ──
+function resetAll() {
+  allRows = []; filtered = [];
+  document.getElementById('h-ruta').textContent    = '—';
+  document.getElementById('h-viaje').textContent   = '—';
+  document.getElementById('h-tiendas').textContent = '0';
+  document.getElementById('h-total').textContent   = '0';
+  document.getElementById('controls-wrap').style.display = 'none';
+  document.getElementById('table-wrap').style.display    = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+  dz.style.display = 'block';
+  document.getElementById('file-input').value     = '';
+  document.getElementById('inp-search').value     = '';
+  document.getElementById('sel-alm').value        = '';
+  document.getElementById('sel-tienda').value     = '';
+  showAlert('');
+}
+
+function showProgress(pct, msg) {
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('prog-fill').style.width   = pct + '%';
+  document.getElementById('prog-pct').textContent    = pct + '%';
+  document.getElementById('prog-status').textContent = msg;
+}
+
+function showAlert(msg) {
+  const el = document.getElementById('alert-box');
+  el.style.display = msg ? 'block' : 'none';
+  el.textContent   = msg;
+}
+</script>
+</body>
+</html>

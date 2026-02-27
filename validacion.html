@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+<title>Validación de Productos</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --navy:       #1a3a5c;
+    --navy-dark:  #122840;
+    --navy-light: #e8eef5;
+    --bg:         #f2f4f7;
+    --surface:    #ffffff;
+    --surface2:   #f8f9fb;
+    --border:     #dde1e8;
+    --text:       #1e2530;
+    --muted:      #6b7280;
+    --faint:      #9aa3ae;
+    --green:      #1e6e42;
+    --green-bg:   #eaf4ee;
+    --green-bd:   #a8d4b8;
+    --orange:     #a04f00;
+    --orange-bg:  #fdf1e6;
+    --orange-bd:  #e8c8a0;
+    --red:        #b91c1c;
+    --red-bg:     #fee2e2;
+    --red-bd:     #fecaca;
+    --blue:       #2563eb;
+    --blue-bg:    #dbeafe;
+    --congelado:  #0e7c7c;
+    --congelado-bg: #e0f0f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    font-family: 'Barlow', sans-serif; 
+    background: var(--bg); 
+    color: var(--text); 
+    min-height: 100vh; 
+    display: flex; 
+    flex-direction: column; 
+  }
+
+  header {
+    background: var(--navy);
+    border-bottom: 3px solid var(--navy-dark);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.15);
+  }
+  .logo-wrap {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: white;
+    border: 1px solid rgba(255,255,255,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .logo-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+  .logo-wrap span { 
+    font-family: 'Barlow Condensed', sans-serif; 
+    font-size: 24px; 
+    font-weight: 700; 
+    color: white; 
+  }
+  .header-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  main { padding: 16px 16px 0; flex: 1; min-width: 0; max-width: 600px; margin: 0 auto; width: 100%; }
+
+  .search-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .search-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-input:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px var(--navy-light);
+  }
+  .search-input::placeholder { color: var(--faint); }
+
+  .route-result {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--navy-light);
+    border-radius: 8px;
+    border-left: 4px solid var(--navy);
+    font-weight: 600;
+    display: none;
+  }
+  .route-result.show { display: block; }
+
+  /* LISTA DE RUTAS */
+  .rutas-lista {
+    margin-top: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    display: none;
+  }
+  .rutas-lista.show { display: block; }
+  .ruta-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .ruta-item:hover {
+    background: var(--navy-light);
+  }
+  .ruta-item:last-child { border-bottom: none; }
+
+  .almacenes-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .alm-btn {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 30px;
+    padding: 10px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--navy);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex: 0 0 auto;
+  }
+  .alm-btn.active {
+    background: var(--navy);
+    border-color: var(--navy-dark);
+    color: white;
+  }
+  .alm-btn:active { transform: scale(0.97); }
+  .alm-btn.completed {
+    background: var(--green-bg);
+    border-color: var(--green);
+    color: var(--green);
+    opacity: 0.8;
+    cursor: not-allowed;
+    position: relative;
+    padding-right: 30px;
+  }
+  .alm-btn.completed::after {
+    content: "✓";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+  }
+  .alm-btn.faltantes {
+    background: var(--orange-bg);
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+  .alm-btn.congelado {
+    background: var(--congelado-bg);
+    border-color: var(--congelado);
+    color: var(--congelado);
+  }
+
+  .initial-fields {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .initial-fields.show { display: block; }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .field-group label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+  .field-group input, .field-group select {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    transition: border-color 0.2s;
+  }
+  .field-group input:focus, .field-group select:focus {
+    outline: none;
+    border-color: var(--navy);
+  }
+  .field-group input.uppercase { text-transform: uppercase; }
+
+  .btn-primary {
+    background: var(--navy);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 14px 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    margin-top: 12px;
+  }
+  .btn-primary:active { background: var(--navy-dark); }
+  .btn-primary:disabled {
+    background: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background: var(--orange);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 14px 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s;
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .validacion-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .validacion-section.show { display: block; }
+
+  .tiempo-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--navy-light);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+  .tiempo-inicio { color: var(--navy); font-weight: 600; }
+  .tiempo-transcurrido { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); }
+
+  /* SELECTOR DE TIENDA EN VALIDACIÓN */
+  .tienda-selector {
+    margin-bottom: 16px;
+  }
+  .tienda-select {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid var(--border);
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 600;
+    background: var(--surface2);
+    color: var(--navy);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tienda-select:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px var(--navy-light);
+  }
+  .tienda-select option {
+    font-weight: normal;
+  }
+
+  .product-search {
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .product-search-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 30px;
+    padding: 12px 18px;
+    font-size: 15px;
+    padding-right: 40px;
+  }
+  .clear-search {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    display: none;
+  }
+  .clear-search.show { display: block; }
+
+  .productos-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    padding: 4px;
+  }
+
+  .producto-card {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    transition: all 0.15s;
+  }
+  .producto-card.validado {
+    display: none;
+  }
+  .producto-card.coincide {
+    border-color: var(--green);
+    background: var(--green-bg);
+  }
+  .producto-card.no-coincide {
+    border-color: var(--red);
+    background: var(--red-bg);
+  }
+
+  .producto-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .producto-codigo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .producto-udm {
+    font-size: 12px;
+    color: var(--muted);
+    background: white;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+  .producto-desc {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  .cantidad-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  /* CONTENEDOR DE BOTONES */
+  .botones-container {
+    display: flex;
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .botones-container button {
+    flex: 1;
+    margin: 0;
+  }
+
+  .btn-sobrantes {
+    background: linear-gradient(135deg, var(--green) 0%, #155f35 100%);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(30, 110, 66, 0.3);
+  }
+  .btn-sobrantes i { 
+    font-size: 20px;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+  }
+  .btn-sobrantes:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(30, 110, 66, 0.4);
+  }
+  .btn-sobrantes:active {
+    transform: translateY(0);
+  }
+
+  .btn-finalizar {
+    background: linear-gradient(135deg, var(--orange) 0%, #b35c00 100%);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex: 2;
+    box-shadow: 0 4px 12px rgba(160, 79, 0, 0.3);
+  }
+  .btn-finalizar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(160, 79, 0, 0.4);
+  }
+  .btn-finalizar:active {
+    transform: translateY(0);
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+    color: white;
+    padding: 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.15s;
+  }
+  .modal-close:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  .modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    max-height: 60vh;
+  }
+
+  .sobrante-campos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sobrante-campos input,
+  .sobrante-campos select {
+    padding: 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    transition: all 0.15s;
+  }
+  .sobrante-campos input:focus,
+  .sobrante-campos select:focus {
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px var(--navy-light);
+  }
+  .sobrante-campos input.uppercase { text-transform: uppercase; }
+
+  .btn-guardar-sobrante {
+    background: linear-gradient(135deg, var(--green) 0%, #155f35 100%);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 16px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: all 0.15s;
+    box-shadow: 0 4px 12px rgba(30, 110, 66, 0.3);
+  }
+  .btn-guardar-sobrante:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(30, 110, 66, 0.4);
+  }
+
+  .faltante-item {
+    background: var(--red-bg);
+    border: 1px solid var(--red-bd);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+  .faltante-item .codigo {
+    font-weight: 700;
+    color: var(--red);
+  }
+
+  .footer {
+    background: var(--navy-dark);
+    color: rgba(255,255,255,0.35);
+    text-align: center;
+    padding: 12px;
+    font-size: 11px;
+    margin-top: 20px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 16px;
+    right: 16px;
+    background: var(--navy);
+    color: white;
+    padding: 14px 18px;
+    border-radius: 30px;
+    font-size: 14px;
+    z-index: 9999;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+    text-align: center;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <img src="logo.png" alt="Logo" onerror="this.parentElement.innerHTML='<span>GV</span>'">
+  </div>
+  <div class="header-title">Validación</div>
+</header>
+
+<main>
+  <!-- BÚSQUEDA DE RUTA -->
+  <div class="search-section">
+    <div class="search-label">BUSCAR RUTA</div>
+    <input type="text" id="rutaSearch" class="search-input" placeholder="Ingresa número de ruta..." autocomplete="off">
+    <div id="rutasLista" class="rutas-lista"></div>
+    <div id="routeResult" class="route-result"></div>
+  </div>
+
+  <!-- ALMACENES -->
+  <div id="almacenesContainer" style="display: none;">
+    <div class="search-label">ALMACENES DISPONIBLES</div>
+    <div id="almacenesGrid" class="almacenes-grid"></div>
+    <button id="verFaltantesBtn" class="btn-secondary" style="display: none;">🔍 VER PRODUCTOS FALTANTES</button>
+  </div>
+
+  <!-- CAMPOS INICIALES (SIN SELECTOR DE TIENDA) -->
+  <div id="initialFields" class="initial-fields">
+    <div class="search-label">DATOS DE VALIDACIÓN</div>
+    <div class="field-grid">
+      <div class="field-group">
+        <label>VALIDADOR</label>
+        <div class="tl-wrap" style="position: relative;">
+          <input type="text" id="validadorInput" class="search-input uppercase" placeholder="NOMBRE" maxlength="60" autocomplete="off" style="padding: 10px;">
+          <div class="tl-dropdown" id="validadorDropdown" style="top: 100%; background: white; border: 1px solid var(--border); border-radius: 8px; max-height: 200px; overflow-y: auto; display: none; position: absolute; width: 100%; z-index: 100;"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>TARIMAS</label>
+        <input type="number" id="tarimasInput" class="search-input" placeholder="0" min="0" step="1">
+      </div>
+      <div class="field-group">
+        <label>ANDEN</label>
+        <input type="text" id="andenInput" class="search-input uppercase" placeholder="Ej: 3A" maxlength="10">
+      </div>
+      <div class="field-group">
+        <label>TIPO</label>
+        <select id="tipoSelect" class="search-input">
+          <option value="">SELECCIONAR</option>
+          <option value="PRECARGA">PRECARGA</option>
+          <option value="AEROPUERTO">AEROPUERTO</option>
+          <option value="QUINTA">QUINTA</option>
+          <option value="NO TOP">NO TOP</option>
+        </select>
+      </div>
+    </div>
+    
+    <button class="btn-primary" id="iniciarValidacionBtn" disabled>INICIAR VALIDACIÓN</button>
+  </div>
+
+  <!-- SECCIÓN DE VALIDACIÓN -->
+  <div id="validacionSection" class="validacion-section">
+    <div class="tiempo-info">
+      <span class="tiempo-inicio" id="tiempoInicioDisplay">--:--:--</span>
+      <span class="tiempo-transcurrido" id="tiempoTranscurrido">00:00:00</span>
+    </div>
+    
+    <!-- SELECTOR DE TIENDA (AHORA AQUÍ, DESPUÉS DE INICIAR) -->
+    <div class="tienda-selector">
+      <select id="tiendaValidacionSelect" class="tienda-select">
+        <option value="">CARGANDO TIENDAS...</option>
+      </select>
+    </div>
+    
+    <div class="product-search">
+      <input type="text" id="productoSearch" class="product-search-input" placeholder="🔍 Buscar por código o descripción...">
+      <button id="clearSearch" class="clear-search"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div id="productosLista" class="productos-lista"></div>
+
+    <!-- CONTENEDOR DE BOTONES (ALINEADOS) -->
+    <div class="botones-container">
+      <button class="btn-sobrantes" id="btnAbrirModalSobrante">
+        <i class="fas fa-plus-circle"></i> SOBRANTE
+      </button>
+      <button class="btn-finalizar" id="finalizarValidacionBtn">FINALIZAR</button>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL DE FALTANTES -->
+<div class="modal-overlay" id="modalFaltantes">
+  <div class="modal">
+    <div class="modal-header">
+      <span>PRODUCTOS FALTANTES</span>
+      <button class="modal-close" id="modalFaltantesClose">&times;</button>
+    </div>
+    <div class="modal-body" id="modalFaltantesBody"></div>
+  </div>
+</div>
+
+<!-- MODAL DE SOBRANTES -->
+<div class="modal-overlay" id="modalSobrante">
+  <div class="modal">
+    <div class="modal-header">
+      <span>AGREGAR SOBRANTE</span>
+      <button class="modal-close" id="modalSobranteClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="sobrante-campos">
+        <input type="text" id="sobCodigo" class="uppercase" placeholder="CÓDIGO" maxlength="50">
+        <input type="text" id="sobDesc" class="uppercase" placeholder="DESCRIPCIÓN" maxlength="100">
+        <input type="text" id="sobUdm" class="uppercase" placeholder="UDM" maxlength="10">
+        <select id="sobTienda">
+          <option value="">SELECCIONAR TIENDA</option>
+        </select>
+        <input type="number" id="sobCantidad" placeholder="CANTIDAD" min="1" step="1">
+        <button class="btn-guardar-sobrante" id="guardarSobranteBtn">GUARDAR SOBRANTE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  © 2026 · E.Lugo · Todos los derechos reservados
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, doc, setDoc, getDocs, getDoc,
+    query, where, writeBatch, onSnapshot, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyB1APqzO0tsh1Ow58-e8VBYeTYbdmLxsNI",
+    authDomain:        "validacion-2026.firebaseapp.com",
+    projectId:         "validacion-2026",
+    storageBucket:     "validacion-2026.firebasestorage.app",
+    messagingSenderId: "9004667623",
+    appId:             "1:9004667623:web:5331db7cda0b94deacc842"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ========== STATE ==========
+  let currentRoute = null;
+  let currentAlmacen = null;
+  let almacenesCompletados = [];
+  let almacenesConFaltantes = [];
+  let almacenesConSesion = [];
+  let productos = [];
+  let productosFiltrados = [];
+  let validadores = [];
+  let sesionValidacion = {
+    inicio: null,
+    fin: null,
+    validador: '',
+    tarimas: 0,
+    anden: '',
+    tipo: '',
+    ruta: '',
+    viaje: '',
+    almacen: '',
+    tienda: ''
+  };
+  let timerInterval = null;
+  let vozFemenina = null;
+  let rutasEncontradas = [];
+  let tiendasDisponibles = [];
+
+  // ========== DOM ELEMENTS ==========
+  const rutaSearch = document.getElementById('rutaSearch');
+  const rutasLista = document.getElementById('rutasLista');
+  const routeResult = document.getElementById('routeResult');
+  const almacenesContainer = document.getElementById('almacenesContainer');
+  const almacenesGrid = document.getElementById('almacenesGrid');
+  const verFaltantesBtn = document.getElementById('verFaltantesBtn');
+  const initialFields = document.getElementById('initialFields');
+  const validadorInput = document.getElementById('validadorInput');
+  const validadorDropdown = document.getElementById('validadorDropdown');
+  const tarimasInput = document.getElementById('tarimasInput');
+  const andenInput = document.getElementById('andenInput');
+  const tipoSelect = document.getElementById('tipoSelect');
+  const iniciarValidacionBtn = document.getElementById('iniciarValidacionBtn');
+  const validacionSection = document.getElementById('validacionSection');
+  const tiendaValidacionSelect = document.getElementById('tiendaValidacionSelect');
+  const productoSearch = document.getElementById('productoSearch');
+  const clearSearch = document.getElementById('clearSearch');
+  const productosLista = document.getElementById('productosLista');
+  const btnAbrirModalSobrante = document.getElementById('btnAbrirModalSobrante');
+  const finalizarValidacionBtn = document.getElementById('finalizarValidacionBtn');
+  const tiempoInicioDisplay = document.getElementById('tiempoInicioDisplay');
+  const tiempoTranscurrido = document.getElementById('tiempoTranscurrido');
+  const modalFaltantes = document.getElementById('modalFaltantes');
+  const modalFaltantesBody = document.getElementById('modalFaltantesBody');
+  const modalFaltantesClose = document.getElementById('modalFaltantesClose');
+  const modalSobrante = document.getElementById('modalSobrante');
+  const modalSobranteClose = document.getElementById('modalSobranteClose');
+  const sobCodigo = document.getElementById('sobCodigo');
+  const sobDesc = document.getElementById('sobDesc');
+  const sobUdm = document.getElementById('sobUdm');
+  const sobTienda = document.getElementById('sobTienda');
+  const sobCantidad = document.getElementById('sobCantidad');
+  const guardarSobranteBtn = document.getElementById('guardarSobranteBtn');
+
+  // ========== FUNCIONES DE VOZ ==========
+  function seleccionarVozFemenina() {
+    return new Promise((resolve) => {
+      let voces = window.speechSynthesis.getVoices();
+      if (voces.length > 0) {
+        resolve(encontrarMejorVozFemenina(voces));
+      } else {
+        window.speechSynthesis.onvoiceschanged = () => {
+          voces = window.speechSynthesis.getVoices();
+          resolve(encontrarMejorVozFemenina(voces));
+        };
+      }
+    });
+  }
+
+  function encontrarMejorVozFemenina(voces) {
+    const prioridadVoces = [
+      { name: 'Sabina', lang: 'es-MX' },
+      { name: 'Paulina', lang: 'es-MX' },
+      { name: 'Mónica', lang: 'es-MX' },
+      { name: 'Google español femenina', lang: 'es' },
+      { pattern: /female/i, lang: /es/ }
+    ];
+
+    for (const criterio of prioridadVoces) {
+      let voz = null;
+      if (criterio.name) {
+        voz = voces.find(v => v.name.includes(criterio.name) && v.lang.startsWith(criterio.lang));
+      } else if (criterio.pattern) {
+        voz = voces.find(v => v.name.match(criterio.pattern) && v.lang.match(criterio.lang));
+      }
+      if (voz) return voz;
+    }
+    
+    return voces.find(v => v.lang.startsWith('es')) || null;
+  }
+
+  async function hablar(texto) {
+    return new Promise(async (resolve) => {
+      if (!vozFemenina) vozFemenina = await seleccionarVozFemenina();
+      const utterance = new SpeechSynthesisUtterance(texto);
+      utterance.lang = 'es-MX';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      if (vozFemenina) utterance.voice = vozFemenina;
+      utterance.onend = resolve;
+      utterance.onerror = resolve;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    });
+  }
+
+  function sonidoError() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.2);
+  }
+
+  // ========== CARGAR VALIDADORES ==========
+  async function loadValidadores() {
+    try {
+      const snap = await getDocs(collection(db, 'team_leaders'));
+      validadores = snap.docs.map(d => d.data().nombre).filter(Boolean);
+    } catch(e) { console.warn('Error cargando validadores:', e); }
+  }
+  loadValidadores();
+
+  // ========== AUTOCOMPLETE VALIDADOR ==========
+  validadorInput.addEventListener('input', () => {
+    const val = validadorInput.value.toUpperCase();
+    validadorInput.value = val;
+    
+    if (val.length < 1) {
+      validadorDropdown.style.display = 'none';
+      return;
+    }
+
+    const matches = validadores.filter(v => v.includes(val));
+    let html = '';
+    matches.forEach(v => {
+      html += `<div class="tl-option" style="padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border);" data-name="${v}">${v}</div>`;
+    });
+    
+    if (!validadores.includes(val)) {
+      html += `<div class="tl-option new-tl" style="padding: 10px; cursor: pointer; color: var(--green);" data-name="${val}">➕ NUEVO: ${val}</div>`;
+    }
+
+    validadorDropdown.innerHTML = html;
+    validadorDropdown.style.display = 'block';
+
+    validadorDropdown.querySelectorAll('.tl-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        validadorInput.value = opt.dataset.name;
+        validadorDropdown.style.display = 'none';
+        checkIniciarValidacion();
+      });
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!validadorInput.contains(e.target) && !validadorDropdown.contains(e.target)) {
+      validadorDropdown.style.display = 'none';
+    }
+  });
+
+  // ========== BUSCAR RUTAS ==========
+  rutaSearch.addEventListener('input', async (e) => {
+    const searchTerm = e.target.value.trim().toUpperCase();
+    rutaSearch.value = searchTerm;
+
+    if (searchTerm.length < 2) {
+      rutasLista.classList.remove('show');
+      routeResult.classList.remove('show');
+      almacenesContainer.style.display = 'none';
+      initialFields.classList.remove('show');
+      return;
+    }
+
+    try {
+      const snap = await getDocs(collection(db, 'rutas'));
+      
+      rutasEncontradas = snap.docs
+        .map(doc => doc.data())
+        .filter(data => data.ruta && data.ruta.includes(searchTerm))
+        .sort((a, b) => a.ruta.localeCompare(b.ruta));
+
+      if (rutasEncontradas.length === 0) {
+        rutasLista.classList.remove('show');
+        routeResult.textContent = `❌ No se encontraron rutas con "${searchTerm}"`;
+        routeResult.classList.add('show');
+        return;
+      }
+
+      rutasLista.innerHTML = rutasEncontradas.map(r => `
+        <div class="ruta-item" data-ruta="${r.ruta}" data-viaje="${r.viaje}" data-almacenes='${JSON.stringify(r.almacenes || [])}'>
+          <strong>${r.ruta}</strong> | Viaje: ${r.viaje} | Almacenes: ${(r.almacenes || []).length}
+        </div>
+      `).join('');
+      
+      rutasLista.classList.add('show');
+      routeResult.classList.remove('show');
+
+      document.querySelectorAll('.ruta-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const ruta = item.dataset.ruta;
+          const viaje = item.dataset.viaje;
+          const almacenes = JSON.parse(item.dataset.almacenes).map(alm => alm === 'FRIO' ? 'CONGELADO' : alm);
+          
+          currentRoute = { ruta, viaje, almacenes };
+          rutaSearch.value = ruta;
+          rutasLista.classList.remove('show');
+          seleccionarRuta();
+        });
+      });
+
+    } catch (error) {
+      console.error('Error buscando rutas:', error);
+      showToast('Error al buscar rutas');
+    }
+  });
+
+  async function seleccionarRuta() {
+    if (!currentRoute) return;
+
+    await verificarEstadoAlmacenes();
+
+    routeResult.textContent = `✅ Ruta: ${currentRoute.ruta} | Viaje: ${currentRoute.viaje}`;
+    routeResult.classList.add('show');
+
+    renderAlmacenesConEstado();
+    almacenesContainer.style.display = 'block';
+    
+    const almacenesDisponibles = currentRoute.almacenes.filter(alm => 
+      !almacenesCompletados.includes(alm) && !almacenesConSesion.includes(alm)
+    );
+    
+    if (almacenesDisponibles.length > 0) {
+      initialFields.classList.add('show');
+    } else {
+      initialFields.classList.remove('show');
+    }
+  }
+
+  async function cargarTiendasDesdeItems() {
+    if (!currentRoute || !currentAlmacen) return;
+    
+    const almacenOriginal = currentAlmacen === 'CONGELADO' ? 'FRIO' : currentAlmacen;
+    
+    try {
+      const q = query(
+        collection(db, 'items'),
+        where('ruta', '==', currentRoute.ruta),
+        where('viaje', '==', currentRoute.viaje),
+        where('almacen', '==', almacenOriginal)
+      );
+      
+      const snap = await getDocs(q);
+      const tiendasSet = new Set();
+      
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (data.tienda) {
+          tiendasSet.add(data.tienda);
+        }
+      });
+      
+      tiendasDisponibles = Array.from(tiendasSet).sort();
+      
+      // Llenar select de tiendas en validación
+      tiendaValidacionSelect.innerHTML = '<option value="">SELECCIONAR TIENDA</option>';
+      tiendasDisponibles.forEach(tienda => {
+        const option = document.createElement('option');
+        option.value = tienda;
+        option.textContent = tienda;
+        tiendaValidacionSelect.appendChild(option);
+      });
+      
+      // También llenar select del modal de sobrantes
+      sobTienda.innerHTML = '<option value="">SELECCIONAR TIENDA</option>';
+      tiendasDisponibles.forEach(tienda => {
+        const option = document.createElement('option');
+        option.value = tienda;
+        option.textContent = tienda;
+        sobTienda.appendChild(option);
+      });
+      
+    } catch (error) {
+      console.error('Error cargando tiendas:', error);
+    }
+  }
+
+  async function verificarEstadoAlmacenes() {
+    if (!currentRoute) return;
+    
+    almacenesCompletados = [];
+    almacenesConFaltantes = [];
+    almacenesConSesion = [];
+
+    const sesionesQuery = query(
+      collection(db, 'sesiones_validacion'),
+      where('ruta', '==', currentRoute.ruta),
+      where('viaje', '==', currentRoute.viaje)
+    );
+    
+    const sesionesSnap = await getDocs(sesionesQuery);
+    sesionesSnap.forEach(doc => {
+      const data = doc.data();
+      if (data.almacen && data.inicio && data.fin) {
+        const almacen = data.almacen === 'FRIO' ? 'CONGELADO' : data.almacen;
+        almacenesConSesion.push(almacen);
+      }
+    });
+
+    for (const alm of currentRoute.almacenes) {
+      const almacenOriginal = alm === 'CONGELADO' ? 'FRIO' : alm;
+      
+      const q = query(
+        collection(db, 'items'),
+        where('ruta', '==', currentRoute.ruta),
+        where('viaje', '==', currentRoute.viaje),
+        where('almacen', '==', almacenOriginal)
+      );
+      
+      const snap = await getDocs(q);
+      let totalItems = 0;
+      let concluidos = 0;
+      let faltantes = 0;
+
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (data.tipo !== 'SOBRANTE') {
+          totalItems++;
+          if (data.estatus === 'concluido') concluidos++;
+          if (data.estatus === 'faltante') faltantes++;
+        }
+      });
+
+      if (totalItems > 0 && concluidos === totalItems) {
+        almacenesCompletados.push(alm);
+      }
+      
+      if (faltantes > 0) {
+        almacenesConFaltantes.push(alm);
+      }
+    }
+  }
+
+  function renderAlmacenesConEstado() {
+    almacenesGrid.innerHTML = '';
+    
+    currentRoute.almacenes.forEach(alm => {
+      const btn = document.createElement('button');
+      btn.className = 'alm-btn';
+      
+      if (alm === 'CONGELADO') {
+        btn.classList.add('congelado');
+      }
+      
+      if (almacenesCompletados.includes(alm) || almacenesConSesion.includes(alm)) {
+        btn.classList.add('completed');
+        btn.textContent = alm;
+        btn.disabled = true;
+      } else {
+        btn.textContent = alm;
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.alm-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentAlmacen = alm;
+          sesionValidacion.almacen = alm;
+          checkIniciarValidacion();
+        });
+      }
+      
+      almacenesGrid.appendChild(btn);
+    });
+
+    verFaltantesBtn.style.display = almacenesConFaltantes.length > 0 ? 'block' : 'none';
+  }
+
+  // ========== VER FALTANTES ==========
+  verFaltantesBtn.addEventListener('click', async () => {
+    if (!currentRoute) return;
+
+    const q = query(
+      collection(db, 'items'),
+      where('ruta', '==', currentRoute.ruta),
+      where('viaje', '==', currentRoute.viaje),
+      where('estatus', '==', 'faltante')
+    );
+
+    const snap = await getDocs(q);
+    const faltantes = [];
+
+    snap.forEach(doc => {
+      const data = doc.data();
+      faltantes.push(data);
+    });
+
+    if (faltantes.length === 0) {
+      modalFaltantesBody.innerHTML = '<p style="text-align:center;color:var(--green);">✅ No hay productos faltantes</p>';
+    } else {
+      modalFaltantesBody.innerHTML = faltantes.map(f => `
+        <div class="faltante-item">
+          <div class="codigo">${f.codigo}</div>
+          <div>${f.descripcion || ''}</div>
+          <div style="font-size:12px;color:var(--muted);">Almacén: ${f.almacen === 'FRIO' ? 'CONGELADO' : f.almacen} | UDM: ${f.udm || 'N/A'}</div>
+        </div>
+      `).join('');
+    }
+
+    modalFaltantes.classList.add('show');
+  });
+
+  modalFaltantesClose.addEventListener('click', () => {
+    modalFaltantes.classList.remove('show');
+  });
+
+  modalFaltantes.addEventListener('click', (e) => {
+    if (e.target === modalFaltantes) {
+      modalFaltantes.classList.remove('show');
+    }
+  });
+
+  // ========== VALIDAR CAMPOS PARA INICIAR ==========
+  function checkIniciarValidacion() {
+    const validadorOk = validadorInput.value.trim().length >= 2;
+    const tarimasOk = tarimasInput.value !== '';
+    const andenOk = andenInput.value.trim().length > 0;
+    const tipoOk = tipoSelect.value !== '';
+    const almacenOk = currentAlmacen !== null && 
+                     !almacenesCompletados.includes(currentAlmacen) && 
+                     !almacenesConSesion.includes(currentAlmacen);
+
+    iniciarValidacionBtn.disabled = !(validadorOk && tarimasOk && andenOk && tipoOk && almacenOk);
+  }
+
+  [validadorInput, tarimasInput, andenInput, tipoSelect].forEach(input => {
+    input.addEventListener('input', checkIniciarValidacion);
+    input.addEventListener('change', checkIniciarValidacion);
+  });
+
+  // ========== INICIAR VALIDACIÓN ==========
+  iniciarValidacionBtn.addEventListener('click', async () => {
+    sesionValidacion = {
+      inicio: new Date(),
+      fin: null,
+      validador: validadorInput.value.trim().toUpperCase(),
+      tarimas: parseInt(tarimasInput.value) || 0,
+      anden: andenInput.value.trim().toUpperCase(),
+      tipo: tipoSelect.value,
+      ruta: currentRoute.ruta,
+      viaje: currentRoute.viaje,
+      almacen: currentAlmacen,
+      tienda: ''
+    };
+
+    if (!validadores.includes(sesionValidacion.validador)) {
+      try {
+        await setDoc(doc(db, 'team_leaders', sesionValidacion.validador), {
+          nombre: sesionValidacion.validador,
+          actualizadoEn: new Date().toISOString()
+        });
+        validadores.push(sesionValidacion.validador);
+      } catch(e) { console.warn(e); }
+    }
+
+    tiempoInicioDisplay.textContent = formatearHora(sesionValidacion.inicio);
+    iniciarTimer();
+
+    // Cargar tiendas desde items
+    await cargarTiendasDesdeItems();
+    
+    // Cargar productos
+    await cargarProductos();
+
+    validacionSection.classList.add('show');
+    
+    showToast('✅ Validación iniciada');
+    hablar('Validación iniciada');
+  });
+
+  function formatearHora(date) {
+    return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function iniciarTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (!sesionValidacion.inicio) return;
+      const ahora = new Date();
+      const diff = Math.floor((ahora - sesionValidacion.inicio) / 1000);
+      const horas = Math.floor(diff / 3600).toString().padStart(2, '0');
+      const minutos = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+      const segundos = (diff % 60).toString().padStart(2, '0');
+      tiempoTranscurrido.textContent = `${horas}:${minutos}:${segundos}`;
+    }, 1000);
+  }
+
+  // ========== CARGAR PRODUCTOS ==========
+  async function cargarProductos() {
+    if (!currentRoute || !currentAlmacen) return;
+
+    const almacenOriginal = currentAlmacen === 'CONGELADO' ? 'FRIO' : currentAlmacen;
+
+    try {
+      const q = query(
+        collection(db, 'items'),
+        where('ruta', '==', currentRoute.ruta),
+        where('viaje', '==', currentRoute.viaje),
+        where('almacen', '==', almacenOriginal)
+      );
+      const snap = await getDocs(q);
+      
+      productos = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (data.estatus !== 'concluido' && data.tipo !== 'SOBRANTE') {
+          productos.push({
+            id: doc.id,
+            ...data
+          });
+        }
+      });
+
+      // Si ya hay una tienda seleccionada, filtrar productos
+      if (sesionValidacion.tienda) {
+        filtrarProductosPorTienda(sesionValidacion.tienda);
+      } else {
+        renderProductos(productos);
+      }
+      
+    } catch (error) {
+      console.error('Error cargando productos:', error);
+      showToast('Error al cargar productos');
+    }
+  }
+
+  // ========== FILTRAR PRODUCTOS POR TIENDA ==========
+  function filtrarProductosPorTienda(tienda) {
+    if (!tienda) {
+      renderProductos(productos);
+      return;
+    }
+    
+    productosFiltrados = productos.filter(p => p.tienda === tienda);
+    renderProductos(productosFiltrados);
+  }
+
+  // ========== EVENTO CAMBIO DE TIENDA ==========
+  tiendaValidacionSelect.addEventListener('change', (e) => {
+    const tienda = e.target.value;
+    sesionValidacion.tienda = tienda;
+    
+    if (tienda) {
+      filtrarProductosPorTienda(tienda);
+      showToast(`Mostrando productos de: ${tienda}`);
+    } else {
+      renderProductos([]);
+      productosLista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">👆 Selecciona una tienda</div>';
+    }
+  });
+
+  // ========== RENDER PRODUCTOS ==========
+  function renderProductos(productosArray) {
+    if (!productosArray || productosArray.length === 0) {
+      if (sesionValidacion.tienda) {
+        productosLista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">📦 No hay productos pendientes para esta tienda</div>';
+      } else {
+        productosLista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">👆 Selecciona una tienda para ver productos</div>';
+      }
+      return;
+    }
+
+    productosLista.innerHTML = productosArray.map(p => `
+  <div class="producto-card" data-id="${p.id}" data-codigo="${p.codigo}" data-desc="${p.descripcion || ''}" data-sdo="${p.sdo || 0}">
+    <div class="producto-header">
+      <span class="producto-codigo">${p.codigo}</span>
+      <span class="producto-udm">${p.udm || 'N/A'}</span>
+    </div>
+    <div class="producto-desc">${p.descripcion || ''}</div>
+    <input type="number" class="cantidad-input" placeholder="Ingresa cantidad validada" min="1" step="1" value="" autocomplete="off">
+  </div>
+`).join('');
+
+    document.querySelectorAll('.producto-card').forEach(card => {
+  const input = card.querySelector('.cantidad-input');
+  const sdo = card.dataset.sdo;
+  const productoId = card.dataset.id;
+  const producto = productos.find(p => p.id === productoId);
+  
+  // Convertir SDO a número
+  const sdoNumero = sdo === '' ? 0 : Number(sdo);
+
+  // ========== BLOQUEAR TECLA 0 ==========
+  input.addEventListener('keydown', (e) => {
+    // Bloquear tecla 0 (código 48) si el campo está vacío
+    if (e.key === '0' && (e.target.value === '' || e.target.value === '0')) {
+      e.preventDefault();
+      showToast('❌ No se puede ingresar 0');
+      sonidoError();
+    }
+    
+    // Bloquear tecla "0" del teclado numérico (código 96)
+    if (e.keyCode === 96 && (e.target.value === '' || e.target.value === '0')) {
+      e.preventDefault();
+      showToast('❌ No se puede ingresar 0');
+      sonidoError();
+    }
+  });
+
+  // ========== BLOQUEAR PEGADO DE 0 ==========
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    
+    // Si intentan pegar "0"
+    if (text === '0') {
+      showToast('❌ No se permite pegar 0');
+      sonidoError();
+      return;
+    }
+    
+    // Si es un número válido diferente de 0
+    const numero = Number(text);
+    if (!isNaN(numero) && numero > 0) {
+      input.value = numero;
+      input.dispatchEvent(new Event('input'));
+    } else {
+      showToast('❌ Solo números positivos');
+      sonidoError();
+    }
+  });
+
+  // ========== VALIDACIÓN PRINCIPAL ==========
+  input.addEventListener('input', async (e) => {
+    const valorIngresado = e.target.value;
+    
+    // Campo vacío
+    if (valorIngresado === '') {
+      card.classList.remove('coincide', 'no-coincide');
+      return;
+    }
+    
+    // Convertir a número
+    const cantidad = Number(valorIngresado);
+    
+    // Validar número
+    if (isNaN(cantidad)) {
+      card.classList.remove('coincide', 'no-coincide');
+      return;
+    }
+    
+    // ===== BLOQUEO DE 0 =====
+    if (cantidad === 0) {
+      card.classList.remove('coincide', 'no-coincide');
+      input.value = ''; // Limpiar campo
+      showToast('❌ No se puede ingresar 0');
+      sonidoError();
+      return;
+    }
+    
+    // ===== VALIDACIÓN EXACTA =====
+    if (cantidad === sdoNumero) {
+      card.classList.add('coincide');
+      card.classList.remove('no-coincide');
+      
+      hablar(`Producto ${producto.codigo} validado`);
+      
+      productoSearch.value = '';
+      clearSearch.classList.remove('show');
+      
+      try {
+        await setDoc(doc(db, 'items', productoId), {
+          ...producto,
+          estatus: 'concluido',
+          validadoPor: sesionValidacion.validador,
+          fechaValidacion: new Date().toISOString()
+        }, { merge: true });
+        
+        setTimeout(() => {
+          card.classList.add('validado');
+          productos = productos.filter(p => p.id !== productoId);
+          if (sesionValidacion.tienda) {
+            productosFiltrados = productosFiltrados.filter(p => p.id !== productoId);
+          }
+        }, 1000);
+      } catch(e) {
+        console.warn(e);
+        showToast('Error al actualizar');
+      }
+    } else {
+      card.classList.add('no-coincide');
+      card.classList.remove('coincide');
+      sonidoError();
+    }
+  });
+});
+  }
+
+  // ========== FILTRO DE BÚSQUEDA ==========
+  productoSearch.addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.producto-card');
+    
+    let resultados = 0;
+    cards.forEach(card => {
+      if (card.classList.contains('validado')) return;
+      
+      const codigo = card.dataset.codigo?.toLowerCase() || '';
+      const desc = card.dataset.desc?.toLowerCase() || '';
+      
+      if (codigo.includes(term) || desc.includes(term)) {
+        card.style.display = 'block';
+        resultados++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+    
+    clearSearch.classList.toggle('show', term.length > 0);
+  });
+
+  clearSearch.addEventListener('click', () => {
+    productoSearch.value = '';
+    productoSearch.dispatchEvent(new Event('input'));
+    productoSearch.focus();
+  });
+
+  // ========== MODAL SOBRANTES ==========
+  btnAbrirModalSobrante.addEventListener('click', () => {
+    if (!currentRoute || !currentAlmacen || !sesionValidacion.validador) {
+      showToast('⚠ Debes iniciar una validación primero');
+      return;
+    }
+    
+    // Actualizar select de tiendas en el modal
+    sobTienda.innerHTML = '<option value="">SELECCIONAR TIENDA</option>';
+    tiendasDisponibles.forEach(tienda => {
+      const option = document.createElement('option');
+      option.value = tienda;
+      option.textContent = tienda;
+      sobTienda.appendChild(option);
+    });
+    
+    modalSobrante.classList.add('show');
+  });
+
+  modalSobranteClose.addEventListener('click', () => {
+    modalSobrante.classList.remove('show');
+    limpiarCamposSobrante();
+  });
+
+  modalSobrante.addEventListener('click', (e) => {
+    if (e.target === modalSobrante) {
+      modalSobrante.classList.remove('show');
+      limpiarCamposSobrante();
+    }
+  });
+
+  function limpiarCamposSobrante() {
+    sobCodigo.value = '';
+    sobDesc.value = '';
+    sobUdm.value = '';
+    sobTienda.value = '';
+    sobCantidad.value = '';
+  }
+
+  // ========== GUARDAR SOBRANTE ==========
+  guardarSobranteBtn.addEventListener('click', async () => {
+    const codigo = sobCodigo.value.trim().toUpperCase();
+    const desc = sobDesc.value.trim().toUpperCase();
+    const udm = sobUdm.value.trim().toUpperCase();
+    const tienda = sobTienda.value;
+    const cantidad = parseInt(sobCantidad.value);
+
+    if (!codigo || !desc || !udm || !tienda || !cantidad) {
+      showToast('⚠ Completa todos los campos');
+      return;
+    }
+
+    const almacenOriginal = currentAlmacen === 'CONGELADO' ? 'FRIO' : currentAlmacen;
+
+    try {
+      const itemId = `${currentRoute.ruta}_${currentRoute.viaje}_${almacenOriginal}_${codigo}_${Date.now()}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+      
+      await setDoc(doc(db, 'items', itemId), {
+        ruta: currentRoute.ruta,
+        viaje: currentRoute.viaje,
+        almacen: almacenOriginal,
+        tienda: tienda,
+        codigo: codigo,
+        descripcion: desc,
+        udm: udm,
+        sdo: cantidad,
+        estatus: 'concluido',
+        tipo: 'SOBRANTE',
+        validadoPor: sesionValidacion.validador,
+        fechaValidacion: new Date().toISOString(),
+        tarimas: sesionValidacion.tarimas,
+        anden: sesionValidacion.anden,
+        tipoValidacion: sesionValidacion.tipo
+      });
+
+      showToast(`✅ Sobrante agregado: ${codigo}`);
+      modalSobrante.classList.remove('show');
+      limpiarCamposSobrante();
+      
+      // Recargar productos para mostrar si hay cambios
+      if (currentRoute && currentAlmacen) {
+        await cargarProductos();
+      }
+      
+    } catch (error) {
+      console.error(error);
+      showToast('❌ Error al guardar sobrante');
+    }
+  });
+
+  // ========== FINALIZAR VALIDACIÓN ==========
+  finalizarValidacionBtn.addEventListener('click', async () => {
+    if (!confirm('¿Finalizar validación? Los productos pendientes quedarán como faltantes.')) return;
+
+    sesionValidacion.fin = new Date();
+    if (timerInterval) clearInterval(timerInterval);
+
+    const diffSeg = Math.floor((sesionValidacion.fin - sesionValidacion.inicio) / 1000);
+    const horas = Math.floor(diffSeg / 3600).toString().padStart(2, '0');
+    const minutos = Math.floor((diffSeg % 3600) / 60).toString().padStart(2, '0');
+    const segundos = (diffSeg % 60).toString().padStart(2, '0');
+    const tiempoTotal = `${horas}:${minutos}:${segundos}`;
+
+    const almacenOriginal = currentAlmacen === 'CONGELADO' ? 'FRIO' : currentAlmacen;
+
+    try {
+      // Usar productosFiltrados si hay tienda seleccionada, sino productos
+      const productosAProcesar = sesionValidacion.tienda ? productosFiltrados : productos;
+      const productosPendientes = productosAProcesar.filter(p => p.estatus !== 'concluido');
+      
+      for (const p of productosPendientes) {
+        await setDoc(doc(db, 'items', p.id), {
+          ...p,
+          estatus: 'faltante',
+          validadoPor: sesionValidacion.validador,
+          fechaValidacion: sesionValidacion.fin.toISOString()
+        }, { merge: true });
+      }
+
+      const sesionId = `${currentRoute.ruta}_${currentRoute.viaje}_${almacenOriginal}_${sesionValidacion.inicio.getTime()}`;
+      await setDoc(doc(db, 'sesiones_validacion', sesionId), {
+        ruta: currentRoute.ruta,
+        viaje: currentRoute.viaje,
+        almacen: almacenOriginal,
+        tienda: sesionValidacion.tienda,
+        validador: sesionValidacion.validador,
+        tarimas: sesionValidacion.tarimas,
+        anden: sesionValidacion.anden,
+        tipo: sesionValidacion.tipo,
+        inicio: sesionValidacion.inicio.toISOString(),
+        fin: sesionValidacion.fin.toISOString(),
+        tiempoTotal,
+        productosTotales: productosAProcesar.length,
+        productosConcluidos: productosAProcesar.filter(p => p.estatus === 'concluido').length,
+        productosFaltantes: productosPendientes.length
+      });
+
+      showToast(`✅ Validación finalizada - Tiempo: ${tiempoTotal}`);
+      hablar("Validación finalizada");
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+
+    } catch (error) {
+      console.error(error);
+      showToast('❌ Error al finalizar');
+    }
+  });
+
+  // ========== TOAST ==========
+  function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  // Inicializar voz
+  seleccionarVozFemenina().then(voz => {
+    vozFemenina = voz;
+  });
+
+  // Escuchar cambios en tiempo real
+  onSnapshot(collection(db, 'items'), () => {
+    if (currentRoute && currentAlmacen && validacionSection.classList.contains('show')) {
+      cargarProductos();
+    }
+  });
+
+</script>
+</body>
+</html>
