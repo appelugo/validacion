@@ -1309,14 +1309,16 @@
       
       productos = [];
       snap.forEach(doc => {
-        const data = doc.data();
-        if (data.estatus !== 'concluido' && data.tipo !== 'SOBRANTE') {
-          productos.push({
-            id: doc.id,
-            ...data
-          });
-        }
-      });
+  const data = doc.data();
+  if (data.estatus !== 'concluido' && data.tipo !== 'SOBRANTE') {
+    // CORREGIDO: Mapear "cantidad" a "sdo"
+    productos.push({
+      id: doc.id,
+      ...data,
+      sdo: data.cantidad || 0  // ← Convertir cantidad a sdo
+    });
+  }
+});
 
       // Si ya hay una tienda seleccionada, filtrar productos
       if (sesionValidacion.tienda) {
@@ -1368,7 +1370,7 @@
     }
 
     productosLista.innerHTML = productosArray.map(p => `
-  <div class="producto-card" data-id="${p.id}" data-codigo="${p.codigo}" data-desc="${p.descripcion || ''}" data-sdo="${p.sdo || 0}">
+  <div class="producto-card" data-id="${p.id}" data-codigo="${p.codigo}" data-desc="${p.descripcion || ''}" data-sdo="${p.sdo || p.cantidad || 0}">
     <div class="producto-header">
       <span class="producto-codigo">${p.codigo}</span>
       <span class="producto-udm">${p.udm || 'N/A'}</span>
