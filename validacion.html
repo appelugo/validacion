@@ -1378,11 +1378,16 @@
   </div>
 `).join('');
 
-    document.querySelectorAll('.producto-card').forEach(card => {
+document.querySelectorAll('.producto-card').forEach(card => {
   const input = card.querySelector('.cantidad-input');
   const sdo = card.dataset.sdo;
   const productoId = card.dataset.id;
   const producto = productos.find(p => p.id === productoId);
+  
+  if (!producto) {
+    console.error('❌ Producto no encontrado:', productoId);
+    return;
+  }
   
   // Convertir SDO a número
   const sdoNumero = sdo === '' ? 0 : Number(sdo);
@@ -1427,7 +1432,7 @@
     }
   });
 
-  // ========== VALIDACIÓN PRINCIPAL ==========
+  // ========== VALIDACIÓN PRINCIPAL CORREGIDA ==========
   input.addEventListener('input', async (e) => {
     const valorIngresado = e.target.value;
     
@@ -1455,8 +1460,21 @@
       return;
     }
     
-    // ===== VALIDACIÓN EXACTA =====
-    if (cantidad === sdoNumero) {
+    // ===== VALIDACIÓN CON TOLERANCIA (CORREGIDA) =====
+    // Comparar con tolerancia para manejar decimales y diferencias de tipo
+    const diferencia = Math.abs(cantidad - sdoNumero);
+    const coincide = diferencia < 0.01; // Tolerancia de 0.01
+    
+    console.log('🔍 Validando:', { 
+      cantidad, 
+      sdo: sdoNumero, 
+      diferencia, 
+      coincide,
+      tipoCantidad: typeof cantidad,
+      tipoSdo: typeof sdoNumero
+    });
+    
+    if (coincide) {
       card.classList.add('coincide');
       card.classList.remove('no-coincide');
       
@@ -1491,6 +1509,10 @@
     }
   });
 });
+
+
+
+    
   }
 
   // ========== FILTRO DE BÚSQUEDA ==========
