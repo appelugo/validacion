@@ -654,6 +654,79 @@
         ${botones}
         <button class="logout-btn" id="logoutBtn">Cerrar</button>
       `;
+
+      // ========== CONFIGURACIÓN DEL UPLOAD (AHORA DENTRO DE RENDERHEADER) ==========
+      setTimeout(() => {
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('file-input');
+        
+        console.log('🔍 Elementos encontrados en renderHeader:', { 
+          uploadBtn: uploadBtn ? '✅' : '❌', 
+          fileInput: fileInput ? '✅' : '❌' 
+        });
+        
+        if (uploadBtn) {
+          uploadBtn.replaceWith(uploadBtn.cloneNode(true));
+          const newUploadBtn = document.getElementById('uploadBtn');
+          
+          newUploadBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('📁 Botón clickeado');
+            
+            if (!currentUser) { 
+              showToast('Debes iniciar sesión'); 
+              loginModal.classList.add('show');
+              return; 
+            }
+            
+            const input = document.getElementById('file-input');
+            if (input) {
+              console.log('🖱️ Abriendo selector de archivos');
+              input.click();
+            }
+          });
+          console.log('✅ Listener agregado al botón upload');
+        }
+        
+        if (fileInput) {
+          fileInput.replaceWith(fileInput.cloneNode(true));
+          const newFileInput = document.getElementById('file-input');
+          
+          newFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            console.log('📂 Archivo seleccionado:', file?.name);
+            
+            if (!file) return;
+            
+            showToast(`📂 Procesando: ${file.name}`);
+            
+            const reader = new FileReader();
+            reader.onload = ev => {
+              try {
+                console.log('📖 Leyendo archivo...');
+                const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+                console.log('📊 Filas encontradas:', rows.length);
+                
+                if (rows.length === 0) {
+                  showToast('⚠️ El archivo está vacío');
+                  return;
+                }
+                
+                processData(rows);
+              } catch (error) {
+                console.error('❌ Error al leer el archivo:', error);
+                showToast('❌ Error al leer: ' + error.message);
+              }
+            };
+            
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
+          });
+          console.log('✅ Listener agregado al input file');
+        }
+      }, 100);
     }
   }
 
@@ -686,7 +759,7 @@
     return '';
   }
 
-  // ========== PROCESS XLSX (CORREGIDO) ==========
+  // ========== PROCESS XLSX ==========
   function processData(rows) {
     if (!rows.length) { 
       showToast('⚠ Archivo vacío'); 
@@ -708,10 +781,7 @@
       
       if (!ruta) return;
 
-      // Limpiar viaje de espacios y caracteres especiales
       const viajeLimpio = String(viaje).trim().replace(/[^a-zA-Z0-9]/g, '');
-      
-      // Crear ID consistente
       const itemId = `${ruta}_${viajeLimpio}_${almacen}_${codigo}_${idx}`.replace(/[^a-zA-Z0-9_-]/g, '_');
 
       console.log('📦 Procesando:', { ruta, viaje: viajeLimpio, almacen, codigo });
@@ -781,20 +851,18 @@
     });
   }
 
-  // ========== SAVE TO FIRESTORE (CORREGIDO) ==========
+  // ========== SAVE TO FIRESTORE ==========
   async function saveAllToFirestore() {
     try {
       showToast('⏳ Guardando en Firebase...');
 
       const CHUNK = 400;
-      let totalGuardados = 0;
       
       console.log('📤 Enviando a Firebase:', {
         rutas: allRoutes.length,
         items: allRawItems.length
       });
       
-      // Guardar rutas
       for (let i = 0; i < allRoutes.length; i += CHUNK) {
         const batch = writeBatch(db);
         const rutasChunk = allRoutes.slice(i, i + CHUNK);
@@ -814,11 +882,9 @@
         });
         
         await batch.commit();
-        totalGuardados += rutasChunk.length;
         console.log(`✅ ${rutasChunk.length} rutas guardadas`);
       }
 
-      // Guardar items
       for (let i = 0; i < allRawItems.length; i += CHUNK) {
         const batch = writeBatch(db);
         const itemsChunk = allRawItems.slice(i, i + CHUNK);
@@ -843,7 +909,6 @@
         });
         
         await batch.commit();
-        totalGuardados += itemsChunk.length;
         console.log(`✅ ${itemsChunk.length} items guardados`);
       }
 
@@ -1515,100 +1580,6 @@
       logout();
     }
   });
-
-  // ========== UPLOAD - VERSIÓN CORREGIDA ==========
-// Usar setTimeout en lugar de setInterval para asegurar que los elementos existen
-setTimeout(() => {
-  const uploadBtn = document.getElementById('uploadBtn');
-  const fileInput = document.getElementById('file-input');
-  
-  console.log('🔍 Elementos encontrados:', { 
-    uploadBtn: uploadBtn ? '✅' : '❌', 
-    fileInput: fileInput ? '✅' : '❌' 
-  });
-  
-  if (uploadBtn) {
-    // Eliminar listeners previos
-    uploadBtn.replaceWith(uploadBtn.cloneNode(true));
-    const newUploadBtn = document.getElementById('uploadBtn');
-    
-    newUploadBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      console.log('📁 Botón clickeado');
-      
-      if (!currentUser) { 
-        showToast('Debes iniciar sesión'); 
-        loginModal.classList.add('show');
-        return; 
-      }
-      
-      const input = document.getElementById('file-input');
-      if (input) {
-        console.log('🖱️ Abriendo selector de archivos');
-        input.click();
-      } else {
-        console.error('❌ file-input no encontrado');
-      }
-    });
-    console.log('✅ Listener agregado al botón upload');
-  }
-  
-  if (fileInput) {
-    // Eliminar listeners previos
-    fileInput.replaceWith(fileInput.cloneNode(true));
-    const newFileInput = document.getElementById('file-input');
-    
-    newFileInput.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      console.log('📂 Archivo seleccionado:', file?.name);
-      
-      if (!file) return;
-      
-      showToast(`📂 Procesando: ${file.name}`);
-      
-      const reader = new FileReader();
-      reader.onload = ev => {
-        try {
-          console.log('📖 Leyendo archivo...');
-          // CORREGIDO: Uint8Array con minúscula
-          const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-          console.log('📊 Filas encontradas:', rows.length);
-          
-          if (rows.length === 0) {
-            showToast('⚠️ El archivo está vacío');
-            return;
-          }
-          
-          processData(rows);
-        } catch (error) {
-          console.error('❌ Error al leer el archivo:', error);
-          showToast('❌ Error al leer: ' + error.message);
-        }
-      };
-      
-      reader.onerror = (error) => {
-        console.error('❌ Error de FileReader:', error);
-        showToast('❌ Error al leer el archivo');
-      };
-      
-      reader.readAsArrayBuffer(file);
-      e.target.value = ''; // Limpiar input
-    });
-    console.log('✅ Listener agregado al input file');
-  }
-}, 500); // Pequeño delay para asegurar que el DOM está listo
-
-
-
-
-
-
-
-
-
-
 
   // ========== TOAST ==========
   function showToast(msg) {
