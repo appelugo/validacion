@@ -69,7 +69,6 @@
   }
   .modal button:hover { background: var(--navy-dark); }
 
-  /* Ocultar main cuando no hay sesión */
   #mainContent.hidden {
     display: none !important;
   }
@@ -145,7 +144,6 @@
 
   footer { background: var(--navy-dark); padding: 6px 24px; text-align: center; color: rgba(255,255,255,0.35); font-size: 10px; }
 
-  /* MODAL DE DETALLE - ESTÉTICA EJECUTIVA COMPACTA */
   .modal-overlay#modalOverlay .modal { 
     max-width: 1100px; 
     max-height: 85vh;
@@ -215,7 +213,6 @@
     border-radius: 0 0 12px 12px;
   }
 
-  /* Info de validación en modal (tarjetas ejecutivas compactas) */
   .validacion-almacen {
     background: white;
     border: 1px solid var(--border);
@@ -254,7 +251,6 @@
     font-size: 15px;
   }
 
-  /* Almacen section inside modal */
   .alm-section { 
     margin-bottom: 16px; 
     background: white;
@@ -451,7 +447,6 @@
   <div class="header-right" id="headerRight"></div>
 </header>
 
-<!-- MAIN (se oculta si no hay sesión) -->
 <main id="mainContent">
   <div class="stats-row">
     <div class="stat-card total"><div class="stat-icon">📋</div><div><div class="stat-label">Rutas</div><div id="statTotal">0</div></div></div>
@@ -505,7 +500,7 @@
   </div>
 </div>
 
-<!-- DETAIL MODAL (ESTÉTICA EJECUTIVA COMPACTA) -->
+<!-- DETAIL MODAL -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-header">
@@ -558,7 +553,6 @@
   let lastActivity = Date.now();
   let activityInterval;
   
-  // Estado para toggle de almacenes en modal
   let almacenesVisibles = {};
 
   // ========== DOM ELEMENTS ==========
@@ -692,7 +686,7 @@
     return '';
   }
 
-  // ========== PROCESS XLSX ==========
+  // ========== PROCESS XLSX (CORREGIDO) ==========
   function processData(rows) {
     if (!rows.length) { 
       showToast('⚠ Archivo vacío'); 
@@ -714,12 +708,19 @@
       
       if (!ruta) return;
 
-      const itemId = `${ruta}__${viaje}__${almacen}__${codigo}__${idx}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+      // Limpiar viaje de espacios y caracteres especiales
+      const viajeLimpio = String(viaje).trim().replace(/[^a-zA-Z0-9]/g, '');
+      
+      // Crear ID consistente
+      const itemId = `${ruta}_${viajeLimpio}_${almacen}_${codigo}_${idx}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      console.log('📦 Procesando:', { ruta, viaje: viajeLimpio, almacen, codigo });
 
       allRawItems.push({ 
         itemId, 
         ruta, 
-        viaje, 
+        viaje: viajeLimpio,
+        viajeOriginal: viaje,
         codigo, 
         desc, 
         udm, 
@@ -732,9 +733,9 @@
         itemStatus[itemId] = 'pendiente';
       }
 
-      const key = `${ruta}||${viaje}`;
+      const key = `${ruta}_${viajeLimpio}`;
       if (!routeMap[key]) {
-        routeMap[key] = { ruta, viaje, almacenes: new Set() };
+        routeMap[key] = { ruta, viaje: viajeLimpio, viajeOriginal: viaje, almacenes: new Set() };
       }
       if (almacen) {
         routeMap[key].almacenes.add(almacen);
@@ -780,52 +781,77 @@
     });
   }
 
-  // ========== SAVE TO FIRESTORE ==========
+  // ========== SAVE TO FIRESTORE (CORREGIDO) ==========
   async function saveAllToFirestore() {
     try {
-      showToast('⏳ Guardando...');
+      showToast('⏳ Guardando en Firebase...');
 
       const CHUNK = 400;
+      let totalGuardados = 0;
+      
+      console.log('📤 Enviando a Firebase:', {
+        rutas: allRoutes.length,
+        items: allRawItems.length
+      });
       
       // Guardar rutas
       for (let i = 0; i < allRoutes.length; i += CHUNK) {
         const batch = writeBatch(db);
-        allRoutes.slice(i, i + CHUNK).forEach(r => {
-          const docId = `${r.ruta}__${r.viaje}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-          batch.set(doc(db, 'rutas', docId), {
-            ruta: r.ruta, 
-            viaje: r.viaje, 
+        const rutasChunk = allRoutes.slice(i, i + CHUNK);
+        
+        rutasChunk.forEach(r => {
+          const docId = `${r.ruta}_${r.viaje}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const rutaRef = doc(db, 'rutas', docId);
+          
+          batch.set(rutaRef, {
+            ruta: r.ruta,
+            viaje: r.viaje,
+            viajeOriginal: r.viajeOriginal || r.viaje,
             almacenes: r.almacenes,
-            cargadoEn: new Date().toISOString()
+            cargadoEn: new Date().toISOString(),
+            cargadoPor: currentUser?.username || 'sistema'
           }, { merge: true });
         });
+        
         await batch.commit();
+        totalGuardados += rutasChunk.length;
+        console.log(`✅ ${rutasChunk.length} rutas guardadas`);
       }
 
       // Guardar items
       for (let i = 0; i < allRawItems.length; i += CHUNK) {
         const batch = writeBatch(db);
-        allRawItems.slice(i, i + CHUNK).forEach(it => {
-          batch.set(doc(db, 'items', it.itemId), {
-            ruta: it.ruta, 
-            viaje: it.viaje, 
+        const itemsChunk = allRawItems.slice(i, i + CHUNK);
+        
+        itemsChunk.forEach(it => {
+          const itemRef = doc(db, 'items', it.itemId);
+          
+          batch.set(itemRef, {
+            ruta: it.ruta,
+            viaje: it.viaje,
+            viajeOriginal: it.viajeOriginal,
             codigo: it.codigo,
-            descripcion: it.desc, 
+            descripcion: it.desc,
             udm: it.udm,
-            almacen: it.almacen, 
-            tienda: it.tienda, 
+            almacen: it.almacen,
+            tienda: it.tienda,
             cantidad: it.cantidad,
             estatus: itemStatus[it.itemId] || 'pendiente',
-            cargadoEn: new Date().toISOString()
+            cargadoEn: new Date().toISOString(),
+            cargadoPor: currentUser?.username || 'sistema'
           }, { merge: true });
         });
+        
         await batch.commit();
+        totalGuardados += itemsChunk.length;
+        console.log(`✅ ${itemsChunk.length} items guardados`);
       }
 
-      showToast(`✅ ${allRawItems.length} ítems`);
+      showToast(`✅ ${allRawItems.length} ítems guardados en Firebase`);
+      
     } catch (err) {
-      console.error('Error al guardar en Firebase:', err);
-      showToast('❌ Error al guardar');
+      console.error('❌ Error al guardar en Firebase:', err);
+      showToast('❌ Error al guardar: ' + err.message);
     }
   }
 
@@ -847,7 +873,7 @@
         await batch.commit();
       }
 
-      await deleteDoc(doc(db, 'rutas', `${ruta}__${viaje}`.replace(/[^a-zA-Z0-9_-]/g, '_')));
+      await deleteDoc(doc(db, 'rutas', `${ruta}_${viaje}`.replace(/[^a-zA-Z0-9_-]/g, '_')));
 
       const sesionesSnap = await getDocs(query(collection(db, 'sesiones_validacion'), where('ruta', '==', ruta), where('viaje', '==', viaje)));
       for (let i = 0; i < sesionesSnap.docs.length; i += CHUNK) {
@@ -1117,7 +1143,7 @@
         const botonEliminar = puedeEliminar ? `<button class="delete-btn" onclick="deleteRoute('${r.ruta}', '${r.viaje}')">❌</button>` : '';
 
         return `<tr>
-          <td><span class="ruta-badge">${r.ruta}</span> ${r.viaje} <span class="click-hint" onclick="openModal('${r.ruta}', '${r.viaje}')">▸ ver</span>
+          <td><span class="ruta-badge">${r.ruta}</span> ${r.viajeOriginal || r.viaje} <span class="click-hint" onclick="openModal('${r.ruta}', '${r.viaje}')">▸ ver</span>
           ${completa ? `<span class="pdf-icon red" onclick="generarPDFProductos('${r.ruta}', '${r.viaje}')">📄</span><span class="pdf-icon blue" onclick="generarPDFCalidad('${r.ruta}', '${r.viaje}')">📋</span>` : ''}
           </td>
           <td>${pct}%</td>${cols}<td>${botonEliminar}</td>
@@ -1129,11 +1155,9 @@
   function getFiltered() {
     const q = searchInput ? searchInput.value.toLowerCase() : '';
     if (!q) return allRoutes;
-    // Búsqueda mejorada: encuentra coincidencias parciales, incluso solo números
     return allRoutes.filter(r => 
       r.ruta.toLowerCase().includes(q) || 
       r.viaje.toLowerCase().includes(q) ||
-      // Buscar números dentro de la ruta (ej: "301" encuentra "N-301")
       (q.match(/\d+/) && r.ruta.includes(q.match(/\d+/)[0]))
     );
   }
@@ -1171,7 +1195,6 @@
     const route = allRoutes.find(rte => rte.ruta === r && rte.viaje === v);
     if (route) {
       currentModalKey = `${r}||${v}`;
-      // Inicializar todos los almacenes como visibles
       const items = allRawItems.filter(it => it.ruta === r && it.viaje === v);
       const almacenes = [...new Set(items.map(it => it.almacen))];
       almacenes.forEach(alm => { almacenesVisibles[alm] = true; });
@@ -1218,7 +1241,7 @@
     const modalBody = document.getElementById('modalBody');
     
     if (modalTitle) modalTitle.textContent = `Ruta ${route.ruta}`;
-    if (modalMeta) modalMeta.textContent = `Viaje: ${route.viaje}`;
+    if (modalMeta) modalMeta.textContent = `Viaje: ${route.viajeOriginal || route.viaje}`;
     const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje);
     const { porAlmacen: sesionPorAlmacen } = await cargarSesionesRuta(route.ruta, route.viaje);
     const done = items.filter(it => itemStatus[it.itemId] === 'concluido' || itemStatus[it.itemId] === 'faltante-confirmado').length;
@@ -1236,13 +1259,11 @@
       const almItems = byAlm[alm];
       const sesion = sesionPorAlmacen[alm];
       
-      // Determinar color del punto
       let dotColor = '#1a3a5c';
       if (alm === 'CONGELADO') dotColor = '#0e7c7c';
       else if (alm === 'REFRIGERADO') dotColor = '#6b48c8';
       else if (alm === 'CRITICO') dotColor = '#8e1e1e';
       
-      // Información de validación del almacén (si existe)
       if (sesion && sesion.inicio) {
         const inicio = new Date(sesion.inicio);
         const fin = sesion.fin ? new Date(sesion.fin) : null;
@@ -1319,7 +1340,6 @@
     }
     if (modalBody) modalBody.innerHTML = modalHTML;
     
-    // Hacer toggle accesible globalmente
     window.toggleAlmacen = toggleAlmacen;
   }
 
@@ -1421,7 +1441,6 @@
     iniciarMonitorInactividad();
     if (tieneSesion) renderTable();
     
-    // ========== EVENTOS DE LOGIN ==========
     setTimeout(() => {
       const loginBtn = document.getElementById('loginBtn');
       const loginUsername = document.getElementById('loginUsername');
@@ -1481,7 +1500,6 @@
     }, 500);
   })();
 
-  // ========== EVENTOS GLOBALES ==========
   document.addEventListener('click', (e) => {
     if (e.target.id === 'showLoginBtn') {
       limpiarFormularioLogin();
@@ -1498,48 +1516,108 @@
     }
   });
 
-  // ========== EVENTO PARA SUBIR ARCHIVO ==========
-  setInterval(() => {
-    const btn = document.getElementById('uploadBtn');
-    const input = document.getElementById('file-input');
+  // ========== UPLOAD - VERSIÓN CORREGIDA ==========
+// Usar setTimeout en lugar de setInterval para asegurar que los elementos existen
+setTimeout(() => {
+  const uploadBtn = document.getElementById('uploadBtn');
+  const fileInput = document.getElementById('file-input');
+  
+  console.log('🔍 Elementos encontrados:', { 
+    uploadBtn: uploadBtn ? '✅' : '❌', 
+    fileInput: fileInput ? '✅' : '❌' 
+  });
+  
+  if (uploadBtn) {
+    // Eliminar listeners previos
+    uploadBtn.replaceWith(uploadBtn.cloneNode(true));
+    const newUploadBtn = document.getElementById('uploadBtn');
     
-    if (btn && !btn.hasListener) {
-      btn.hasListener = true;
-      btn.addEventListener('click', function() {
-        if (!currentUser) { 
-          showToast('Debes iniciar sesión'); 
-          limpiarFormularioLogin();
-          loginModal.classList.add('show');
-          return; 
-        }
-        if (input) input.click();
-      });
-    }
+    newUploadBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('📁 Botón clickeado');
+      
+      if (!currentUser) { 
+        showToast('Debes iniciar sesión'); 
+        loginModal.classList.add('show');
+        return; 
+      }
+      
+      const input = document.getElementById('file-input');
+      if (input) {
+        console.log('🖱️ Abriendo selector de archivos');
+        input.click();
+      } else {
+        console.error('❌ file-input no encontrado');
+      }
+    });
+    console.log('✅ Listener agregado al botón upload');
+  }
+  
+  if (fileInput) {
+    // Eliminar listeners previos
+    fileInput.replaceWith(fileInput.cloneNode(true));
+    const newFileInput = document.getElementById('file-input');
     
-    if (input && !input.hasListener) {
-      input.hasListener = true;
-      input.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        showToast('📂 Procesando...');
-        
-        const reader = new FileReader();
-        reader.onload = ev => {
-          try {
-            const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-            processData(rows);
-          } catch (error) {
-            console.error('Error al leer el archivo:', error);
-            showToast('❌ Error al leer');
+    newFileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      console.log('📂 Archivo seleccionado:', file?.name);
+      
+      if (!file) return;
+      
+      showToast(`📂 Procesando: ${file.name}`);
+      
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          console.log('📖 Leyendo archivo...');
+          // CORREGIDO: Uint8Array con minúscula
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+          console.log('📊 Filas encontradas:', rows.length);
+          
+          if (rows.length === 0) {
+            showToast('⚠️ El archivo está vacío');
+            return;
           }
-        };
-        reader.readAsArrayBuffer(file);
-        e.target.value = '';
-      });
-    }
-  }, 1000);
+          
+          processData(rows);
+        } catch (error) {
+          console.error('❌ Error al leer el archivo:', error);
+          showToast('❌ Error al leer: ' + error.message);
+        }
+      };
+      
+      reader.onerror = (error) => {
+        console.error('❌ Error de FileReader:', error);
+        showToast('❌ Error al leer el archivo');
+      };
+      
+      reader.readAsArrayBuffer(file);
+      e.target.value = ''; // Limpiar input
+    });
+    console.log('✅ Listener agregado al input file');
+  }
+}, 500); // Pequeño delay para asegurar que el DOM está listo
+
+
+
+
+
+
+
+
+
+
+
+  // ========== TOAST ==========
+  function showToast(msg) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
 </script>
 </body>
 </html>
