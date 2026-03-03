@@ -7,6 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- ======================================================================== -->
+<!-- INICIO: ESTILOS CSS -->
+<!-- ======================================================================== -->
 <style>
   :root {
     --navy:       #1a3a5c;
@@ -44,6 +48,7 @@
     flex-direction: column; 
   }
 
+  /* ===== INICIO: HEADER ===== */
   header {
     background: var(--navy);
     border-bottom: 3px solid var(--navy-dark);
@@ -81,9 +86,13 @@
     text-transform: uppercase;
     color: #fff;
   }
+  /* ===== FIN: HEADER ===== */
 
+  /* ===== INICIO: MAIN ===== */
   main { padding: 16px 16px 0; flex: 1; min-width: 0; max-width: 600px; margin: 0 auto; width: 100%; }
+  /* ===== FIN: MAIN ===== */
 
+  /* ===== INICIO: SECCIÓN DE BÚSQUEDA ===== */
   .search-section {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -151,7 +160,9 @@
     background: var(--navy-light);
   }
   .ruta-item:last-child { border-bottom: none; }
+  /* ===== FIN: SECCIÓN DE BÚSQUEDA ===== */
 
+  /* ===== INICIO: BOTONES DE ALMACÉN (CORREGIDO) ===== */
   .almacenes-grid {
     display: flex;
     flex-wrap: wrap;
@@ -201,12 +212,13 @@
     border-color: var(--orange);
     color: var(--orange);
   }
+  /* CORREGIDO: Congelado ahora usa los mismos estilos base */
   .alm-btn.congelado {
-    background: var(--congelado-bg);
-    border-color: var(--congelado);
-    color: var(--congelado);
+    /* Vacío - hereda los estilos base */
   }
+  /* ===== FIN: BOTONES DE ALMACÉN ===== */
 
+  /* ===== INICIO: CAMPOS INICIALES ===== */
   .initial-fields {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -290,7 +302,9 @@
     width: 100%;
     margin-top: 12px;
   }
+  /* ===== FIN: CAMPOS INICIALES ===== */
 
+  /* ===== INICIO: SECCIÓN DE VALIDACIÓN ===== */
   .validacion-section {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -433,7 +447,9 @@
     text-align: center;
     margin-bottom: 8px;
   }
+  /* ===== FIN: SECCIÓN DE VALIDACIÓN ===== */
 
+  /* ===== INICIO: BOTONES DE ACCIÓN (CORREGIDOS) ===== */
   .botones-container {
     display: flex;
     gap: 12px;
@@ -444,14 +460,15 @@
     margin: 0;
   }
 
+  /* CORREGIDO: Botón SOBRANTE más pequeño */
   .btn-sobrantes {
     background: linear-gradient(135deg, var(--green) 0%, #155f35 100%);
     color: white;
     border: none;
     border-radius: 30px;
-    padding: 16px;
+    padding: 10px 12px;
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -460,11 +477,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 4px;
     box-shadow: 0 4px 12px rgba(30, 110, 66, 0.3);
   }
   .btn-sobrantes i { 
-    font-size: 20px;
+    font-size: 16px;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
   }
   .btn-sobrantes:hover {
@@ -475,30 +492,33 @@
     transform: translateY(0);
   }
 
+  /* CORREGIDO: Botón FINALIZAR ahora es AZUL */
   .btn-finalizar {
-    background: linear-gradient(135deg, var(--orange) 0%, #b35c00 100%);
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
     color: white;
     border: none;
     border-radius: 30px;
-    padding: 16px;
+    padding: 12px 16px;
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.15s;
     flex: 2;
-    box-shadow: 0 4px 12px rgba(160, 79, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(26, 58, 92, 0.3);
   }
   .btn-finalizar:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(160, 79, 0, 0.4);
+    box-shadow: 0 6px 16px rgba(26, 58, 92, 0.4);
   }
   .btn-finalizar:active {
     transform: translateY(0);
   }
+  /* ===== FIN: BOTONES DE ACCIÓN ===== */
 
+  /* ===== INICIO: MODALES ===== */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -608,7 +628,9 @@
     font-weight: 700;
     color: var(--red);
   }
+  /* ===== FIN: MODALES ===== */
 
+  /* ===== INICIO: FOOTER ===== */
   .footer {
     background: var(--navy-dark);
     color: rgba(255,255,255,0.35);
@@ -617,7 +639,9 @@
     font-size: 11px;
     margin-top: 20px;
   }
+  /* ===== FIN: FOOTER ===== */
 
+  /* ===== INICIO: TOAST ===== */
   .toast {
     position: fixed;
     bottom: 24px;
@@ -640,31 +664,49 @@
     from { transform: translateY(100%); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
+  /* ===== FIN: TOAST ===== */
 </style>
+<!-- ======================================================================== -->
+<!-- FIN: ESTILOS CSS -->
+<!-- ======================================================================== -->
 </head>
 <body>
 
+<!-- ======================================================================== -->
+<!-- INICIO: HEADER HTML -->
+<!-- ======================================================================== -->
 <header>
   <div class="logo-wrap">
     <img src="logo.png" alt="Logo" onerror="this.parentElement.innerHTML='<span>GV</span>'">
   </div>
   <div class="header-title">Validación</div>
 </header>
+<!-- ======================================================================== -->
+<!-- FIN: HEADER HTML -->
+<!-- ======================================================================== -->
 
+<!-- ======================================================================== -->
+<!-- INICIO: MAIN HTML -->
+<!-- ======================================================================== -->
 <main>
+  <!-- INICIO: SECCIÓN DE BÚSQUEDA -->
   <div class="search-section">
     <div class="search-label">BUSCAR RUTA</div>
     <input type="text" id="rutaSearch" class="search-input" placeholder="Ingresa número de ruta..." autocomplete="off">
     <div id="rutasLista" class="rutas-lista"></div>
     <div id="routeResult" class="route-result"></div>
   </div>
+  <!-- FIN: SECCIÓN DE BÚSQUEDA -->
 
+  <!-- INICIO: CONTENEDOR DE ALMACENES -->
   <div id="almacenesContainer" style="display: none;">
     <div class="search-label">ALMACENES DISPONIBLES</div>
     <div id="almacenesGrid" class="almacenes-grid"></div>
     <button id="verFaltantesBtn" class="btn-secondary" style="display: none;">🔍 VER PRODUCTOS FALTANTES</button>
   </div>
+  <!-- FIN: CONTENEDOR DE ALMACENES -->
 
+  <!-- INICIO: CAMPOS INICIALES -->
   <div id="initialFields" class="initial-fields">
     <div class="search-label">DATOS DE VALIDACIÓN</div>
     <div class="field-grid">
@@ -697,7 +739,9 @@
     
     <button class="btn-primary" id="iniciarValidacionBtn" disabled>INICIAR VALIDACIÓN</button>
   </div>
+  <!-- FIN: CAMPOS INICIALES -->
 
+  <!-- INICIO: SECCIÓN DE VALIDACIÓN -->
   <div id="validacionSection" class="validacion-section">
     <div class="tiempo-info">
       <span class="tiempo-inicio" id="tiempoInicioDisplay">--:--:--</span>
@@ -717,15 +761,24 @@
 
     <div id="productosLista" class="productos-lista"></div>
 
+    <!-- INICIO: BOTONES DE ACCIÓN -->
     <div class="botones-container">
       <button class="btn-sobrantes" id="btnAbrirModalSobrante">
         <i class="fas fa-plus-circle"></i> SOBRANTE
       </button>
       <button class="btn-finalizar" id="finalizarValidacionBtn">FINALIZAR</button>
     </div>
+    <!-- FIN: BOTONES DE ACCIÓN -->
   </div>
+  <!-- FIN: SECCIÓN DE VALIDACIÓN -->
 </main>
+<!-- ======================================================================== -->
+<!-- FIN: MAIN HTML -->
+<!-- ======================================================================== -->
 
+<!-- ======================================================================== -->
+<!-- INICIO: MODAL FALTANTES -->
+<!-- ======================================================================== -->
 <div class="modal-overlay" id="modalFaltantes">
   <div class="modal">
     <div class="modal-header">
@@ -735,7 +788,13 @@
     <div class="modal-body" id="modalFaltantesBody"></div>
   </div>
 </div>
+<!-- ======================================================================== -->
+<!-- FIN: MODAL FALTANTES -->
+<!-- ======================================================================== -->
 
+<!-- ======================================================================== -->
+<!-- INICIO: MODAL SOBRANTE -->
+<!-- ======================================================================== -->
 <div class="modal-overlay" id="modalSobrante">
   <div class="modal">
     <div class="modal-header">
@@ -756,15 +815,27 @@
     </div>
   </div>
 </div>
+<!-- ======================================================================== -->
+<!-- FIN: MODAL SOBRANTE -->
+<!-- ======================================================================== -->
 
+<!-- ======================================================================== -->
+<!-- INICIO: FOOTER -->
+<!-- ======================================================================== -->
 <div class="footer">
   © 2026 · E.Lugo · Todos los derechos reservados
 </div>
+<!-- ======================================================================== -->
+<!-- FIN: FOOTER -->
+<!-- ======================================================================== -->
 
+<!-- ======================================================================== -->
+<!-- INICIO: JAVASCRIPT -->
+<!-- ======================================================================== -->
 <script type="module">
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Importaciones y Configuración Firebase
-  // ============================================================================
+  // ==========================================================================
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
     getFirestore, collection, doc, setDoc, getDocs, getDoc,
@@ -782,13 +853,13 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  // ============================================================================
+  // ==========================================================================
   // FIN: Importaciones y Configuración Firebase
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Variables de Estado Globales
-  // ============================================================================
+  // ==========================================================================
   let currentRoute = null;
   let currentAlmacen = null;
   let almacenesCompletados = [];
@@ -813,13 +884,13 @@
   let vozFemenina = null;
   let rutasEncontradas = [];
   let tiendasDisponibles = [];
-  // ============================================================================
+  // ==========================================================================
   // FIN: Variables de Estado Globales
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Referencias a Elementos DOM
-  // ============================================================================
+  // ==========================================================================
   const rutaSearch = document.getElementById('rutaSearch');
   const rutasLista = document.getElementById('rutasLista');
   const routeResult = document.getElementById('routeResult');
@@ -854,13 +925,13 @@
   const sobTienda = document.getElementById('sobTienda');
   const sobCantidad = document.getElementById('sobCantidad');
   const guardarSobranteBtn = document.getElementById('guardarSobranteBtn');
-  // ============================================================================
+  // ==========================================================================
   // FIN: Referencias a Elementos DOM
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Funciones de Voz y Audio
-  // ============================================================================
+  // ==========================================================================
   function seleccionarVozFemenina() {
     return new Promise((resolve) => {
       let voces = window.speechSynthesis.getVoices();
@@ -924,13 +995,13 @@
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.2);
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Funciones de Voz y Audio
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Cargar Validadors (Team Leaders)
-  // ============================================================================
+  // ==========================================================================
   async function loadValidadores() {
     try {
       const snap = await getDocs(collection(db, 'team_leaders'));
@@ -938,13 +1009,13 @@
     } catch(e) { console.warn('Error cargando validadores:', e); }
   }
   loadValidadores();
-  // ============================================================================
+  // ==========================================================================
   // FIN: Cargar Validadors
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Autocompletado de Validador
-  // ============================================================================
+  // ==========================================================================
   validadorInput.addEventListener('input', () => {
     const val = validadorInput.value.toUpperCase();
     validadorInput.value = val;
@@ -981,13 +1052,13 @@
       validadorDropdown.style.display = 'none';
     }
   });
-  // ============================================================================
+  // ==========================================================================
   // FIN: Autocompletado de Validador
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Búsqueda de Rutas
-  // ============================================================================
+  // ==========================================================================
   rutaSearch.addEventListener('input', async (e) => {
     const searchTerm = e.target.value.trim().toUpperCase();
     rutaSearch.value = searchTerm;
@@ -1064,13 +1135,13 @@
       initialFields.classList.remove('show');
     }
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Búsqueda de Rutas
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Funciones Auxiliares (detectar Domino's, Congelado, agrupación)
-  // ============================================================================
+  // ==========================================================================
   function esAlmacenCongelado() {
     return currentAlmacen === 'CONGELADO';
   }
@@ -1154,13 +1225,13 @@
     
     return Array.from(gruposMap.values());
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Funciones Auxiliares
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Cargar Tiendas Desde Items
-  // ============================================================================
+  // ==========================================================================
   async function cargarTiendasDesdeItems() {
     if (!currentRoute || !currentAlmacen) return;
     
@@ -1238,13 +1309,13 @@
       console.error('Error cargando tiendas:', error);
     }
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Cargar Tiendas Desde Items
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Verificar Estado de Almacenes
-  // ============================================================================
+  // ==========================================================================
   async function verificarEstadoAlmacenes() {
     if (!currentRoute) return;
     
@@ -1300,13 +1371,13 @@
       }
     }
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Verificar Estado de Almacenes
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Renderizar Botones de Almacenes
-  // ============================================================================
+  // ==========================================================================
   function renderAlmacenesConEstado() {
     almacenesGrid.innerHTML = '';
     
@@ -1314,7 +1385,9 @@
       const btn = document.createElement('button');
       btn.className = 'alm-btn';
       
+      // CORREGIDO: Congelado ya no tiene color especial
       if (alm === 'CONGELADO') {
+        // Solo agregamos clase para posible identificación, pero sin estilos especiales
         btn.classList.add('congelado');
       }
       
@@ -1338,13 +1411,13 @@
 
     verFaltantesBtn.style.display = almacenesConFaltantes.length > 0 ? 'block' : 'none';
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Renderizar Botones de Almacenes
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Ver Faltantes (Modal)
-  // ============================================================================
+  // ==========================================================================
   verFaltantesBtn.addEventListener('click', async () => {
     if (!currentRoute) return;
 
@@ -1387,13 +1460,13 @@
       modalFaltantes.classList.remove('show');
     }
   });
-  // ============================================================================
+  // ==========================================================================
   // FIN: Ver Faltantes
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Validar Campos para Habilitar Inicio
-  // ============================================================================
+  // ==========================================================================
   function checkIniciarValidacion() {
     const validadorOk = validadorInput.value.trim().length >= 2;
     const tarimasOk = tarimasInput.value !== '';
@@ -1410,13 +1483,13 @@
     input.addEventListener('input', checkIniciarValidacion);
     input.addEventListener('change', checkIniciarValidacion);
   });
-  // ============================================================================
+  // ==========================================================================
   // FIN: Validar Campos para Habilitar Inicio
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Iniciar Validación
-  // ============================================================================
+  // ==========================================================================
   iniciarValidacionBtn.addEventListener('click', async () => {
     sesionValidacion = {
       inicio: new Date(),
@@ -1469,13 +1542,13 @@
       tiempoTranscurrido.textContent = `${horas}:${minutos}:${segundos}`;
     }, 1000);
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Iniciar Validación
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Cargar Productos
-  // ============================================================================
+  // ==========================================================================
   async function cargarProductos() {
     if (!currentRoute || !currentAlmacen) return;
 
@@ -1518,26 +1591,26 @@
       showToast('Error al cargar productos');
     }
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Cargar Productos
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Procesar Congelado
-  // ============================================================================
+  // ==========================================================================
   function procesarCongelado() {
     const productosCongelado = productos.filter(p => p.estatus !== 'concluido');
     const productosAgrupados = agruparProductosCongelado(productosCongelado);
     showToast(`❄️ Mostrando productos CONGELADO (${productosAgrupados.length} grupos)`);
     renderProductos(productosAgrupados);
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Procesar Congelado
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Filtrar Productos por Tienda
-  // ============================================================================
+  // ==========================================================================
   function filtrarProductosPorTienda(tienda) {
     if (!tienda) {
       renderProductos([]);
@@ -1567,13 +1640,13 @@
       renderProductos(productosFiltradosTemp);
     }
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Filtrar Productos por Tienda
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Ocultar Tienda del Selector (cuando se completa)
-  // ============================================================================
+  // ==========================================================================
   function ocultarTiendaDelSelector(tienda) {
     Array.from(tiendaValidacionSelect.options).forEach(option => {
       if (option.value === tienda) {
@@ -1591,25 +1664,25 @@
       showToast('✨ Todas las tiendas completadas');
     }
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Ocultar Tienda del Selector
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Evento Cambio de Tienda
-  // ============================================================================
+  // ==========================================================================
   tiendaValidacionSelect.addEventListener('change', (e) => {
     const tienda = e.target.value;
     sesionValidacion.tienda = tienda;
     filtrarProductosPorTienda(tienda);
   });
-  // ============================================================================
+  // ==========================================================================
   // FIN: Evento Cambio de Tienda
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Renderizar Productos
-  // ============================================================================
+  // ==========================================================================
   function renderProductos(productosArray) {
     if (!productosArray || productosArray.length === 0) {
       if (esAlmacenCongelado()) {
@@ -1675,7 +1748,7 @@
     }).join('');
 
     // ==========================================================================
-    // INICIO: Eventos de Input en Productos (Validación)
+    // INICIO: Eventos de Input en Productos (Validación con DELAY - CORREGIDO)
     // ==========================================================================
     document.querySelectorAll('.producto-card').forEach(card => {
       const input = card.querySelector('.cantidad-input');
@@ -1691,18 +1764,22 @@
       
       if (!producto) return;
 
-      input.addEventListener('input', async (e) => {
+      let timeoutId = null;
+
+      input.addEventListener('input', (e) => {
         const valorIngresado = e.target.value;
         
-        if (valorIngresado === '') {
-          card.classList.remove('coincide', 'no-coincide');
-          return;
-        }
+        // Limpiar timeout anterior si existe
+        if (timeoutId) clearTimeout(timeoutId);
+        
+        // Remover clases mientras escribe
+        card.classList.remove('coincide', 'no-coincide');
+        
+        if (valorIngresado === '') return;
         
         const cantidad = parseFloat(valorIngresado);
         
         if (isNaN(cantidad) || cantidad === 0) {
-          card.classList.remove('coincide', 'no-coincide');
           if (cantidad === 0) {
             input.value = '';
             showToast('❌ No se puede ingresar 0');
@@ -1711,72 +1788,78 @@
           return;
         }
 
-        const diferencia = Math.abs(cantidad - sdo);
-        const coincide = diferencia < 0.01;
+        // Esperar 500ms después de que el usuario deje de escribir
+        timeoutId = setTimeout(async () => {
+          const cantidad = parseFloat(input.value);
+          if (isNaN(cantidad) || cantidad === 0) return;
 
-        if (coincide) {
-          card.classList.add('coincide');
-          card.classList.remove('no-coincide');
-          
-          hablar(`Producto ${producto.codigo} validado`);
-          productoSearch.value = '';
-          clearSearch.classList.remove('show');
-          
-          try {
-            if (esDomino || esCongelado) {
-              for (const tiendaOrigen of producto.tiendasOrigen) {
-                await setDoc(doc(db, 'items', tiendaOrigen.idOriginal), {
+          const diferencia = Math.abs(cantidad - sdo);
+          const coincide = diferencia < 0.01;
+
+          if (coincide) {
+            card.classList.add('coincide');
+            card.classList.remove('no-coincide');
+            
+            hablar(`Producto ${producto.codigo} validado`);
+            productoSearch.value = '';
+            clearSearch.classList.remove('show');
+            
+            try {
+              if (esDomino || esCongelado) {
+                for (const tiendaOrigen of producto.tiendasOrigen) {
+                  await setDoc(doc(db, 'items', tiendaOrigen.idOriginal), {
+                    estatus: 'concluido',
+                    validadoPor: sesionValidacion.validador,
+                    fechaValidacion: new Date().toISOString()
+                  }, { merge: true });
+                }
+              } else {
+                await setDoc(doc(db, 'items', productoId), {
                   estatus: 'concluido',
                   validadoPor: sesionValidacion.validador,
                   fechaValidacion: new Date().toISOString()
                 }, { merge: true });
               }
-            } else {
-              await setDoc(doc(db, 'items', productoId), {
-                estatus: 'concluido',
-                validadoPor: sesionValidacion.validador,
-                fechaValidacion: new Date().toISOString()
-              }, { merge: true });
-            }
-            
-            setTimeout(() => {
-              card.classList.add('validado');
               
-              if (!esDomino && !esCongelado && tienda) {
-                const productosRestantes = productos.filter(p => 
-                  p.tienda === tienda && p.estatus !== 'concluido'
-                ).length;
+              setTimeout(() => {
+                card.classList.add('validado');
                 
-                if (productosRestantes === 0) {
-                  ocultarTiendaDelSelector(tienda);
+                if (!esDomino && !esCongelado && tienda) {
+                  const productosRestantes = productos.filter(p => 
+                    p.tienda === tienda && p.estatus !== 'concluido'
+                  ).length;
+                  
+                  if (productosRestantes === 0) {
+                    ocultarTiendaDelSelector(tienda);
+                  }
                 }
-              }
+                
+                cargarProductos();
+              }, 1000);
               
-              cargarProductos();
-            }, 1000);
-            
-          } catch(e) {
-            console.warn(e);
-            showToast('Error al actualizar');
+            } catch(e) {
+              console.warn(e);
+              showToast('Error al actualizar');
+            }
+          } else {
+            card.classList.add('no-coincide');
+            card.classList.remove('coincide');
+            sonidoError();
           }
-        } else {
-          card.classList.add('no-coincide');
-          card.classList.remove('coincide');
-          sonidoError();
-        }
+        }, 500); // ⏱️ 500ms de delay
       });
     });
     // ==========================================================================
     // FIN: Eventos de Input en Productos
     // ==========================================================================
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Renderizar Productos
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Filtro de Búsqueda de Productos
-  // ============================================================================
+  // ==========================================================================
   productoSearch.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const cards = document.querySelectorAll('.producto-card');
@@ -1804,13 +1887,13 @@
     productoSearch.dispatchEvent(new Event('input'));
     productoSearch.focus();
   });
-  // ============================================================================
+  // ==========================================================================
   // FIN: Filtro de Búsqueda de Productos
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Modal Sobrantes - Abrir
-  // ============================================================================
+  // ==========================================================================
   btnAbrirModalSobrante.addEventListener('click', () => {
     if (!currentRoute || !currentAlmacen || !sesionValidacion.validador) {
       showToast('⚠ Debes iniciar una validación primero');
@@ -1847,13 +1930,13 @@
     sobTienda.value = '';
     sobCantidad.value = '';
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Modal Sobrantes - Abrir
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Guardar Sobrante
-  // ============================================================================
+  // ==========================================================================
   guardarSobranteBtn.addEventListener('click', async () => {
     const codigo = sobCodigo.value.trim().toUpperCase();
     const desc = sobDesc.value.trim().toUpperCase();
@@ -1903,63 +1986,84 @@
       showToast('❌ Error al guardar sobrante');
     }
   });
-  // ============================================================================
+  // ==========================================================================
   // FIN: Guardar Sobrante
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
-  // INICIO: Finalizar Validación (CORREGIDA)
-  // ============================================================================
-  finalizarValidacionBtn.addEventListener('click', async () => {
-    if (!confirm('¿Finalizar validación? Los productos pendientes quedarán como faltantes.')) return;
 
-    sesionValidacion.fin = new Date();
-    if (timerInterval) clearInterval(timerInterval);
+// ==========================================================================
+// INICIO: Finalizar Validación (CORREGIDA - PROCESA TODOS LOS ALMACENES)
+// ==========================================================================
+finalizarValidacionBtn.addEventListener('click', async () => {
+  if (!confirm('¿Finalizar validación? Los productos pendientes quedarán como faltantes.')) return;
 
-    const diffSeg = Math.floor((sesionValidacion.fin - sesionValidacion.inicio) / 1000);
-    const horas = Math.floor(diffSeg / 3600).toString().padStart(2, '0');
-    const minutos = Math.floor((diffSeg % 3600) / 60).toString().padStart(2, '0');
-    const segundos = (diffSeg % 60).toString().padStart(2, '0');
-    const tiempoTotal = `${horas}:${minutos}:${segundos}`;
+  sesionValidacion.fin = new Date();
+  if (timerInterval) clearInterval(timerInterval);
 
-    const almacenOriginal = currentAlmacen;
+  const diffSeg = Math.floor((sesionValidacion.fin - sesionValidacion.inicio) / 1000);
+  const horas = Math.floor(diffSeg / 3600).toString().padStart(2, '0');
+  const minutos = Math.floor((diffSeg % 3600) / 60).toString().padStart(2, '0');
+  const segundos = (diffSeg % 60).toString().padStart(2, '0');
+  const tiempoTotal = `${horas}:${minutos}:${segundos}`;
 
-    try {
-      // 🔍 Obtener productos actualizados directamente de Firebase
-      const q = query(
-        collection(db, 'items'),
-        where('ruta', '==', currentRoute.ruta),
-        where('viaje', '==', currentRoute.viaje),
-        where('almacen', '==', almacenOriginal)
-      );
-      const snap = await getDocs(q);
-      
-      const productosActuales = [];
-      snap.forEach(doc => {
-        const data = doc.data();
-        if (data.tipo !== 'SOBRANTE') {
-          productosActuales.push({
-            id: doc.id,
-            ...data,
-            sdo: data.cantidad || 0
-          });
+  const almacenOriginal = currentAlmacen;
+
+  try {
+    // 🔍 Obtener TODOS los productos de la ruta, no solo del almacén actual
+    const q = query(
+      collection(db, 'items'),
+      where('ruta', '==', currentRoute.ruta),
+      where('viaje', '==', currentRoute.viaje)
+      // 👆 ELIMINADO el filtro por almacén - AHORA TRAE TODOS
+    );
+    const snap = await getDocs(q);
+    
+    const productosPorAlmacen = {};
+    const todosLosProductos = [];
+    
+    snap.forEach(doc => {
+      const data = doc.data();
+      if (data.tipo !== 'SOBRANTE') {
+        const producto = {
+          id: doc.id,
+          ...data,
+          sdo: data.cantidad || 0
+        };
+        todosLosProductos.push(producto);
+        
+        // Agrupar por almacén para estadísticas
+        const almacen = data.almacen === 'FRIO' ? 'CONGELADO' : data.almacen;
+        if (!productosPorAlmacen[almacen]) {
+          productosPorAlmacen[almacen] = [];
         }
-      });
+        productosPorAlmacen[almacen].push(producto);
+      }
+    });
 
-      // Filtrar por tienda si es necesario
-      let productosAProcesar = productosActuales;
-      if (sesionValidacion.tienda && sesionValidacion.tienda !== 'TODAS') {
+    console.log('📊 Procesando todos los almacenes:', Object.keys(productosPorAlmacen));
+
+    // Procesar CADA ALMACÉN individualmente
+    const resultadosPorAlmacen = {};
+    let totalFaltantes = 0;
+    let totalProcesados = 0;
+
+    for (const [almacen, productosAlmacen] of Object.entries(productosPorAlmacen)) {
+      // Filtrar por tienda si es necesario (solo para el almacén actual)
+      let productosAProcesar = productosAlmacen;
+      
+      // Si es el almacén actual y hay una tienda seleccionada, aplicar filtro
+      if (almacen === currentAlmacen && sesionValidacion.tienda && sesionValidacion.tienda !== 'TODAS') {
         if (sesionValidacion.tienda === 'DOMINOS') {
-          productosAProcesar = productosActuales.filter(p => esTiendaDomino(p.tienda));
+          productosAProcesar = productosAlmacen.filter(p => esTiendaDomino(p.tienda));
         } else {
-          productosAProcesar = productosActuales.filter(p => p.tienda === sesionValidacion.tienda);
+          productosAProcesar = productosAlmacen.filter(p => p.tienda === sesionValidacion.tienda);
         }
       }
 
-      // Identificar productos pendientes (no concluidos)
+      // Identificar productos pendientes (no concluidos) en ESTE almacén
       const productosPendientes = productosAProcesar.filter(p => p.estatus !== 'concluido');
       
-      console.log(`📊 Productos pendientes a marcar como faltantes: ${productosPendientes.length}`);
+      console.log(`📊 Almacén ${almacen}: ${productosPendientes.length} pendientes de ${productosAProcesar.length} totales`);
 
       // Marcar cada pendiente como faltante
       for (const p of productosPendientes) {
@@ -1968,48 +2072,57 @@
           validadoPor: sesionValidacion.validador,
           fechaValidacion: sesionValidacion.fin.toISOString()
         }, { merge: true });
-        console.log(`✅ Marcado como faltante: ${p.codigo} (${p.tienda})`);
+        console.log(`✅ Marcado como faltante: ${p.codigo} (${p.tienda}) - Almacén: ${almacen}`);
+        totalFaltantes++;
       }
-
-      // Guardar sesión de validación
-      const sesionId = `${currentRoute.ruta}_${currentRoute.viaje}_${almacenOriginal}_${sesionValidacion.inicio.getTime()}`;
-      await setDoc(doc(db, 'sesiones_validacion', sesionId), {
-        ruta: currentRoute.ruta,
-        viaje: currentRoute.viaje,
-        almacen: almacenOriginal,
-        tienda: sesionValidacion.tienda,
-        validador: sesionValidacion.validador,
-        tarimas: sesionValidacion.tarimas,
-        anden: sesionValidacion.anden,
-        tipo: sesionValidacion.tipo,
-        inicio: sesionValidacion.inicio.toISOString(),
-        fin: sesionValidacion.fin.toISOString(),
-        tiempoTotal,
-        productosTotales: productosAProcesar.length,
-        productosConcluidos: productosAProcesar.filter(p => p.estatus === 'concluido').length,
-        productosFaltantes: productosPendientes.length
-      });
-
-      showToast(`✅ Validación finalizada - ${productosPendientes.length} faltantes marcados`);
-      hablar("Validación finalizada");
-
-      // Recargar para limpiar estado
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-
-    } catch (error) {
-      console.error('❌ Error al finalizar:', error);
-      showToast('❌ Error al finalizar');
+      
+      totalProcesados += productosAProcesar.length;
+      resultadosPorAlmacen[almacen] = {
+        total: productosAProcesar.length,
+        faltantes: productosPendientes.length
+      };
     }
-  });
-  // ============================================================================
-  // FIN: Finalizar Validación
-  // ============================================================================
 
-  // ============================================================================
+    // Guardar sesión de validación con detalles por almacén
+    const sesionId = `${currentRoute.ruta}_${currentRoute.viaje}_${almacenOriginal}_${sesionValidacion.inicio.getTime()}`;
+    await setDoc(doc(db, 'sesiones_validacion', sesionId), {
+      ruta: currentRoute.ruta,
+      viaje: currentRoute.viaje,
+      almacen: almacenOriginal,
+      tienda: sesionValidacion.tienda,
+      validador: sesionValidacion.validador,
+      tarimas: sesionValidacion.tarimas,
+      anden: sesionValidacion.anden,
+      tipo: sesionValidacion.tipo,
+      inicio: sesionValidacion.inicio.toISOString(),
+      fin: sesionValidacion.fin.toISOString(),
+      tiempoTotal,
+      resultadosPorAlmacen,
+      productosTotales: totalProcesados,
+      productosFaltantes: totalFaltantes
+    });
+
+    showToast(`✅ Validación finalizada - ${totalFaltantes} faltantes marcados en total`);
+    hablar("Validación finalizada");
+
+    // Recargar para limpiar estado
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+
+  } catch (error) {
+    console.error('❌ Error al finalizar:', error);
+    showToast('❌ Error al finalizar');
+  }
+});
+// ==========================================================================
+// FIN: Finalizar Validación
+// ==========================================================================
+
+
+  // ==========================================================================
   // INICIO: Toast
-  // ============================================================================
+  // ==========================================================================
   function showToast(msg) {
     const toast = document.createElement('div');
     toast.className = 'toast';
@@ -2017,32 +2130,35 @@
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   }
-  // ============================================================================
+  // ==========================================================================
   // FIN: Toast
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Inicializar Voz
-  // ============================================================================
+  // ==========================================================================
   seleccionarVozFemenina().then(voz => {
     vozFemenina = voz;
   });
-  // ============================================================================
+  // ==========================================================================
   // FIN: Inicializar Voz
-  // ============================================================================
+  // ==========================================================================
 
-  // ============================================================================
+  // ==========================================================================
   // INICIO: Listener en Tiempo Real (Firestore)
-  // ============================================================================
+  // ==========================================================================
   onSnapshot(collection(db, 'items'), () => {
     if (currentRoute && currentAlmacen && validacionSection.classList.contains('show')) {
       cargarProductos();
     }
   });
-  // ============================================================================
+  // ==========================================================================
   // FIN: Listener en Tiempo Real
-  // ============================================================================
+  // ==========================================================================
 
 </script>
+<!-- ======================================================================== -->
+<!-- FIN: JAVASCRIPT -->
+<!-- ======================================================================== -->
 </body>
 </html>
