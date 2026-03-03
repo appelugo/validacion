@@ -762,6 +762,9 @@
 </div>
 
 <script type="module">
+  // ============================================================================
+  // INICIO: Importaciones y Configuración Firebase
+  // ============================================================================
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
     getFirestore, collection, doc, setDoc, getDocs, getDoc,
@@ -779,8 +782,13 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  // ============================================================================
+  // FIN: Importaciones y Configuración Firebase
+  // ============================================================================
 
-  // ========== STATE ==========
+  // ============================================================================
+  // INICIO: Variables de Estado Globales
+  // ============================================================================
   let currentRoute = null;
   let currentAlmacen = null;
   let almacenesCompletados = [];
@@ -805,8 +813,13 @@
   let vozFemenina = null;
   let rutasEncontradas = [];
   let tiendasDisponibles = [];
+  // ============================================================================
+  // FIN: Variables de Estado Globales
+  // ============================================================================
 
-  // ========== DOM ELEMENTS ==========
+  // ============================================================================
+  // INICIO: Referencias a Elementos DOM
+  // ============================================================================
   const rutaSearch = document.getElementById('rutaSearch');
   const rutasLista = document.getElementById('rutasLista');
   const routeResult = document.getElementById('routeResult');
@@ -841,8 +854,13 @@
   const sobTienda = document.getElementById('sobTienda');
   const sobCantidad = document.getElementById('sobCantidad');
   const guardarSobranteBtn = document.getElementById('guardarSobranteBtn');
+  // ============================================================================
+  // FIN: Referencias a Elementos DOM
+  // ============================================================================
 
-  // ========== FUNCIONES DE VOZ ==========
+  // ============================================================================
+  // INICIO: Funciones de Voz y Audio
+  // ============================================================================
   function seleccionarVozFemenina() {
     return new Promise((resolve) => {
       let voces = window.speechSynthesis.getVoices();
@@ -906,8 +924,13 @@
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + 0.2);
   }
+  // ============================================================================
+  // FIN: Funciones de Voz y Audio
+  // ============================================================================
 
-  // ========== CARGAR VALIDADORES ==========
+  // ============================================================================
+  // INICIO: Cargar Validadors (Team Leaders)
+  // ============================================================================
   async function loadValidadores() {
     try {
       const snap = await getDocs(collection(db, 'team_leaders'));
@@ -915,8 +938,13 @@
     } catch(e) { console.warn('Error cargando validadores:', e); }
   }
   loadValidadores();
+  // ============================================================================
+  // FIN: Cargar Validadors
+  // ============================================================================
 
-  // ========== AUTOCOMPLETE VALIDADOR ==========
+  // ============================================================================
+  // INICIO: Autocompletado de Validador
+  // ============================================================================
   validadorInput.addEventListener('input', () => {
     const val = validadorInput.value.toUpperCase();
     validadorInput.value = val;
@@ -953,8 +981,13 @@
       validadorDropdown.style.display = 'none';
     }
   });
+  // ============================================================================
+  // FIN: Autocompletado de Validador
+  // ============================================================================
 
-  // ========== BUSCAR RUTAS ==========
+  // ============================================================================
+  // INICIO: Búsqueda de Rutas
+  // ============================================================================
   rutaSearch.addEventListener('input', async (e) => {
     const searchTerm = e.target.value.trim().toUpperCase();
     rutaSearch.value = searchTerm;
@@ -1031,18 +1064,21 @@
       initialFields.classList.remove('show');
     }
   }
+  // ============================================================================
+  // FIN: Búsqueda de Rutas
+  // ============================================================================
 
-  // ========== DETECTAR ALMACÉN CONGELADO ==========
+  // ============================================================================
+  // INICIO: Funciones Auxiliares (detectar Domino's, Congelado, agrupación)
+  // ============================================================================
   function esAlmacenCongelado() {
     return currentAlmacen === 'CONGELADO';
   }
 
-  // ========== FUNCIÓN PARA IDENTIFICAR DOMINO'S ==========
   function esTiendaDomino(tienda) {
     return tienda && tienda.toString().startsWith('1');
   }
 
-  // ========== AGRUPAR PRODUCTOS DE DOMINO'S ==========
   function agruparProductosDomino(productosDomino) {
     const gruposMap = new Map();
     
@@ -1081,7 +1117,6 @@
     return Array.from(gruposMap.values());
   }
 
-  // ========== AGRUPAR PRODUCTOS DE CONGELADO ==========
   function agruparProductosCongelado(productosCongelado) {
     const gruposMap = new Map();
     
@@ -1119,12 +1154,16 @@
     
     return Array.from(gruposMap.values());
   }
+  // ============================================================================
+  // FIN: Funciones Auxiliares
+  // ============================================================================
 
-  // ========== CARGAR TIENDAS DESDE ITEMS ==========
+  // ============================================================================
+  // INICIO: Cargar Tiendas Desde Items
+  // ============================================================================
   async function cargarTiendasDesdeItems() {
     if (!currentRoute || !currentAlmacen) return;
     
-    // USAR currentAlmacen DIRECTAMENTE (sin conversiones)
     const almacenOriginal = currentAlmacen;
 
     try {
@@ -1151,17 +1190,14 @@
       
       tiendasDisponibles = Array.from(tiendasSet).sort();
       
-      // SI ES CONGELADO - OCULTAR SELECTOR DE TIENDAS
       if (esAlmacenCongelado()) {
         tiendaSelectorContainer.style.display = 'none';
-        // Para CONGELADO, siempre mostrar TODOS los productos agrupados
         sesionValidacion.tienda = 'CONGELADO';
         return;
       } else {
         tiendaSelectorContainer.style.display = 'block';
       }
       
-      // Resto del código para llenar selector (solo para otros almacenes)
       tiendaValidacionSelect.innerHTML = '<option value="">SELECCIONAR TIENDA</option>';
       
       const optionTodas = document.createElement('option');
@@ -1202,7 +1238,13 @@
       console.error('Error cargando tiendas:', error);
     }
   }
+  // ============================================================================
+  // FIN: Cargar Tiendas Desde Items
+  // ============================================================================
 
+  // ============================================================================
+  // INICIO: Verificar Estado de Almacenes
+  // ============================================================================
   async function verificarEstadoAlmacenes() {
     if (!currentRoute) return;
     
@@ -1258,7 +1300,13 @@
       }
     }
   }
+  // ============================================================================
+  // FIN: Verificar Estado de Almacenes
+  // ============================================================================
 
+  // ============================================================================
+  // INICIO: Renderizar Botones de Almacenes
+  // ============================================================================
   function renderAlmacenesConEstado() {
     almacenesGrid.innerHTML = '';
     
@@ -1290,8 +1338,13 @@
 
     verFaltantesBtn.style.display = almacenesConFaltantes.length > 0 ? 'block' : 'none';
   }
+  // ============================================================================
+  // FIN: Renderizar Botones de Almacenes
+  // ============================================================================
 
-  // ========== VER FALTANTES ==========
+  // ============================================================================
+  // INICIO: Ver Faltantes (Modal)
+  // ============================================================================
   verFaltantesBtn.addEventListener('click', async () => {
     if (!currentRoute) return;
 
@@ -1334,8 +1387,13 @@
       modalFaltantes.classList.remove('show');
     }
   });
+  // ============================================================================
+  // FIN: Ver Faltantes
+  // ============================================================================
 
-  // ========== VALIDAR CAMPOS PARA INICIAR ==========
+  // ============================================================================
+  // INICIO: Validar Campos para Habilitar Inicio
+  // ============================================================================
   function checkIniciarValidacion() {
     const validadorOk = validadorInput.value.trim().length >= 2;
     const tarimasOk = tarimasInput.value !== '';
@@ -1352,8 +1410,13 @@
     input.addEventListener('input', checkIniciarValidacion);
     input.addEventListener('change', checkIniciarValidacion);
   });
+  // ============================================================================
+  // FIN: Validar Campos para Habilitar Inicio
+  // ============================================================================
 
-  // ========== INICIAR VALIDACIÓN ==========
+  // ============================================================================
+  // INICIO: Iniciar Validación
+  // ============================================================================
   iniciarValidacionBtn.addEventListener('click', async () => {
     sesionValidacion = {
       inicio: new Date(),
@@ -1406,12 +1469,16 @@
       tiempoTranscurrido.textContent = `${horas}:${minutos}:${segundos}`;
     }, 1000);
   }
+  // ============================================================================
+  // FIN: Iniciar Validación
+  // ============================================================================
 
-  // ========== CARGAR PRODUCTOS ==========
+  // ============================================================================
+  // INICIO: Cargar Productos
+  // ============================================================================
   async function cargarProductos() {
     if (!currentRoute || !currentAlmacen) return;
 
-    // USAR currentAlmacen DIRECTAMENTE (sin conversiones)
     const almacenOriginal = currentAlmacen;
 
     try {
@@ -1439,7 +1506,6 @@
       productos = productosTemp;
       
       if (esAlmacenCongelado()) {
-        // Para CONGELADO, procesar directamente
         procesarCongelado();
       } else if (sesionValidacion.tienda) {
         filtrarProductosPorTienda(sesionValidacion.tienda);
@@ -1452,16 +1518,26 @@
       showToast('Error al cargar productos');
     }
   }
+  // ============================================================================
+  // FIN: Cargar Productos
+  // ============================================================================
 
-  // ========== PROCESAR CONGELADO ==========
+  // ============================================================================
+  // INICIO: Procesar Congelado
+  // ============================================================================
   function procesarCongelado() {
     const productosCongelado = productos.filter(p => p.estatus !== 'concluido');
     const productosAgrupados = agruparProductosCongelado(productosCongelado);
     showToast(`❄️ Mostrando productos CONGELADO (${productosAgrupados.length} grupos)`);
     renderProductos(productosAgrupados);
   }
+  // ============================================================================
+  // FIN: Procesar Congelado
+  // ============================================================================
 
-  // ========== FILTRAR PRODUCTOS POR TIENDA ==========
+  // ============================================================================
+  // INICIO: Filtrar Productos por Tienda
+  // ============================================================================
   function filtrarProductosPorTienda(tienda) {
     if (!tienda) {
       renderProductos([]);
@@ -1491,8 +1567,13 @@
       renderProductos(productosFiltradosTemp);
     }
   }
+  // ============================================================================
+  // FIN: Filtrar Productos por Tienda
+  // ============================================================================
 
-  // ========== OCULTAR TIENDA DEL SELECTOR ==========
+  // ============================================================================
+  // INICIO: Ocultar Tienda del Selector (cuando se completa)
+  // ============================================================================
   function ocultarTiendaDelSelector(tienda) {
     Array.from(tiendaValidacionSelect.options).forEach(option => {
       if (option.value === tienda) {
@@ -1510,15 +1591,25 @@
       showToast('✨ Todas las tiendas completadas');
     }
   }
+  // ============================================================================
+  // FIN: Ocultar Tienda del Selector
+  // ============================================================================
 
-  // ========== EVENTO CAMBIO DE TIENDA ==========
+  // ============================================================================
+  // INICIO: Evento Cambio de Tienda
+  // ============================================================================
   tiendaValidacionSelect.addEventListener('change', (e) => {
     const tienda = e.target.value;
     sesionValidacion.tienda = tienda;
     filtrarProductosPorTienda(tienda);
   });
+  // ============================================================================
+  // FIN: Evento Cambio de Tienda
+  // ============================================================================
 
-  // ========== RENDER PRODUCTOS ==========
+  // ============================================================================
+  // INICIO: Renderizar Productos
+  // ============================================================================
   function renderProductos(productosArray) {
     if (!productosArray || productosArray.length === 0) {
       if (esAlmacenCongelado()) {
@@ -1583,6 +1674,9 @@
       `;
     }).join('');
 
+    // ==========================================================================
+    // INICIO: Eventos de Input en Productos (Validación)
+    // ==========================================================================
     document.querySelectorAll('.producto-card').forEach(card => {
       const input = card.querySelector('.cantidad-input');
       const sdo = parseFloat(card.dataset.sdo);
@@ -1672,9 +1766,17 @@
         }
       });
     });
+    // ==========================================================================
+    // FIN: Eventos de Input en Productos
+    // ==========================================================================
   }
+  // ============================================================================
+  // FIN: Renderizar Productos
+  // ============================================================================
 
-  // ========== FILTRO DE BÚSQUEDA ==========
+  // ============================================================================
+  // INICIO: Filtro de Búsqueda de Productos
+  // ============================================================================
   productoSearch.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     const cards = document.querySelectorAll('.producto-card');
@@ -1702,8 +1804,13 @@
     productoSearch.dispatchEvent(new Event('input'));
     productoSearch.focus();
   });
+  // ============================================================================
+  // FIN: Filtro de Búsqueda de Productos
+  // ============================================================================
 
-  // ========== MODAL SOBRANTES ==========
+  // ============================================================================
+  // INICIO: Modal Sobrantes - Abrir
+  // ============================================================================
   btnAbrirModalSobrante.addEventListener('click', () => {
     if (!currentRoute || !currentAlmacen || !sesionValidacion.validador) {
       showToast('⚠ Debes iniciar una validación primero');
@@ -1740,8 +1847,13 @@
     sobTienda.value = '';
     sobCantidad.value = '';
   }
+  // ============================================================================
+  // FIN: Modal Sobrantes - Abrir
+  // ============================================================================
 
-  // ========== GUARDAR SOBRANTE ==========
+  // ============================================================================
+  // INICIO: Guardar Sobrante
+  // ============================================================================
   guardarSobranteBtn.addEventListener('click', async () => {
     const codigo = sobCodigo.value.trim().toUpperCase();
     const desc = sobDesc.value.trim().toUpperCase();
@@ -1791,8 +1903,13 @@
       showToast('❌ Error al guardar sobrante');
     }
   });
+  // ============================================================================
+  // FIN: Guardar Sobrante
+  // ============================================================================
 
-  // ========== FINALIZAR VALIDACIÓN ==========
+  // ============================================================================
+  // INICIO: Finalizar Validación (CORREGIDA)
+  // ============================================================================
   finalizarValidacionBtn.addEventListener('click', async () => {
     if (!confirm('¿Finalizar validación? Los productos pendientes quedarán como faltantes.')) return;
 
@@ -1808,27 +1925,53 @@
     const almacenOriginal = currentAlmacen;
 
     try {
-      const productosAProcesar = sesionValidacion.tienda ? productosFiltrados : productos;
-      const productosPendientes = productosAProcesar.filter(p => p.estatus !== 'concluido' && p.tipo !== 'SOBRANTE');
+      // 🔍 Obtener productos actualizados directamente de Firebase
+      const q = query(
+        collection(db, 'items'),
+        where('ruta', '==', currentRoute.ruta),
+        where('viaje', '==', currentRoute.viaje),
+        where('almacen', '==', almacenOriginal)
+      );
+      const snap = await getDocs(q);
       
-      for (const p of productosPendientes) {
-        if (p.esDomino || p.esCongelado) {
-          for (const tiendaOrigen of p.tiendasOrigen) {
-            await setDoc(doc(db, 'items', tiendaOrigen.idOriginal), {
-              estatus: 'faltante',
-              validadoPor: sesionValidacion.validador,
-              fechaValidacion: sesionValidacion.fin.toISOString()
-            }, { merge: true });
-          }
+      const productosActuales = [];
+      snap.forEach(doc => {
+        const data = doc.data();
+        if (data.tipo !== 'SOBRANTE') {
+          productosActuales.push({
+            id: doc.id,
+            ...data,
+            sdo: data.cantidad || 0
+          });
+        }
+      });
+
+      // Filtrar por tienda si es necesario
+      let productosAProcesar = productosActuales;
+      if (sesionValidacion.tienda && sesionValidacion.tienda !== 'TODAS') {
+        if (sesionValidacion.tienda === 'DOMINOS') {
+          productosAProcesar = productosActuales.filter(p => esTiendaDomino(p.tienda));
         } else {
-          await setDoc(doc(db, 'items', p.id), {
-            estatus: 'faltante',
-            validadoPor: sesionValidacion.validador,
-            fechaValidacion: sesionValidacion.fin.toISOString()
-          }, { merge: true });
+          productosAProcesar = productosActuales.filter(p => p.tienda === sesionValidacion.tienda);
         }
       }
 
+      // Identificar productos pendientes (no concluidos)
+      const productosPendientes = productosAProcesar.filter(p => p.estatus !== 'concluido');
+      
+      console.log(`📊 Productos pendientes a marcar como faltantes: ${productosPendientes.length}`);
+
+      // Marcar cada pendiente como faltante
+      for (const p of productosPendientes) {
+        await setDoc(doc(db, 'items', p.id), {
+          estatus: 'faltante',
+          validadoPor: sesionValidacion.validador,
+          fechaValidacion: sesionValidacion.fin.toISOString()
+        }, { merge: true });
+        console.log(`✅ Marcado como faltante: ${p.codigo} (${p.tienda})`);
+      }
+
+      // Guardar sesión de validación
       const sesionId = `${currentRoute.ruta}_${currentRoute.viaje}_${almacenOriginal}_${sesionValidacion.inicio.getTime()}`;
       await setDoc(doc(db, 'sesiones_validacion', sesionId), {
         ruta: currentRoute.ruta,
@@ -1847,20 +1990,26 @@
         productosFaltantes: productosPendientes.length
       });
 
-      showToast(`✅ Validación finalizada - Tiempo: ${tiempoTotal}`);
+      showToast(`✅ Validación finalizada - ${productosPendientes.length} faltantes marcados`);
       hablar("Validación finalizada");
 
+      // Recargar para limpiar estado
       setTimeout(() => {
         window.location.reload();
       }, 2000);
 
     } catch (error) {
-      console.error(error);
+      console.error('❌ Error al finalizar:', error);
       showToast('❌ Error al finalizar');
     }
   });
+  // ============================================================================
+  // FIN: Finalizar Validación
+  // ============================================================================
 
-  // ========== TOAST ==========
+  // ============================================================================
+  // INICIO: Toast
+  // ============================================================================
   function showToast(msg) {
     const toast = document.createElement('div');
     toast.className = 'toast';
@@ -1868,16 +2017,31 @@
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
   }
+  // ============================================================================
+  // FIN: Toast
+  // ============================================================================
 
+  // ============================================================================
+  // INICIO: Inicializar Voz
+  // ============================================================================
   seleccionarVozFemenina().then(voz => {
     vozFemenina = voz;
   });
+  // ============================================================================
+  // FIN: Inicializar Voz
+  // ============================================================================
 
+  // ============================================================================
+  // INICIO: Listener en Tiempo Real (Firestore)
+  // ============================================================================
   onSnapshot(collection(db, 'items'), () => {
     if (currentRoute && currentAlmacen && validacionSection.classList.contains('show')) {
       cargarProductos();
     }
   });
+  // ============================================================================
+  // FIN: Listener en Tiempo Real
+  // ============================================================================
 
 </script>
 </body>
