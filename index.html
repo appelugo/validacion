@@ -104,10 +104,16 @@
   th { color: rgba(255,255,255,0.9); padding: 8px 12px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
   td { padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--border); }
 
-  .ruta-badge { background: var(--navy-light); border: 1px solid #c8d8e8; border-radius: 4px; padding: 2px 6px; display: inline-block; font-weight: 600; font-size: 11px; }
-  .action-icons { display: inline-flex; gap: 8px; margin-left: 6px; }
-  .click-hint { font-size: 9px; color: var(--faint); cursor: pointer; transition: color 0.2s; }
-  .click-hint:hover { color: var(--navy); text-decoration: underline; }
+  .ruta-cell {
+    cursor: pointer;
+    transition: background 0.2s;
+    font-weight: 500;
+  }
+  .ruta-cell:hover {
+    background: var(--navy-light);
+  }
+  .ruta-badge { background: var(--navy-light); border: 1px solid #c8d8e8; border-radius: 4px; padding: 2px 6px; display: inline-block; font-weight: 600; font-size: 11px; margin-right: 6px; }
+  .action-icons { display: inline-flex; gap: 8px; margin-left: 8px; }
   .pdf-icon { font-size: 15px; cursor: pointer; transition: transform 0.2s; }
   .pdf-icon:hover { transform: scale(1.15); }
   .pdf-icon.red { color: var(--pdf-red); }
@@ -144,21 +150,22 @@
 
   footer { background: var(--navy-dark); padding: 6px 24px; text-align: center; color: rgba(255,255,255,0.35); font-size: 10px; }
 
+  /* MODAL DE DETALLE - TAMAÑO REDUCIDO */
   .modal-overlay#modalOverlay .modal { 
-    max-width: 1100px; 
-    max-height: 85vh;
-    width: 95%;
+    max-width: 950px; 
+    max-height: 80vh;
+    width: 90%;
     display: flex;
     flex-direction: column;
     padding: 0;
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: 10px;
   }
   
   .modal-overlay#modalOverlay .modal-header {
     background: var(--navy);
-    border-radius: 12px 12px 0 0;
-    padding: 12px 20px;
+    border-radius: 10px 10px 0 0;
+    padding: 10px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -167,14 +174,14 @@
   
   .modal-overlay#modalOverlay .modal-title { 
     font-family: 'Barlow Condensed', sans-serif; 
-    font-size: 16px; 
+    font-size: 15px; 
     font-weight: 700; 
     color: #fff; 
     letter-spacing: 1px;
   }
   
   .modal-overlay#modalOverlay .modal-meta { 
-    font-size: 11px; 
+    font-size: 10px; 
     color: rgba(255,255,255,0.7); 
     margin-top: 2px; 
   }
@@ -183,11 +190,11 @@
     background: rgba(255,255,255,0.15); 
     border: 1px solid rgba(255,255,255,0.2); 
     color: #fff; 
-    border-radius: 6px; 
-    width: 28px; 
-    height: 28px; 
+    border-radius: 5px; 
+    width: 26px; 
+    height: 26px; 
     cursor: pointer; 
-    font-size: 14px; 
+    font-size: 13px; 
     display: flex; 
     align-items: center; 
     justify-content: center; 
@@ -198,63 +205,26 @@
   .modal-overlay#modalOverlay .modal-body {
     flex: 1;
     overflow-y: auto;
-    padding: 16px;
+    padding: 12px;
     background: var(--bg);
   }
 
   .modal-overlay#modalOverlay .modal-footer {
     border-top: 1px solid var(--border);
-    padding: 12px 20px;
+    padding: 8px 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
     background: white;
-    border-radius: 0 0 12px 12px;
+    border-radius: 0 0 10px 10px;
   }
 
-  .validacion-almacen {
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    box-shadow: var(--shadow-sm);
-  }
-  
-  .validacion-item { 
-    display: flex; 
-    flex-direction: column; 
-  }
-  
-  .validacion-label { 
-    font-size: 9px; 
-    font-weight: 600; 
-    text-transform: uppercase; 
-    letter-spacing: 1px; 
-    color: var(--muted); 
-    margin-bottom: 2px;
-  }
-  
-  .validacion-value { 
-    font-size: 13px; 
-    font-weight: 600; 
-    color: var(--navy); 
-  }
-  
-  .validacion-value.tiempo {
-    color: var(--purple);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 15px;
-  }
-
+  /* ESTILOS PARA ENCABEZADOS DE ALMACÉN CON DATOS DE VALIDACIÓN */
   .alm-section { 
-    margin-bottom: 16px; 
+    margin-bottom: 12px; 
     background: white;
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
     box-shadow: var(--shadow-sm);
   }
@@ -264,26 +234,26 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(135deg, var(--surface2) 0%, white 100%);
+    background: var(--surface2);
     border-bottom: 1px solid var(--border);
-    padding: 10px 16px;
+    padding: 8px 12px;
     cursor: pointer;
     transition: background 0.2s;
   }
   .alm-header:hover {
-    background: var(--surface2);
+    background: var(--navy-light);
   }
   
   .alm-name { 
     font-family: 'Barlow Condensed', sans-serif; 
-    font-size: 14px; 
+    font-size: 13px; 
     font-weight: 700; 
     color: var(--navy); 
     text-transform: uppercase; 
     letter-spacing: 1px; 
     display: flex; 
     align-items: center; 
-    gap: 8px; 
+    gap: 6px; 
   }
   
   .alm-dot { 
@@ -294,42 +264,62 @@
     flex-shrink: 0; 
   }
   
+  .alm-header-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  
+  .alm-header-info span {
+    white-space: nowrap;
+  }
+  
+  .alm-header-info strong {
+    color: var(--navy);
+    margin-left: 3px;
+  }
+  
   .alm-header-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
   
   .alm-count { 
-    font-size: 11px; 
+    font-size: 10px; 
     color: var(--muted); 
     font-weight: 500; 
     background: var(--surface2);
     padding: 2px 8px;
     border-radius: 16px;
+    border: 1px solid var(--border);
   }
   
-  .btn-no-validado {
+  .btn-no-validado-icon {
     background: var(--gray);
     color: white;
     border: none;
     border-radius: 3px;
-    padding: 4px 8px;
-    font-size: 10px;
-    font-weight: 600;
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+    font-weight: bold;
     cursor: pointer;
     transition: background 0.15s;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .btn-no-validado:hover {
+  .btn-no-validado-icon:hover {
     background: #4b5563;
   }
 
   .toggle-icon {
-    font-size: 12px;
+    font-size: 10px;
     color: var(--muted);
-    margin-left: 8px;
+    margin-left: 4px;
   }
 
   .alm-table-wrap { 
@@ -344,7 +334,7 @@
   .alm-table { 
     width: 100%; 
     border-collapse: collapse; 
-    min-width: 800px; 
+    min-width: 750px; 
   }
   
   .alm-table th { 
@@ -355,12 +345,12 @@
     font-weight: 600; 
     text-transform: uppercase; 
     letter-spacing: 1px; 
-    padding: 8px 12px; 
+    padding: 6px 10px; 
     text-align: left; 
   }
   
   .alm-table td { 
-    padding: 8px 12px; 
+    padding: 6px 10px; 
     font-size: 11px; 
     border-bottom: 1px solid #f0f2f5; 
     vertical-align: middle; 
@@ -377,7 +367,7 @@
   }
   .desc-text { 
     color: var(--text); 
-    max-width: 250px; 
+    max-width: 200px; 
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; 
@@ -392,19 +382,19 @@
   .cantidad-text { 
     font-family: 'Barlow Condensed', sans-serif; 
     font-weight: 700; 
-    font-size: 13px; 
+    font-size: 12px; 
     color: var(--text); 
   }
 
   .status-badge {
     display: inline-block;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 600;
     letter-spacing: 0.3px;
-    padding: 3px 8px;
-    border-radius: 16px;
+    padding: 2px 6px;
+    border-radius: 12px;
     text-transform: uppercase;
-    min-width: 80px;
+    min-width: 70px;
     text-align: center;
   }
   .status-badge.pendiente { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-bd); }
@@ -429,11 +419,16 @@
   .btn-accion.gray { background: var(--gray); }
   .btn-accion.gray:hover { background: #4b5563; }
 
-  .modal-pct-wrap { display: flex; align-items: center; gap: 10px; }
+  .modal-pct-wrap { display: flex; align-items: center; gap: 8px; }
   .modal-pct-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
-  .modal-pct-bar-bg { width: 160px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .modal-pct-bar-bg { width: 140px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
   .modal-pct-bar { height: 100%; background: var(--purple); border-radius: 3px; transition: width 0.4s ease; }
-  .modal-pct-val { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--navy); }
+  .modal-pct-val { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: var(--navy); }
+
+  /* Estilos para el formato de validación de rutas (PDF) */
+  .pdf-format {
+    font-family: 'Verdana', Arial, sans-serif;
+  }
 </style>
 </head>
 <body>
@@ -554,6 +549,7 @@
   let activityInterval;
   
   let almacenesVisibles = {};
+  let initialDataLoaded = false;
 
   // ========== DOM ELEMENTS ==========
   const mainContent = document.getElementById('mainContent');
@@ -655,15 +651,9 @@
         <button class="logout-btn" id="logoutBtn">Cerrar</button>
       `;
 
-      // ========== CONFIGURACIÓN DEL UPLOAD (AHORA DENTRO DE RENDERHEADER) ==========
       setTimeout(() => {
         const uploadBtn = document.getElementById('uploadBtn');
         const fileInput = document.getElementById('file-input');
-        
-        console.log('🔍 Elementos encontrados en renderHeader:', { 
-          uploadBtn: uploadBtn ? '✅' : '❌', 
-          fileInput: fileInput ? '✅' : '❌' 
-        });
         
         if (uploadBtn) {
           uploadBtn.replaceWith(uploadBtn.cloneNode(true));
@@ -672,7 +662,6 @@
           newUploadBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('📁 Botón clickeado');
             
             if (!currentUser) { 
               showToast('Debes iniciar sesión'); 
@@ -682,11 +671,9 @@
             
             const input = document.getElementById('file-input');
             if (input) {
-              console.log('🖱️ Abriendo selector de archivos');
               input.click();
             }
           });
-          console.log('✅ Listener agregado al botón upload');
         }
         
         if (fileInput) {
@@ -695,8 +682,6 @@
           
           newFileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
-            console.log('📂 Archivo seleccionado:', file?.name);
-            
             if (!file) return;
             
             showToast(`📂 Procesando: ${file.name}`);
@@ -704,10 +689,8 @@
             const reader = new FileReader();
             reader.onload = ev => {
               try {
-                console.log('📖 Leyendo archivo...');
                 const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
-                console.log('📊 Filas encontradas:', rows.length);
                 
                 if (rows.length === 0) {
                   showToast('⚠️ El archivo está vacío');
@@ -724,7 +707,6 @@
             reader.readAsArrayBuffer(file);
             e.target.value = '';
           });
-          console.log('✅ Listener agregado al input file');
         }
       }, 100);
     }
@@ -737,6 +719,7 @@
     allRawItems = [];
     itemStatus = {};
     routeAlmStatus = {};
+    initialDataLoaded = false;
     renderHeader();
     renderTable();
     mostrarContenido(false);
@@ -783,8 +766,6 @@
 
       const viajeLimpio = String(viaje).trim().replace(/[^a-zA-Z0-9]/g, '');
       const itemId = `${ruta}_${viajeLimpio}_${almacen}_${codigo}_${idx}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-
-      console.log('📦 Procesando:', { ruta, viaje: viajeLimpio, almacen, codigo });
 
       allRawItems.push({ 
         itemId, 
@@ -858,11 +839,6 @@
 
       const CHUNK = 400;
       
-      console.log('📤 Enviando a Firebase:', {
-        rutas: allRoutes.length,
-        items: allRawItems.length
-      });
-      
       for (let i = 0; i < allRoutes.length; i += CHUNK) {
         const batch = writeBatch(db);
         const rutasChunk = allRoutes.slice(i, i + CHUNK);
@@ -882,7 +858,6 @@
         });
         
         await batch.commit();
-        console.log(`✅ ${rutasChunk.length} rutas guardadas`);
       }
 
       for (let i = 0; i < allRawItems.length; i += CHUNK) {
@@ -909,7 +884,6 @@
         });
         
         await batch.commit();
-        console.log(`✅ ${itemsChunk.length} items guardados`);
       }
 
       showToast(`✅ ${allRawItems.length} ítems guardados en Firebase`);
@@ -1088,22 +1062,473 @@
     }
   };
 
-  // ========== GENERAR PDF CALIDAD ==========
+  // ========== GENERAR PDF FORMATO DE VALIDACIÓN DE RUTAS (VERSIÓN COMPLETA) ==========
   window.generarPDFCalidad = async (ruta, viaje) => {
-    showToast('⏳ Generando formato...');
+    showToast('⏳ Generando Formato de Validación de Rutas...');
+    
     try {
-      const fecha = new Date().toLocaleDateString('es-MX');
-      const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Formato Calidad</title>
-      <style>body{font-family:Verdana;padding:15px; font-size:11px;}</style></head><body>
-      <h2>Formato de Calidad - Ruta ${ruta}</h2><p>Generado: ${fecha}</p>
-      <p>Crítico: _________________</p>
-      </body></html>`;
-      const v = window.open('', '_blank');
-      if (v) { v.document.write(htmlContent); v.document.close(); }
-      showToast('✅ Formato generado');
+      const items = allRawItems.filter(it => it.ruta === ruta && it.viaje === viaje);
+      const { porAlmacen: sesionPorAlmacen } = await cargarSesionesRuta(ruta, viaje);
+
+      // Determinar tipo de ruta (de la primera sesión)
+      const sesiones = Object.values(sesionPorAlmacen);
+      const tipoRuta = sesiones.length > 0 ? sesiones[0].tipo : '';
+      
+      // Determinar checkboxes de crítico
+      const palabrasCritico = {
+        tumbler: ['TUMBLER'],
+        vino: ['VINO'],
+        vam: ['VAM'],
+        grisinnis: ['GRISINNIS'],
+        tazas: ['TAZAS'],
+        tarjeta: ['TARJETA']
+      };
+
+      const criticosMarcados = {
+        tumbler: false,
+        vino: false,
+        vam: false,
+        grisinnis: false,
+        tazas: false,
+        tarjeta: false,
+        otros: false,
+        sinCritico: true
+      };
+
+      items.forEach(item => {
+        const texto = `${item.codigo} ${item.desc || ''}`.toUpperCase();
+        let encontrado = false;
+        
+        Object.entries(palabrasCritico).forEach(([key, palabras]) => {
+          if (palabras.some(p => texto.includes(p))) {
+            criticosMarcados[key] = true;
+            criticosMarcados.sinCritico = false;
+            encontrado = true;
+          }
+        });
+        
+        if (encontrado) {
+          criticosMarcados.otros = true;
+        }
+      });
+
+      // Contar faltantes y sobrantes por almacén
+      const conteo = {
+        SECO: { faltante: 0, sobrante: 0 },
+        REFRIGERADO: { faltante: 0, sobrante: 0 },
+        FRIO: { faltante: 0, sobrante: 0 },
+        CRITICO: { faltante: 0, sobrante: 0 }
+      };
+
+      items.forEach(item => {
+        const alm = item.almacen;
+        if (conteo[alm]) {
+          if (itemStatus[item.itemId] === 'faltante' || itemStatus[item.itemId] === 'faltante-confirmado') {
+            conteo[alm].faltante++;
+          }
+          if (item.tipo === 'SOBRANTE') {
+            conteo[alm].sobrante++;
+          }
+        }
+      });
+
+      const fecha = new Date().toLocaleDateString('es-MX').split('/').map(n => n.padStart(2, '0')).join('/');
+      const hora = new Date().toLocaleTimeString('es-MX');
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Formato de Validación de Rutas - Ruta ${ruta}</title>
+          <link href="https://fonts.googleapis.com/css2?family=Verdana&display=swap" rel="stylesheet">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Verdana', Arial, sans-serif; 
+              background: white; 
+              color: #000; 
+              padding: 20px;
+              font-size: 10px;
+            }
+            .container {
+              max-width: 1100px;
+              margin: 0 auto;
+              position: relative;
+            }
+            table {
+              border-collapse: collapse;
+              width: 100%;
+            }
+            td {
+              border: 1px solid #000;
+              padding: 4px;
+              vertical-align: middle;
+            }
+            .check-box {
+              display: inline-block;
+              width: 12px;
+              height: 12px;
+              border: 1px solid #000;
+              margin-right: 3px;
+              background: white;
+            }
+            .check-box.checked {
+              background: #000;
+            }
+            .bpd-box {
+              border: 1px solid #000;
+              padding: 5px;
+              margin: 10px 0;
+            }
+            .ruta-box {
+              border: 1px solid #000;
+              padding: 4px;
+              margin: 10px 0;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            }
+            .observaciones-box {
+              border: 1px solid #000;
+              padding: 4px;
+              margin: 10px 0;
+              width: 300px;
+              margin-left: auto;
+            }
+            .observaciones-title {
+              font-weight: bold;
+              margin-bottom: 5px;
+            }
+            .observaciones-line {
+              height: 20px;
+              border-bottom: 1px solid #000;
+              margin-bottom: 5px;
+            }
+            .tipo-ruta-box {
+              border: 1px solid #000;
+              padding: 5px;
+              margin: 10px 0;
+              display: flex;
+              align-items: center;
+              gap: 15px;
+            }
+            .critico-box {
+              border: 1px solid #000;
+              padding: 5px;
+              margin: 10px 0;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              flex-wrap: wrap;
+            }
+            .firmas-section {
+              margin-top: 30px;
+            }
+            .firma-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 15px;
+            }
+            .firma-item {
+              width: 30%;
+              text-align: center;
+            }
+            .firma-line {
+              border-top: 1px solid #000;
+              width: 100%;
+              margin: 5px 0;
+            }
+            .operador-box {
+              margin-top: 20px;
+              text-align: center;
+            }
+            .operador-line {
+              border-top: 1px solid #000;
+              width: 50%;
+              margin: 5px auto;
+            }
+            .print-button-container {
+              text-align: center;
+              margin-bottom: 20px;
+            }
+            .print-button {
+              background: #1a3a5c;
+              color: white;
+              border: none;
+              padding: 10px 24px;
+              border-radius: 4px;
+              font-size: 14px;
+              cursor: pointer;
+              display: inline-block;
+            }
+            .print-button:hover {
+              background: #122840;
+            }
+            
+            @media print {
+              body { 
+                padding: 5px; 
+                margin: 0;
+                background: white;
+                font-size: 7px;
+              }
+              .no-print { 
+                display: none; 
+              }
+              button { 
+                display: none; 
+              }
+              .print-button { 
+                display: none; 
+              }
+              
+              td[style*="background-color: #D9D9D9"], td[bgcolor="#D9D9D9"] {
+                background-color: #D9D9D9 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              
+              .check-box {
+                border: 1px solid #000 !important;
+                background-color: white !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .check-box.checked {
+                background-color: #000 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="no-print print-button-container">
+              <button class="print-button" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+            </div>
+
+            <div style="position: relative; margin-bottom: 20px; width: 100%;">
+              <div style="position: absolute; top: 0; right: 0; width: 18.5%; height: 100%; border: 1px solid #000; display: flex; align-items: center; justify-content: center; background: white; z-index: 10;">
+                <img src="logo.png" alt="Logo" style="max-width: 90%; max-height: 90%;" onerror="this.style.display='none'; this.parentElement.innerHTML='LOGO'">
+              </div>
+
+              <table style="width: 100%; border-collapse: collapse; font-family: 'Verdana', sans-serif; font-size: 10px; table-layout: fixed;">
+                <tr>
+                  <td colspan="11" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Nombre del documento</td>
+                  <td colspan="6" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Código del Documento</td>
+                  <td colspan="5" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Emisión</td>
+                  <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: #D9D9D9;" bgcolor="#D9D9D9"></td>
+                </tr>
+                
+                <tr>
+                  <td colspan="11" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">FORMATO DE VALIDACIÓN DE RUTAS</td>
+                  <td colspan="6" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">FOR-CDS-CYD-CDC-287</td>
+                  <td colspan="5" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">09/01/26</td>
+                  <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: white;" bgcolor="white"></td>
+                </tr>
+                
+                <tr>
+                  <td colspan="4" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Proceso</td>
+                  <td colspan="4" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Área</td>
+                  <td colspan="3" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Línea</td>
+                  <td colspan="6" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Versión</td>
+                  <td colspan="5" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Próxima revisión</td>
+                  <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: #D9D9D9;" bgcolor="#D9D9D9"></td>
+                </tr>
+                
+                <tr>
+                  <td colspan="4" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">Finanzas</td>
+                  <td colspan="4" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">Mesa de Control</td>
+                  <td colspan="3" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">Almacén</td>
+                  <td colspan="6" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">04</td>
+                  <td colspan="5" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">08/01/29</td>
+                  <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: white;" bgcolor="white"></td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="margin: 5px 0;">
+              <div style="font-size: 10px; margin-bottom: 2px;">
+                Cumplimiento de los lineamientos de BPD´s : Aplica a todo el personal del Área de Validación se deberá colocar si cumple (✓),
+              </div>
+              <div style="font-size: 10px;">
+                no cumple (✗) o no aplica (N/A). El formato deberá realizarse cada vez que se inicie una ruta .
+              </div>
+            </div>
+
+            <div style="width: 100%; margin: 5px 0;">
+              <table style="width: 100%; border-collapse: collapse; font-family: 'Verdana', sans-serif; font-size: 10px; table-layout: fixed;">
+                <tr>
+                  <td colspan="17" style="border: none;"></td>
+                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: 1px solid #000; border-bottom: none; padding: 4px; font-weight: bold; text-align: center; background-color: #D9D9D9;" bgcolor="#D9D9D9">
+                    Observaciones
+                  </td>
+                </tr>
+                
+                <tr>
+                  <td colspan="17" style="border: none;"></td>
+                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
+                </tr>
+                
+                <tr>
+                  <td colspan="17" style="border: none;"></td>
+                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
+                </tr>
+                
+                <tr>
+                  <td colspan="3" style="border: none; padding: 4px 2px; vertical-align: bottom;">
+                    <span style="font-size: 10px;">Ruta Validada:</span>
+                  </td>
+                  <td colspan="4" style="border-left: none; border-right: none; border-top: none; border-bottom: 1px solid #000; padding: 4px 2px 0 2px; vertical-align: bottom;">
+                    <span style="font-size: 12px; font-weight: bold;">${ruta}</span>
+                  </td>
+                  <td colspan="10" style="border: none;"></td>
+                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
+                </tr>
+                
+                <tr>
+                  <td colspan="17" style="border: none;"></td>
+                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
+                </tr>
+                
+                <tr>
+                  <td colspan="17" style="border: none;"></td>
+                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: 1px solid #000; height: 15px;"></td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="tipo-ruta-box">
+              <strong>Tipo de Ruta:</strong>
+              <span><span class="check-box ${tipoRuta === 'AEROPUERTO' ? 'checked' : ''}"></span> Aeropuerto</span>
+              <span><span class="check-box ${tipoRuta === 'PRECARGA' ? 'checked' : ''}"></span> Precarga</span>
+              <span><span class="check-box ${tipoRuta === 'QUINTA' ? 'checked' : ''}"></span> Quinta</span>
+              <span><span class="check-box ${tipoRuta === 'NO TOP' ? 'checked' : ''}"></span> Ruta No Top</span>
+            </div>
+
+            <div class="critico-box">
+              <strong>Critico:</strong>
+              <span><span class="check-box ${criticosMarcados.tumbler ? 'checked' : ''}"></span> Tumbler</span>
+              <span><span class="check-box ${criticosMarcados.vino ? 'checked' : ''}"></span> Vino</span>
+              <span><span class="check-box ${criticosMarcados.vam ? 'checked' : ''}"></span> Vam</span>
+              <span><span class="check-box ${criticosMarcados.grisinnis ? 'checked' : ''}"></span> Grisinnis</span>
+              <span><span class="check-box ${criticosMarcados.tazas ? 'checked' : ''}"></span> Tazas</span>
+              <span><span class="check-box ${criticosMarcados.tarjeta ? 'checked' : ''}"></span> Tarjeta</span>
+              <span><span class="check-box ${criticosMarcados.otros ? 'checked' : ''}"></span> Otros</span>
+              <span><span class="check-box ${criticosMarcados.sinCritico ? 'checked' : ''}"></span> Sin Critico</span>
+            </div>
+
+            <table style="margin: 15px 0;">
+              <thead>
+                <tr>
+                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Ambiente Validado</th>
+                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Fecha</th>
+                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Hora de Inicio</th>
+                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Hora de Termino</th>
+                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Nombre del Validador</th>
+                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">N° Tarimas</th>
+                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Anden</th>
+                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Faltante</th>
+                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Sobrante</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Seco</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? new Date(sesionPorAlmacen.SECO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? new Date(sesionPorAlmacen.SECO.inicio).toLocaleTimeString() : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO && sesionPorAlmacen.SECO.fin ? new Date(sesionPorAlmacen.SECO.fin).toLocaleTimeString() : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.validador : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.tarimas : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.anden : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.SECO.faltante || ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.SECO.sobrante || ''}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Refrigerado</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? new Date(sesionPorAlmacen.REFRIGERADO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? new Date(sesionPorAlmacen.REFRIGERADO.inicio).toLocaleTimeString() : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO && sesionPorAlmacen.REFRIGERADO.fin ? new Date(sesionPorAlmacen.REFRIGERADO.fin).toLocaleTimeString() : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.validador : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.tarimas : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.anden : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.REFRIGERADO.faltante || ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.REFRIGERADO.sobrante || ''}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Conge</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? new Date(sesionPorAlmacen.FRIO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? new Date(sesionPorAlmacen.FRIO.inicio).toLocaleTimeString() : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO && sesionPorAlmacen.FRIO.fin ? new Date(sesionPorAlmacen.FRIO.fin).toLocaleTimeString() : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.validador : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.tarimas : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.anden : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.FRIO.faltante || ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.FRIO.sobrante || ''}</td>
+                </tr>
+                <tr>
+                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Crítico</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? new Date(sesionPorAlmacen.CRITICO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? new Date(sesionPorAlmacen.CRITICO.inicio).toLocaleTimeString() : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO && sesionPorAlmacen.CRITICO.fin ? new Date(sesionPorAlmacen.CRITICO.fin).toLocaleTimeString() : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.validador : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.tarimas : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.anden : ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.CRITICO.faltante || ''}</td>
+                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.CRITICO.sobrante || ''}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="height: 60px;"></div>
+
+            <div class="firmas-section">
+              <div class="firma-row">
+                <div class="firma-item">
+                  <div class="firma-line"></div>
+                  <strong>Firma del TEAM</strong>
+                </div>
+                <div class="firma-item">
+                  <div class="firma-line"></div>
+                  <strong>Firma del TEAM</strong>
+                </div>
+                <div class="firma-item">
+                  <div class="firma-line"></div>
+                  <strong>Firma del TEAM</strong>
+                </div>
+              </div>
+
+              <div style="height: 10px;"></div>
+
+              <div class="operador-box">
+                <div class="operador-line"></div>
+                <strong>Nombre y Firma de Operador Maniobra</strong>
+              </div>
+
+              <div style="margin-top: 10px; font-size: 6.5px; text-align: center; border-top: 1px solid #000; padding-top: 3px;">
+                Las copias impresas de este documento son consideradas COPIA NO CONTROLADA, a menos que cuenten con un sello de DOCUMENTO CONTROLADO.
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const ventana = window.open('', '_blank');
+      ventana.document.write(htmlContent);
+      ventana.document.close();
+      
+      showToast('✅ Formato de Validación de Rutas generado');
     } catch (error) {
       console.error('Error generando formato:', error);
-      showToast('❌ Error');
+      showToast('❌ Error al generar formato');
     }
   };
 
@@ -1118,7 +1543,9 @@
       });
       allRoutes = Object.values(map);
       recalcRouteAlmStatus();
-      if (currentUser) renderTable();
+      if (currentUser) {
+        renderTable();
+      }
       if (currentModalKey) {
         const [r, v] = currentModalKey.split('||');
         const route = allRoutes.find(rte => rte.ruta === r && rte.viaje === v);
@@ -1152,7 +1579,9 @@
         }
       });
       recalcRouteAlmStatus();
-      if (currentUser) renderTable();
+      if (currentUser) {
+        renderTable();
+      }
       if (currentModalKey) {
         const [r, v] = currentModalKey.split('||');
         const route = allRoutes.find(rte => rte.ruta === r && rte.viaje === v);
@@ -1191,7 +1620,9 @@
     if (tableBody) {
       tableBody.innerHTML = routes.map(r => {
         const pct = calcRoutePct(r);
-        const completa = rutaEstaCompleta(r);
+        const barColor = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--border)';
+        const pctColor = pct === 100 ? 'var(--green)' : pct > 0 ? 'var(--orange)' : 'var(--faint)';
+        
         const cols = ['SECO', 'REFRIGERADO', 'CONGELADO', 'CRITICO'].map(type => {
           if (!r.almacenes.includes(type)) return `<td><span class="chip na">N/A</span></td>`;
           const st = routeAlmStatus[`${r.ruta}||${r.viaje}||${type}`] || 'pendiente';
@@ -1208,10 +1639,21 @@
         const botonEliminar = puedeEliminar ? `<button class="delete-btn" onclick="deleteRoute('${r.ruta}', '${r.viaje}')">❌</button>` : '';
 
         return `<tr>
-          <td><span class="ruta-badge">${r.ruta}</span> ${r.viajeOriginal || r.viaje} <span class="click-hint" onclick="openModal('${r.ruta}', '${r.viaje}')">▸ ver</span>
-          ${completa ? `<span class="pdf-icon red" onclick="generarPDFProductos('${r.ruta}', '${r.viaje}')">📄</span><span class="pdf-icon blue" onclick="generarPDFCalidad('${r.ruta}', '${r.viaje}')">📋</span>` : ''}
+          <td class="ruta-cell" onclick="openModal('${r.ruta}', '${r.viaje}')">
+            <span class="ruta-badge">${r.ruta}</span> ${r.viajeOriginal || r.viaje}
+            <span class="action-icons">
+              <span class="pdf-icon red" onclick="event.stopPropagation(); generarPDFProductos('${r.ruta}', '${r.viaje}')" title="Descargar lista de productos">📄</span>
+              <span class="pdf-icon blue" onclick="event.stopPropagation(); generarPDFCalidad('${r.ruta}', '${r.viaje}')" title="Descargar formato de validación">📋</span>
+            </span>
           </td>
-          <td>${pct}%</td>${cols}<td>${botonEliminar}</td>
+          <td class="progress-cell">
+            <div class="progress-wrap">
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+              <span class="progress-pct" style="color:${pctColor}">${pct}%</span>
+            </div>
+          </td>
+          ${cols}
+          <td>${botonEliminar}</td>
         </tr>`;
       }).join('');
     }
@@ -1220,10 +1662,13 @@
   function getFiltered() {
     const q = searchInput ? searchInput.value.toLowerCase() : '';
     if (!q) return allRoutes;
+    
+    // Filtrar por cualquier parte del texto que contenga el término de búsqueda
     return allRoutes.filter(r => 
       r.ruta.toLowerCase().includes(q) || 
       r.viaje.toLowerCase().includes(q) ||
-      (q.match(/\d+/) && r.ruta.includes(q.match(/\d+/)[0]))
+      r.viajeOriginal?.toLowerCase().includes(q) ||
+      (q.match(/\d+/) && (r.ruta.includes(q) || r.viaje.includes(q)))
     );
   }
 
@@ -1247,12 +1692,6 @@
     if (!items.length) return 0;
     const done = items.filter(it => itemStatus[it.itemId] === 'concluido' || itemStatus[it.itemId] === 'faltante-confirmado').length;
     return Math.round(done / items.length * 100);
-  }
-
-  function rutaEstaCompleta(route) {
-    const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje);
-    if (!items.length) return false;
-    return items.every(it => itemStatus[it.itemId] === 'concluido' || itemStatus[it.itemId] === 'faltante-confirmado');
   }
 
   // ========== MODAL CON TOGGLE POR ALMACÉN ==========
@@ -1329,47 +1768,22 @@
       else if (alm === 'REFRIGERADO') dotColor = '#6b48c8';
       else if (alm === 'CRITICO') dotColor = '#8e1e1e';
       
+      const visible = almacenesVisibles[alm] !== false;
+      
+      // Formatear datos de sesión para el encabezado
+      let fechaStr = '', inicioStr = '', finStr = '', tiempoStr = '', validadorStr = '', tarimasStr = '', andenStr = '';
+      
       if (sesion && sesion.inicio) {
         const inicio = new Date(sesion.inicio);
         const fin = sesion.fin ? new Date(sesion.fin) : null;
-        const tiempo = fin ? calcularTiempoTranscurrido(sesion.inicio, sesion.fin) : 'En curso';
-        modalHTML += `<div class="validacion-almacen">
-          <div class="validacion-item">
-            <span class="validacion-label">Fecha</span>
-            <span class="validacion-value">${inicio.toLocaleDateString()}</span>
-          </div>
-          <div class="validacion-item">
-            <span class="validacion-label">Inicio</span>
-            <span class="validacion-value">${inicio.toLocaleTimeString()}</span>
-          </div>
-          <div class="validacion-item">
-            <span class="validacion-label">Fin</span>
-            <span class="validacion-value">${fin ? fin.toLocaleTimeString() : '—'}</span>
-          </div>
-          <div class="validacion-item">
-            <span class="validacion-label">Tiempo</span>
-            <span class="validacion-value tiempo">${tiempo}</span>
-          </div>
-          <div class="validacion-item">
-            <span class="validacion-label">Validador</span>
-            <span class="validacion-value">${sesion.validador || '—'}</span>
-          </div>
-          <div class="validacion-item">
-            <span class="validacion-label">Tarimas</span>
-            <span class="validacion-value">${sesion.tarimas || '—'}</span>
-          </div>
-          <div class="validacion-item">
-            <span class="validacion-label">Anden</span>
-            <span class="validacion-value">${sesion.anden || '—'}</span>
-          </div>
-          <div class="validacion-item">
-            <span class="validacion-label">Tipo</span>
-            <span class="validacion-value">${sesion.tipo || '—'}</span>
-          </div>
-        </div>`;
+        fechaStr = inicio.toLocaleDateString();
+        inicioStr = inicio.toLocaleTimeString();
+        finStr = fin ? fin.toLocaleTimeString() : '—';
+        tiempoStr = fin ? calcularTiempoTranscurrido(sesion.inicio, sesion.fin) : 'En curso';
+        validadorStr = sesion.validador || '—';
+        tarimasStr = sesion.tarimas || '—';
+        andenStr = sesion.anden || '—';
       }
-      
-      const visible = almacenesVisibles[alm] !== false;
       
       modalHTML += `<div class="alm-section">
         <div class="alm-header" onclick="toggleAlmacen('${alm}')">
@@ -1378,9 +1792,19 @@
             ${alm}
             <span class="toggle-icon">${visible ? '▼' : '▶'}</span>
           </div>
+          <div class="alm-header-info">
+            ${sesion ? `
+              <span>📅 <strong>${fechaStr}</strong></span>
+              <span>⏱️ <strong>${inicioStr}</strong> - <strong>${finStr}</strong></span>
+              <span>⏳ <strong>${tiempoStr}</strong></span>
+              <span>👤 <strong>${validadorStr}</strong></span>
+              <span>📦 <strong>${tarimasStr}</strong></span>
+              <span>🚪 <strong>${andenStr}</strong></span>
+            ` : '<span>Sin sesión de validación</span>'}
+          </div>
           <div class="alm-header-actions">
             <span class="alm-count">${almItems.filter(i => itemStatus[i.itemId] === 'concluido' || itemStatus[i.itemId] === 'faltante-confirmado').length}/${almItems.length}</span>
-            <button class="btn-no-validado" onclick="event.stopPropagation(); marcarAlmacenNoValidado('${route.ruta}', '${route.viaje}', '${alm}')">✗ NO VAL</button>
+            <button class="btn-no-validado-icon" onclick="event.stopPropagation(); marcarAlmacenNoValidado('${route.ruta}', '${route.viaje}', '${alm}')" title="Marcar como no validado">✗</button>
           </div>
         </div>
         <div id="alm-wrap-${alm}" class="alm-table-wrap ${visible ? '' : 'hidden'}">
@@ -1504,7 +1928,13 @@
     renderHeader();
     listenFirestore();
     iniciarMonitorInactividad();
-    if (tieneSesion) renderTable();
+    
+    // Forzar renderizado inmediato después del login
+    if (tieneSesion) {
+      setTimeout(() => {
+        renderTable();
+      }, 500);
+    }
     
     setTimeout(() => {
       const loginBtn = document.getElementById('loginBtn');
@@ -1538,7 +1968,12 @@
               if (loginModal) loginModal.classList.remove('show');
               mostrarContenido(true);
               renderHeader();
-              renderTable();
+              
+              // Forzar recarga de datos y renderizado
+              setTimeout(() => {
+                renderTable();
+              }, 300);
+              
               showToast(`✅ Bienvenido ${user}`);
             } else {
               showToast('❌ Contraseña incorrecta');
