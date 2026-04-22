@@ -65,12 +65,9 @@
     justify-content: center;
     overflow: hidden;
   }
-  .logo-wrap img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
-  .logo-wrap span { 
-    font-family: 'Barlow Condensed', sans-serif; 
-    font-size: 24px; 
-    font-weight: 700; 
-    color: white; 
+  .logo-wrap i {
+    font-size: 32px;
+    color: var(--navy);
   }
   .header-title {
     font-family: 'Barlow Condensed', sans-serif;
@@ -109,12 +106,48 @@
     padding: 12px 16px;
     border-radius: 10px;
     transition: border-color 0.2s, box-shadow 0.2s;
-    text-transform: uppercase;
   }
   .validador-input:focus {
     outline: none;
     border-color: var(--navy);
     box-shadow: 0 0 0 3px var(--navy-light);
+  }
+
+  /* Botón principal flotante */
+  .action-button {
+    position: fixed;
+    bottom: 30px;
+    right: 20px;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: var(--navy);
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .action-button:active {
+    transform: scale(0.95);
+  }
+  .action-button.camara {
+    background: var(--navy);
+  }
+  .action-button.enviar {
+    background: var(--green);
+    display: none;
+  }
+  .action-button.enviar.show {
+    display: flex;
+  }
+  .action-button.camara.hide {
+    display: none;
   }
 
   /* QR Reader Section */
@@ -127,29 +160,6 @@
     display: none;
   }
   .qr-section.show { display: block; }
-
-  .btn-camara {
-    background: var(--navy);
-    color: white;
-    border: none;
-    border-radius: 30px;
-    padding: 14px 20px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.15s;
-    width: 100%;
-    margin-bottom: 16px;
-  }
-  .btn-camara:active { background: var(--navy-dark); }
-  .btn-camara:disabled {
-    background: var(--border);
-    color: var(--muted);
-    cursor: not-allowed;
-  }
 
   #reader {
     width: 100%;
@@ -232,165 +242,57 @@
     color: var(--green);
   }
 
-  /* Lista de Tarimas Escaneadas */
-  .tarimas-lista {
-    max-height: 300px;
-    overflow-y: auto;
-    margin-top: 12px;
-  }
-  .tarima-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px;
-    border-bottom: 1px solid var(--border);
-    background: var(--green-bg);
-    margin-bottom: 8px;
-    border-radius: 8px;
-  }
-  .tarima-numero {
-    font-weight: 700;
-    color: var(--green);
-    font-size: 16px;
-  }
-  .tarima-hora {
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .tarima-check {
-    color: var(--green);
-    font-size: 20px;
-  }
-
-  /* Botones */
-  .btn-enviar {
-    background: linear-gradient(135deg, var(--green) 0%, #155f35 100%);
-    color: white;
-    border: none;
-    border-radius: 30px;
-    padding: 16px 20px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.15s;
-    width: 100%;
-    margin-top: 16px;
-    box-shadow: 0 4px 12px rgba(30, 110, 66, 0.3);
-  }
-  .btn-enviar:disabled {
-    background: var(--border);
-    color: var(--muted);
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-  .btn-enviar:active:not(:disabled) { transform: scale(0.98); }
-
-  .btn-whatsapp {
-    background: #25D366;
-    color: white;
-    border: none;
-    border-radius: 30px;
-    padding: 12px 20px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.15s;
-    width: 100%;
-    margin-top: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-  .btn-whatsapp:hover { background: #128C7E; }
-
-  .btn-reiniciar {
-    background: var(--orange);
-    color: white;
-    border: none;
-    border-radius: 30px;
-    padding: 12px 20px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.15s;
-    width: 100%;
-    margin-top: 12px;
-  }
-
-  /* Modal */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 1000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-  .modal-overlay.show { display: flex; }
-  .modal {
+  /* Dashboard de Tarimas Escaneadas */
+  .tarimas-dashboard {
     background: var(--surface);
-    border-radius: 20px;
-    width: 100%;
-    max-width: 500px;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-  }
-  .modal-header {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
-    color: white;
-    padding: 16px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .modal-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background 0.15s;
-  }
-  .modal-close:hover { background: rgba(255,255,255,0.2); }
-  .modal-body { padding: 16px; overflow-y: auto; max-height: 60vh; }
-
-  .reporte-contenido {
-    background: var(--surface2);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px;
-    font-size: 13px;
-    font-family: monospace;
-    white-space: pre-wrap;
-    word-break: break-word;
+    margin-top: 16px;
+  }
+  .dashboard-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .tarimas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .tarima-card {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 4px;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .tarima-card.escaneada {
+    background: var(--green-bg);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .tarima-card.escaneada i {
+    color: var(--green);
+  }
+  .tarima-num {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .tarima-check-icon {
+    font-size: 12px;
+    margin-top: 4px;
   }
 
   .toast {
     position: fixed;
-    bottom: 24px;
+    bottom: 100px;
     left: 16px;
     right: 16px;
     background: var(--navy);
@@ -425,7 +327,7 @@
 
 <header>
   <div class="logo-wrap">
-    <span>GV</span>
+    <i class="fas fa-boxes"></i>
   </div>
   <div class="header-title">Control de Embarque</div>
 </header>
@@ -434,18 +336,12 @@
   <!-- Validador -->
   <div class="validador-section">
     <div class="validador-label">NOMBRE DEL VALIDADOR</div>
-    <input type="text" id="validadorInput" class="validador-input" placeholder="INGRESA TU NOMBRE" maxlength="60" autocomplete="off">
+    <input type="text" id="validadorInput" class="validador-input" placeholder="Nombre y Apellido" autocomplete="off">
   </div>
 
   <!-- QR Scanner -->
   <div id="qrSection" class="qr-section">
-    <button id="btnIniciarCamara" class="btn-camara">
-      <i class="fas fa-camera"></i> INICIAR CÁMARA
-    </button>
     <div id="reader"></div>
-    <button id="btnDetenerCamara" class="btn-camara" style="background: var(--orange); margin-top: 12px; margin-bottom: 0; display: none;">
-      <i class="fas fa-stop"></i> DETENER CÁMARA
-    </button>
   </div>
 
   <!-- Información del Embarque -->
@@ -469,34 +365,19 @@
     <div class="contador-tarimas">
       📦 <span id="escaneadasCount">0</span> / <span id="totalCount">0</span> TARIMAS
     </div>
-    <div class="tarimas-lista" id="tarimasLista"></div>
   </div>
 
-  <!-- Botones -->
-  <div id="botonesSection" style="display: none;">
-    <button id="btnEnviarReporte" class="btn-enviar" disabled>
-      <i class="fas fa-paper-plane"></i> ENVIAR REPORTE
-    </button>
-    <button id="btnReiniciar" class="btn-reiniciar">
-      <i class="fas fa-refresh"></i> NUEVO EMBARQUE
-    </button>
+  <!-- Dashboard de Tarimas -->
+  <div id="dashboardSection" class="tarimas-dashboard" style="display: none;">
+    <div class="dashboard-title"><i class="fas fa-check-circle"></i> TARIMAS ESCANEADAS</div>
+    <div id="tarimasGrid" class="tarimas-grid"></div>
   </div>
 </main>
 
-<div id="modalReporte" class="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <span>📋 REPORTE DE EMBARQUE</span>
-      <button class="modal-close" id="modalReporteClose">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div id="reporteContenido" class="reporte-contenido"></div>
-      <button id="btnCompartirWhatsApp" class="btn-whatsapp">
-        <i class="fab fa-whatsapp"></i> COMPARTIR POR WHATSAPP
-      </button>
-    </div>
-  </div>
-</div>
+<!-- Botón flotante -->
+<button id="btnAccion" class="action-button camara">
+  <i class="fas fa-camera"></i>
+</button>
 
 <div class="footer">
   © 2026 · Control de Embarque · Todos los derechos reservados
@@ -505,8 +386,8 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import {
-    getFirestore, collection, doc, setDoc, getDocs, getDoc,
-    query, where, orderBy, Timestamp
+    getFirestore, collection, doc, setDoc, getDoc,
+    query, where
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -528,12 +409,11 @@
   let tarimasEscaneadas = []; // { numero, hora, timestamp }
   let totalTarimas = 0;
   let validadorActual = '';
+  let vozFemenina = null;
 
   // Elementos DOM
   const validadorInput = document.getElementById('validadorInput');
   const qrSection = document.getElementById('qrSection');
-  const btnIniciarCamara = document.getElementById('btnIniciarCamara');
-  const btnDetenerCamara = document.getElementById('btnDetenerCamara');
   const readerDiv = document.getElementById('reader');
   const embarqueInfoDiv = document.getElementById('embarqueInfo');
   const infoRuta = document.getElementById('infoRuta');
@@ -546,14 +426,59 @@
   const progresoFill = document.getElementById('progresoFill');
   const escaneadasCount = document.getElementById('escaneadasCount');
   const totalCount = document.getElementById('totalCount');
-  const tarimasLista = document.getElementById('tarimasLista');
-  const botonesSection = document.getElementById('botonesSection');
-  const btnEnviarReporte = document.getElementById('btnEnviarReporte');
-  const btnReiniciar = document.getElementById('btnReiniciar');
-  const modalReporte = document.getElementById('modalReporte');
-  const modalReporteClose = document.getElementById('modalReporteClose');
-  const reporteContenido = document.getElementById('reporteContenido');
-  const btnCompartirWhatsApp = document.getElementById('btnCompartirWhatsApp');
+  const dashboardSection = document.getElementById('dashboardSection');
+  const tarimasGrid = document.getElementById('tarimasGrid');
+  const btnAccion = document.getElementById('btnAccion');
+
+  // ========== VOZ ==========
+  function seleccionarVozFemenina() {
+    return new Promise((resolve) => {
+      let voces = window.speechSynthesis.getVoices();
+      if (voces.length > 0) {
+        resolve(encontrarMejorVozFemenina(voces));
+      } else {
+        window.speechSynthesis.onvoiceschanged = () => {
+          voces = window.speechSynthesis.getVoices();
+          resolve(encontrarMejorVozFemenina(voces));
+        };
+      }
+    });
+  }
+
+  function encontrarMejorVozFemenina(voces) {
+    const prioridadVoces = [
+      { name: 'Sabina', lang: 'es-MX' },
+      { name: 'Paulina', lang: 'es-MX' },
+      { name: 'Mónica', lang: 'es-MX' },
+      { name: 'Google español femenina', lang: 'es' },
+      { pattern: /female/i, lang: /es/ }
+    ];
+    for (const criterio of prioridadVoces) {
+      let voz = null;
+      if (criterio.name) {
+        voz = voces.find(v => v.name.includes(criterio.name) && v.lang.startsWith(criterio.lang));
+      } else if (criterio.pattern) {
+        voz = voces.find(v => v.name.match(criterio.pattern) && v.lang.match(criterio.lang));
+      }
+      if (voz) return voz;
+    }
+    return voces.find(v => v.lang.startsWith('es')) || null;
+  }
+
+  async function hablar(texto) {
+    return new Promise(async (resolve) => {
+      if (!vozFemenina) vozFemenina = await seleccionarVozFemenina();
+      const utterance = new SpeechSynthesisUtterance(texto);
+      utterance.lang = 'es-MX';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      if (vozFemenina) utterance.voice = vozFemenina;
+      utterance.onend = resolve;
+      utterance.onerror = resolve;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utterance);
+    });
+  }
 
   // ========== TOAST ==========
   function showToast(msg, esError = false) {
@@ -565,20 +490,24 @@
     setTimeout(() => toast.remove(), 3000);
   }
 
-  // ========== FORMATEAR HORA ==========
-  function formatearHora() {
-    const ahora = new Date();
-    return ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  // ========== VOZ DE PROGRESO ==========
+  async function anunciarProgreso() {
+    const faltantes = totalTarimas - tarimasEscaneadas.length;
+    if (faltantes > 0) {
+      await hablar(`Faltan ${faltantes} tarimas por escanear`);
+    } else {
+      await hablar(`¡Felicidades! Has completado el escaneo de todas las ${totalTarimas} tarimas`);
+    }
   }
 
   // ========== PROCESAR QR ==========
-  function procesarQR(qrText) {
+  async function procesarQR(qrText) {
     if (!validadorActual) {
       showToast('⚠️ Primero ingresa tu nombre', true);
       return false;
     }
 
-    // Extraer datos del QR usando regex
+    // Extraer datos del QR
     const regex = /RUTA:\s*(\S+)\s*VIAJE:\s*(\S+)\s*ALMACEN:\s*(\S+)\s*TARIMA:\s*(\d+)\s*TOTAL TARIMAS:\s*(\d+)\s*FECHA:\s*(\S+)\s*HORA:\s*(\S+)/i;
     const match = qrText.match(regex);
 
@@ -593,10 +522,8 @@
 
     // Si es el primer QR del embarque, inicializar
     if (!embarqueActual) {
-      // Verificar si ya existe un embarque activo en Firebase con el mismo ID
       const embarqueId = `${ruta}_${viaje}_${almacen}`;
       
-      // Inicializar embarque
       embarqueActual = {
         id: embarqueId,
         ruta,
@@ -619,24 +546,25 @@
       infoFecha.textContent = fecha;
       infoHora.textContent = hora;
       embarqueInfoDiv.classList.add('show');
+      dashboardSection.style.display = 'block';
       
       // Cargar tarimas ya escaneadas desde Firebase
-      cargarEmbarqueExistente(embarqueId);
+      await cargarEmbarqueExistente(embarqueId);
     }
 
-    // Verificar que los datos coincidan con el embarque actual
+    // Verificar que los datos coincidan
     if (embarqueActual.ruta !== ruta || embarqueActual.viaje !== viaje || embarqueActual.almacen !== almacen) {
       showToast('❌ Este QR pertenece a otro embarque diferente', true);
       return false;
     }
 
-    // Verificar que la tarima no haya sido escaneada
+    // Verificar duplicado
     if (tarimasEscaneadas.some(t => t.numero === tarimaNum)) {
       showToast(`⚠️ La tarima ${tarimaNum} ya fue escaneada`, true);
       return false;
     }
 
-    // Verificar que el número de tarima sea válido (1 - total)
+    // Verificar rango
     if (tarimaNum < 1 || tarimaNum > totalTarimas) {
       showToast(`❌ Tarima inválida. Debe ser entre 1 y ${totalTarimas}`, true);
       return false;
@@ -646,30 +574,71 @@
     const ahora = new Date();
     const nuevoEscaneo = {
       numero: tarimaNum,
-      hora: formatearHora(),
+      hora: ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       timestamp: ahora.toISOString()
     };
     
     tarimasEscaneadas.push(nuevoEscaneo);
     tarimasEscaneadas.sort((a, b) => a.numero - b.numero);
     
-    // Guardar en Firebase inmediatamente
-    guardarEscaneoEnFirebase(tarimaNum, nuevoEscaneo.hora);
+    // Guardar en Firebase
+    await guardarEscaneoEnFirebase(tarimaNum, nuevoEscaneo.hora);
     
     // Actualizar UI
     actualizarUI();
     
+    // Anunciar por voz cuántas faltan
+    await anunciarProgreso();
+    
     showToast(`✅ Tarima ${tarimaNum} escaneada correctamente`);
     
-    // Si se completaron todas, mostrar mensaje especial
+    // Si se completaron todas, detener cámara y cambiar botón
     if (tarimasEscaneadas.length === totalTarimas) {
-      showToast(`🎉 ¡FELICIDADES! Has completado el escaneo de todas las ${totalTarimas} tarimas`);
+      await hablar(`¡Felicidades! Has completado el escaneo de todas las ${totalTarimas} tarimas`);
+      await detenerCamara();
+      
+      // Cambiar botón: ocultar cámara, mostrar enviar
+      btnAccion.classList.remove('camara');
+      btnAccion.classList.add('enviar');
+      btnAccion.innerHTML = '<i class="fas fa-paper-plane"></i>';
+      btnAccion.classList.add('show');
+      
+      // Mostrar modal de reporte automáticamente
+      await mostrarReporteYEnviar();
     }
     
     return true;
   }
 
-  // ========== CARGAR EMBARQUE EXISTENTE DESDE FIREBASE ==========
+  // ========== MOSTRAR REPORTE Y ENVIAR ==========
+  async function mostrarReporteYEnviar() {
+    if (!embarqueActual || tarimasEscaneadas.length !== totalTarimas) return;
+    
+    const reporte = generarReporte();
+    
+    try {
+      // Actualizar Firebase
+      const docRef = doc(db, 'embarques', embarqueActual.id);
+      await setDoc(docRef, {
+        completado: true,
+        finalizado: new Date().toISOString(),
+        reporte: reporte
+      }, { merge: true });
+      
+      // Compartir por WhatsApp automáticamente
+      const textoCodificado = encodeURIComponent(reporte);
+      const url = `https://wa.me/?text=${textoCodificado}`;
+      window.open(url, '_blank');
+      
+      showToast('✅ Reporte enviado a WhatsApp');
+      
+    } catch (error) {
+      console.error('Error:', error);
+      showToast('❌ Error al enviar reporte', true);
+    }
+  }
+
+  // ========== CARGAR EMBARQUE EXISTENTE ==========
   async function cargarEmbarqueExistente(embarqueId) {
     try {
       const docRef = doc(db, 'embarques', embarqueId);
@@ -681,21 +650,27 @@
           tarimasEscaneadas = data.tarimas;
           actualizarUI();
           showToast(`📦 Embarque recuperado - ${tarimasEscaneadas.length} tarimas ya escaneadas`);
+          
+          // Si ya estaba completado, cambiar botón
+          if (tarimasEscaneadas.length === totalTarimas && totalTarimas > 0) {
+            btnAccion.classList.remove('camara');
+            btnAccion.classList.add('enviar');
+            btnAccion.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            btnAccion.classList.add('show');
+          }
         }
       }
     } catch (error) {
-      console.warn('Error al cargar embarque existente:', error);
+      console.warn('Error al cargar embarque:', error);
     }
   }
 
-  // ========== GUARDAR ESCANEO EN FIREBASE ==========
+  // ========== GUARDAR ESCANEO ==========
   async function guardarEscaneoEnFirebase(tarimaNumero, horaEscaneo) {
     if (!embarqueActual) return;
     
     try {
       const docRef = doc(db, 'embarques', embarqueActual.id);
-      
-      // Obtener documento actual o crear uno nuevo
       const docSnap = await getDoc(docRef);
       let tarimasActuales = [];
       
@@ -703,7 +678,6 @@
         tarimasActuales = docSnap.data().tarimas || [];
       }
       
-      // Agregar nueva tarima si no existe
       if (!tarimasActuales.some(t => t.numero === tarimaNumero)) {
         tarimasActuales.push({
           numero: tarimaNumero,
@@ -728,14 +702,12 @@
       }, { merge: true });
       
     } catch (error) {
-      console.error('Error al guardar escaneo:', error);
-      showToast('❌ Error al guardar en Firebase', true);
+      console.error('Error al guardar:', error);
     }
   }
 
   // ========== ACTUALIZAR UI ==========
   function actualizarUI() {
-    // Actualizar contadores
     const escaneadas = tarimasEscaneadas.length;
     escaneadasCount.textContent = escaneadas;
     totalCount.textContent = totalTarimas;
@@ -744,33 +716,24 @@
     progresoFill.style.width = `${porcentaje}%`;
     progresoFill.textContent = `${Math.round(porcentaje)}%`;
     
-    // Mostrar lista de tarimas
-    if (tarimasEscaneadas.length > 0) {
-      tarimasLista.innerHTML = tarimasEscaneadas.map(t => `
-        <div class="tarima-item">
-          <div>
-            <div class="tarima-numero">📍 Tarima ${t.numero}</div>
-            <div class="tarima-hora">${t.hora}</div>
+    // Actualizar dashboard de tarimas
+    if (totalTarimas > 0) {
+      const tarimasHTML = [];
+      for (let i = 1; i <= totalTarimas; i++) {
+        const escaneada = tarimasEscaneadas.some(t => t.numero === i);
+        tarimasHTML.push(`
+          <div class="tarima-card ${escaneada ? 'escaneada' : ''}">
+            <div class="tarima-num">${i}</div>
+            <div class="tarima-check-icon">
+              ${escaneada ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-circle"></i>'}
+            </div>
           </div>
-          <div class="tarima-check"><i class="fas fa-check-circle"></i></div>
-        </div>
-      `).join('');
-    } else {
-      tarimasLista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">📷 Escanea la primera tarima para comenzar</div>';
-    }
-    
-    // Activar/desactivar botón de enviar
-    const completado = escaneadas === totalTarimas && totalTarimas > 0;
-    btnEnviarReporte.disabled = !completado;
-    
-    if (completado) {
-      btnEnviarReporte.style.background = 'linear-gradient(135deg, var(--green) 0%, #0a4a2a 100%)';
-    } else {
-      btnEnviarReporte.style.background = 'linear-gradient(135deg, var(--green) 0%, #155f35 100%)';
+        `);
+      }
+      tarimasGrid.innerHTML = tarimasHTML.join('');
     }
     
     progresoSection.classList.add('show');
-    botonesSection.style.display = 'block';
   }
 
   // ========== GENERAR REPORTE ==========
@@ -779,7 +742,6 @@
     
     const fechaActual = new Date().toLocaleString('es-MX');
     const tarimasListaStr = tarimasEscaneadas.map(t => `  • Tarima ${t.numero} - ${t.hora}`).join('\n');
-    const estado = tarimasEscaneadas.length === totalTarimas ? '✅ COMPLETADO' : `⚠️ PENDIENTE (${tarimasEscaneadas.length}/${totalTarimas})`;
     
     return `
 ╔══════════════════════════════════════════════════════════╗
@@ -798,98 +760,25 @@
 ║  📦 TARIMAS ESCANEADAS (${tarimasEscaneadas.length}/${totalTarimas})                  ║
 ${tarimasListaStr}
 ║  ──────────────────────────────────────────────────────── ║
-║  🟢 ESTADO: ${estado.padEnd(41)}║
+║  🟢 ESTADO: COMPLETADO ✅                                  ║
 ║  ──────────────────────────────────────────────────────── ║
 ║  📅 REPORTE GENERADO: ${fechaActual.padEnd(36)}║
 ╚══════════════════════════════════════════════════════════╝
     `;
   }
 
-  // ========== ENVIAR REPORTE A FIREBASE Y MOSTRAR MODAL ==========
-  async function enviarReporte() {
-    if (!embarqueActual || tarimasEscaneadas.length !== totalTarimas) {
-      showToast('⚠️ Debes escanear todas las tarimas primero', true);
-      return;
-    }
-    
-    const reporte = generarReporte();
-    const completado = tarimasEscaneadas.length === totalTarimas;
-    
-    try {
-      // Actualizar Firebase con estado completado
-      const docRef = doc(db, 'embarques', embarqueActual.id);
-      await setDoc(docRef, {
-        completado: true,
-        finalizado: new Date().toISOString(),
-        reporte: reporte
-      }, { merge: true });
-      
-      // Mostrar modal con reporte
-      reporteContenido.innerHTML = `<pre style="font-family: monospace; font-size: 11px; white-space: pre-wrap; word-break: break-word;">${reporte}</pre>`;
-      modalReporte.classList.add('show');
-      
-      showToast('✅ Reporte guardado en Firebase');
-      
-      // Detener cámara automáticamente
-      if (camaraActiva) {
-        detenerCamara();
-      }
-      
-    } catch (error) {
-      console.error('Error al guardar reporte:', error);
-      showToast('❌ Error al guardar reporte', true);
-    }
-  }
-
-  // ========== COMPARTIR POR WHATSAPP ==========
-  function compartirWhatsApp() {
-    const reporte = generarReporte();
-    const textoCodificado = encodeURIComponent(reporte);
-    const url = `https://wa.me/?text=${textoCodificado}`;
-    window.open(url, '_blank');
-  }
-
-  // ========== REINICIAR (NUEVO EMBARQUE) ==========
-  function reiniciar() {
-    if (camaraActiva) {
-      detenerCamara();
-    }
-    
-    embarqueActual = null;
-    tarimasEscaneadas = [];
-    totalTarimas = 0;
-    
-    embarqueInfoDiv.classList.remove('show');
-    progresoSection.classList.remove('show');
-    botonesSection.style.display = 'none';
-    tarimasLista.innerHTML = '';
-    progresoFill.style.width = '0%';
-    progresoFill.textContent = '0%';
-    escaneadasCount.textContent = '0';
-    totalCount.textContent = '0';
-    
-    // Limpiar información
-    infoRuta.textContent = '---';
-    infoViaje.textContent = '---';
-    infoAlmacen.textContent = '---';
-    infoTotalTarimas.textContent = '---';
-    infoFecha.textContent = '---';
-    infoHora.textContent = '---';
-    
-    showToast('🔄 Nuevo embarque listo para escanear');
-  }
-
   // ========== CÁMARA ==========
   async function iniciarCamara() {
     if (!validadorActual) {
-      showToast('⚠️ Primero ingresa tu nombre', true);
+      showToast('⚠️ Primero ingresa tu nombre y apellido', true);
       return;
     }
     
     if (camaraActiva) {
-      detenerCamara();
+      await detenerCamara();
     }
     
+    qrSection.classList.add('show');
     html5QrCode = new Html5Qrcode("reader");
     
     try {
@@ -900,70 +789,86 @@ ${tarimasListaStr}
         
         await html5QrCode.start(
           cameraId,
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
-          },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText) => {
             procesarQR(decodedText);
           },
-          (errorMessage) => {
-            // Silenciar errores normales de escaneo
-          }
+          (errorMessage) => {}
         );
         
         camaraActiva = true;
-        btnIniciarCamara.style.display = 'none';
-        btnDetenerCamara.style.display = 'block';
         showToast('📷 Cámara activada, escanea los QR de las tarimas');
       } else {
         showToast('❌ No se encontraron cámaras', true);
       }
     } catch (error) {
-      console.error('Error al iniciar cámara:', error);
+      console.error('Error:', error);
       showToast('❌ Error al acceder a la cámara', true);
     }
   }
   
-  function detenerCamara() {
+  async function detenerCamara() {
     if (html5QrCode && camaraActiva) {
-      html5QrCode.stop().then(() => {
+      try {
+        await html5QrCode.stop();
         camaraActiva = false;
-        btnIniciarCamara.style.display = 'block';
-        btnDetenerCamara.style.display = 'none';
-        showToast('📷 Cámara detenida');
-      }).catch(err => {
+        qrSection.classList.remove('show');
+      } catch (err) {
         console.warn('Error al detener cámara:', err);
-      });
+      }
     }
+  }
+
+  // ========== REINICIAR PROCESO ==========
+  function reiniciarProceso() {
+    if (camaraActiva) detenerCamara();
+    
+    embarqueActual = null;
+    tarimasEscaneadas = [];
+    totalTarimas = 0;
+    
+    embarqueInfoDiv.classList.remove('show');
+    progresoSection.classList.remove('show');
+    dashboardSection.style.display = 'none';
+    tarimasGrid.innerHTML = '';
+    progresoFill.style.width = '0%';
+    progresoFill.textContent = '0%';
+    escaneadasCount.textContent = '0';
+    totalCount.textContent = '0';
+    
+    infoRuta.textContent = '---';
+    infoViaje.textContent = '---';
+    infoAlmacen.textContent = '---';
+    infoTotalTarimas.textContent = '---';
+    infoFecha.textContent = '---';
+    infoHora.textContent = '---';
+    
+    // Restaurar botón a cámara
+    btnAccion.classList.remove('enviar', 'show');
+    btnAccion.classList.add('camara');
+    btnAccion.innerHTML = '<i class="fas fa-camera"></i>';
+    
+    showToast('🔄 Listo para nuevo embarque');
   }
 
   // ========== VALIDADOR INPUT ==========
   validadorInput.addEventListener('input', (e) => {
-    validadorActual = e.target.value.trim().toUpperCase();
+    validadorActual = e.target.value.trim();
     validadorInput.value = validadorActual;
-    
-    // Mostrar sección QR solo si hay validador
-    if (validadorActual.length >= 2) {
-      qrSection.classList.add('show');
-    } else {
-      qrSection.classList.remove('show');
-      if (camaraActiva) detenerCamara();
+  });
+
+  // ========== BOTÓN DE ACCIÓN ==========
+  btnAccion.addEventListener('click', async () => {
+    if (btnAccion.classList.contains('camara')) {
+      await iniciarCamara();
+    } else if (btnAccion.classList.contains('enviar')) {
+      await mostrarReporteYEnviar();
     }
   });
 
-  // ========== EVENTOS ==========
-  btnIniciarCamara.addEventListener('click', iniciarCamara);
-  btnDetenerCamara.addEventListener('click', detenerCamara);
-  btnEnviarReporte.addEventListener('click', enviarReporte);
-  btnReiniciar.addEventListener('click', reiniciar);
-  modalReporteClose.addEventListener('click', () => modalReporte.classList.remove('show'));
-  modalReporte.addEventListener('click', (e) => {
-    if (e.target === modalReporte) modalReporte.classList.remove('show');
-  });
-  btnCompartirWhatsApp.addEventListener('click', compartirWhatsApp);
-
-  // ========== INICIALIZAR ==========
+  // ========== INICIALIZAR VOZ ==========
+  seleccionarVozFemenina().then(voz => { vozFemenina = voz; });
+  
   console.log('App lista para escanear tarimas');
 </script>
 </body>
