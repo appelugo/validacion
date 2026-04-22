@@ -568,7 +568,7 @@
     }, 5000);
   }
 
-  // ========== PROCESAR QR ==========
+  // ========== PROCESAR QR (FORMATO JSON) ==========
   async function procesarQR(qrText) {
     // Evitar múltiples escaneos simultáneos
     if (escaneoEnProceso) return false;
@@ -580,23 +580,33 @@
       return false;
     }
 
-    // Extraer datos del QR
-    const regex = /RUTA:\s*(\S+)\s*VIAJE:\s*(\S+)\s*ALMACEN:\s*(\S+)\s*TARIMA:\s*(\d+)\s*TOTAL TARIMAS:\s*(\d+)\s*FECHA:\s*(\S+)\s*HORA:\s*(\S+)/i;
-    const match = qrText.match(regex);
-
-    if (!match) {
-      showToast('❌ QR no válido - Formato incorrecto', true);
+    let datos;
+    try {
+      // Intentar parsear como JSON
+      datos = JSON.parse(qrText);
+    } catch (e) {
+      showToast('❌ QR no válido - Formato JSON incorrecto', true);
       escaneoEnProceso = false;
       return false;
     }
 
-    const [, ruta, viaje, almacen, tarimaNumero, totalTarimasStr, fecha, hora] = match;
-    const tarimaNum = parseInt(tarimaNumero);
-    const totalTar = parseInt(totalTarimasStr);
+    // Validar que tenga todas las propiedades necesarias
+    const requiredFields = ['ruta', 'viaje', 'almacen', 'tarima', 'totalTarimas', 'fecha', 'hora'];
+    const missingFields = requiredFields.filter(field => !datos[field]);
+    
+    if (missingFields.length > 0) {
+      showToast(`❌ QR incompleto - Faltan: ${missingFields.join(', ')}`, true);
+      escaneoEnProceso = false;
+      return false;
+    }
+
+    const { ruta, viaje, almacen, tarima, totalTarimas: totalTar, fecha, hora } = datos;
+    const tarimaNum = parseInt(tarima);
+    const totalTarNum = parseInt(totalTar);
     const horaActual = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     // Mostrar el QR escaneado
-    mostrarUltimoQR(ruta, viaje, almacen, tarimaNum, totalTar, horaActual);
+    mostrarUltimoQR(ruta, viaje, almacen, tarimaNum, totalTarNum, horaActual);
 
     // Si es el primer QR del embarque, inicializar
     if (!embarqueActual) {
@@ -607,20 +617,20 @@
         ruta,
         viaje,
         almacen,
-        totalTarimas: totalTar,
+        totalTarimas: totalTarNum,
         fecha,
         hora,
         validador: validadorActual,
         inicio: new Date().toISOString(),
         tarimas: []
       };
-      totalTarimas = totalTar;
+      totalTarimas = totalTarNum;
       
       // Mostrar información del embarque
       infoRuta.textContent = ruta;
       infoViaje.textContent = viaje;
       infoAlmacen.textContent = almacen;
-      infoTotalTarimas.textContent = totalTar;
+      infoTotalTarimas.textContent = totalTarNum;
       infoFecha.textContent = fecha;
       infoHora.textContent = hora;
       embarqueInfoDiv.classList.add('show');
@@ -630,21 +640,21 @@
       await cargarEmbarqueExistente(embarqueId);
     }
 
-    // Verificar que los datos coincidan
+    // Verificar que los datos coincidan con el embarque actual
     if (embarqueActual.ruta !== ruta || embarqueActual.viaje !== viaje || embarqueActual.almacen !== almacen) {
       showToast('❌ Este QR pertenece a otro embarque diferente', true);
       escaneoEnProceso = false;
       return false;
     }
 
-    // Verificar duplicado
+    // Verificar que la tarima no haya sido escaneada
     if (tarimasEscaneadas.some(t => t.numero === tarimaNum)) {
       showToast(`⚠️ La tarima ${tarimaNum} ya fue escaneada`, true);
       escaneoEnProceso = false;
       return false;
     }
 
-    // Verificar rango
+    // Verificar que el número de tarima sea válido (1 - total)
     if (tarimaNum < 1 || tarimaNum > totalTarimas) {
       showToast(`❌ Tarima inválida. Debe ser entre 1 y ${totalTarimas}`, true);
       escaneoEnProceso = false;
@@ -672,7 +682,7 @@
     
     showToast(`✅ Tarima ${tarimaNum} escaneada correctamente`);
     
-    // Detener cámara después del escaneo
+    // Detener cámara después del escaneo (solo una lectura)
     await detenerCamara();
     
     // Si se completaron todas, cambiar botón
@@ -690,7 +700,7 @@
     return true;
   }
 
-  // ========== ENVIAR REPORTE ==========
+  // ========== ENVIAR REPORTE POR WHATSAPP ==========
   async function enviarReporte() {
     if (!embarqueActual || tarimasEscaneadas.length !== totalTarimas) {
       showToast('⚠️ Debes escanear todas las tarimas primero', true);
@@ -748,7 +758,7 @@
     }
   }
 
-  // ========== GUARDAR ESCANEO ==========
+  // ========== GUARDAR ESCANEO EN FIREBASE ==========
   async function guardarEscaneoEnFirebase(tarimaNumero, horaEscaneo) {
     if (!embarqueActual) return;
     
@@ -926,7 +936,7 @@ ${tarimasListaStr}
   // ========== INICIALIZAR VOZ ==========
   seleccionarVozFemenina().then(voz => { vozFemenina = voz; });
   
-  console.log('App lista para escanear tarimas');
+  console.log('App lista para escanear tarimas en formato JSON');
 </script>
 </body>
 </html>
