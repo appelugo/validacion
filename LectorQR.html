@@ -378,7 +378,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyB1APqzO0tsh1Ow58-e8VBYeTYbdmLxsNI",
@@ -554,55 +554,53 @@
     showToast('✅ Reporte enviado a WhatsApp');
   }
 
-// ========== REFRESCAR - SOLO LIMPIAR PANTALLA, NO BORRAR FIREBASE ==========
-async function refrescarTodo() {
-  if (confirm('⚠️ ¿Estás seguro? Se limpiará la pantalla para empezar un nuevo embarque. Los datos anteriores se conservan en Firebase.')) {
-    
-    if (camaraActiva) {
-      await detenerCamara();
+  // ========== REFRESCAR - SOLO LIMPIAR PANTALLA ==========
+  async function refrescarTodo() {
+    if (confirm('⚠️ ¿Estás seguro? Se limpiará la pantalla para empezar un nuevo embarque. Los datos anteriores se conservan en Firebase.')) {
+      
+      if (camaraActiva) {
+        await detenerCamara();
+      }
+      
+      embarqueActual = null;
+      tarimasEscaneadas = [];
+      totalTarimas = 0;
+      escaneoEnProceso = false;
+      ultimoQrProcesado = '';
+      
+      embarqueInfoDiv.classList.remove('show');
+      progresoSection.classList.remove('show');
+      dashboardSection.style.display = 'none';
+      tarimasGrid.innerHTML = '';
+      progresoFill.style.width = '0%';
+      progresoFill.textContent = '0%';
+      escaneadasCount.textContent = '0';
+      totalCount.textContent = '0';
+      ultimoQr.classList.remove('show');
+      
+      infoRuta.textContent = '---';
+      infoViaje.textContent = '---';
+      infoAlmacen.textContent = '---';
+      infoTotalTarimas.textContent = '---';
+      infoFecha.textContent = '---';
+      infoHora.textContent = '---';
+      
+      ultRuta.textContent = '---';
+      ultViaje.textContent = '---';
+      ultAlmacen.textContent = '---';
+      ultTarima.textContent = '---';
+      ultTotal.textContent = '---';
+      ultHora.textContent = '---';
+      
+      btnAccion.classList.remove('enviar', 'show');
+      btnAccion.classList.add('camara');
+      btnAccion.innerHTML = '<i class="fas fa-camera"></i>';
+      
+      showToast('🔄 Pantalla reiniciada. Puedes escanear un nuevo embarque.');
+      hablar('Pantalla reiniciada. Puedes comenzar un nuevo embarque.');
     }
-    
-    // SOLO LIMPIAR VARIABLES LOCALES
-    embarqueActual = null;
-    tarimasEscaneadas = [];
-    totalTarimas = 0;
-    escaneoEnProceso = false;
-    ultimoQrProcesado = '';
-    
-    // LIMPIAR INTERFAZ
-    embarqueInfoDiv.classList.remove('show');
-    progresoSection.classList.remove('show');
-    dashboardSection.style.display = 'none';
-    tarimasGrid.innerHTML = '';
-    progresoFill.style.width = '0%';
-    progresoFill.textContent = '0%';
-    escaneadasCount.textContent = '0';
-    totalCount.textContent = '0';
-    ultimoQr.classList.remove('show');
-    
-    infoRuta.textContent = '---';
-    infoViaje.textContent = '---';
-    infoAlmacen.textContent = '---';
-    infoTotalTarimas.textContent = '---';
-    infoFecha.textContent = '---';
-    infoHora.textContent = '---';
-    
-    ultRuta.textContent = '---';
-    ultViaje.textContent = '---';
-    ultAlmacen.textContent = '---';
-    ultTarima.textContent = '---';
-    ultTotal.textContent = '---';
-    ultHora.textContent = '---';
-    
-    btnAccion.classList.remove('enviar', 'show');
-    btnAccion.classList.add('camara');
-    btnAccion.innerHTML = '<i class="fas fa-camera"></i>';
-    
-    showToast('🔄 Pantalla reiniciada. Puedes escanear un nuevo embarque.');
-    hablar('Pantalla reiniciada. Puedes comenzar un nuevo embarque.');
   }
-}
-  
+
   // ========== GUARDAR ESCANEO EN FIREBASE ==========
   async function guardarEscaneoEnFirebase(tarimaNumero, horaEscaneo) {
     if (!embarqueActual) return;
@@ -757,6 +755,9 @@ async function refrescarTodo() {
     mostrarUltimoQR(ruta, viaje, almacen, tarimaNum, totalTarNum, horaActual);
     ultimoQrProcesado = qrText;
 
+    // PRIMERO: CERRAR LA CÁMARA INMEDIATAMENTE
+    await detenerCamara();
+
     // Si no hay embarque actual o ya está completado, mostrar resumen para reenviar
     if (!embarqueActual || (tarimasEscaneadas.length === totalTarimas && totalTarimas > 0)) {
       infoRuta.textContent = ruta;
@@ -776,7 +777,6 @@ async function refrescarTodo() {
       };
       totalTarimas = totalTarNum;
       
-      // Si ya hay tarimas escaneadas (de Firebase), usarlas
       if (tarimasEscaneadas.length === 0) {
         for (let i = 1; i <= totalTarNum; i++) {
           tarimasEscaneadas.push({ numero: i, hora: 'Completado' });
@@ -787,6 +787,7 @@ async function refrescarTodo() {
       dashboardSection.style.display = 'block';
       
       showToast(`📋 Embarque cargado - Listo para enviar reporte`);
+      // DESPUÉS: anunciar por voz
       await hablar(`Embarque de ${totalTarNum} tarimas cargado, puedes enviar el reporte`);
       
       btnAccion.classList.remove('camara');
@@ -794,7 +795,6 @@ async function refrescarTodo() {
       btnAccion.innerHTML = '<i class="fas fa-paper-plane"></i>';
       btnAccion.classList.add('show');
       
-      await detenerCamara();
       escaneoEnProceso = false;
       return true;
     }
@@ -802,7 +802,6 @@ async function refrescarTodo() {
     // Verificar que los datos coincidan con el embarque actual
     if (embarqueActual.ruta !== ruta || embarqueActual.viaje !== viaje || embarqueActual.almacen !== almacen) {
       showToast('❌ Este QR pertenece a otro embarque diferente', true);
-      await detenerCamara();
       escaneoEnProceso = false;
       return false;
     }
@@ -810,14 +809,12 @@ async function refrescarTodo() {
     // Verificar duplicado
     if (tarimasEscaneadas.some(t => t.numero === tarimaNum)) {
       showToast(`⚠️ La tarima ${tarimaNum} ya fue escaneada`, true);
-      await detenerCamara();
       escaneoEnProceso = false;
       return false;
     }
 
     if (tarimaNum < 1 || tarimaNum > totalTarimas) {
       showToast(`❌ Tarima inválida`, true);
-      await detenerCamara();
       escaneoEnProceso = false;
       return false;
     }
@@ -832,10 +829,10 @@ async function refrescarTodo() {
     
     await guardarEscaneoEnFirebase(tarimaNum, fechaHoraCompleta);
     actualizarUI();
-    await anunciarProgreso();
     showToast(`✅ Tarima ${tarimaNum} escaneada`);
     
-    await detenerCamara();
+    // DESPUÉS DE CERRAR LA CÁMARA, anunciar por voz
+    await anunciarProgreso();
     
     if (tarimasEscaneadas.length === totalTarimas) {
       await hablar(`¡Completaste todas las ${totalTarimas} tarimas!`);
