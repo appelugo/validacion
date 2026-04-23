@@ -77,14 +77,14 @@
 
   main { padding: 16px 16px 0; flex: 1; min-width: 0; max-width: 600px; margin: 0 auto; width: 100%; }
 
-  .Embarcador-section {
+  .validador-section {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 16px;
   }
-  .Embarcador-label {
+  .validador-label {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -92,7 +92,7 @@
     color: var(--muted);
     margin-bottom: 6px;
   }
-  .Embarcador-input {
+  .validador-input {
     width: 100%;
     background: var(--surface);
     border: 2px solid var(--border);
@@ -103,7 +103,7 @@
     border-radius: 10px;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .Embarcador-input:focus {
+  .validador-input:focus {
     outline: none;
     border-color: var(--navy);
     box-shadow: 0 0 0 3px var(--navy-light);
@@ -317,9 +317,9 @@
 </header>
 
 <main>
-  <div class="Embarcador-section">
-    <div class="Embarcador-label">NOMBRE DEL Embarcador</div>
-    <input type="text" id="EmbarcadorInput" class="Embarcador-input" placeholder="Nombre y Apellido" autocomplete="off">
+  <div class="validador-section">
+    <div class="validador-label">NOMBRE DEL VALIDADOR</div>
+    <input type="text" id="validadorInput" class="validador-input" placeholder="Nombre y Apellido" autocomplete="off">
   </div>
 
   <div id="qrSection" class="qr-section">
@@ -397,12 +397,12 @@
   let embarqueActual = null;
   let tarimasEscaneadas = [];
   let totalTarimas = 0;
-  let EmbarcadorActual = '';
+  let validadorActual = '';
   let vozFemenina = null;
   let escaneoEnProceso = false;
   let ultimoQrProcesado = '';
 
-  const EmbarcadorInput = document.getElementById('EmbarcadorInput');
+  const validadorInput = document.getElementById('validadorInput');
   const qrSection = document.getElementById('qrSection');
   const ultimoQr = document.getElementById('ultimoQr');
   const ultRuta = document.getElementById('ultRuta');
@@ -506,7 +506,7 @@
     setTimeout(() => ultimoQr.classList.remove('show'), 5000);
   }
 
-  // ========== GENERAR REPORTE PROFESIONAL ==========
+  // ========== GENERAR REPORTE ==========
   function generarReporte() {
     if (!embarqueActual) return '';
     
@@ -523,13 +523,12 @@
     reporte += `FECHA:       ${embarqueActual.fecha}\n`;
     reporte += `HORA INICIO: ${embarqueActual.hora}\n\n`;
     
-    reporte += `👤 Embarcador\n`;
-    reporte += `${embarqueActual.Embarcador}\n\n`;
+    reporte += `👤 VALIDADOR\n`;
+    reporte += `${embarqueActual.validador}\n\n`;
     
     reporte += `📦 TARIMAS ESCANEADAS\n`;
     tarimasEscaneadas.forEach(t => {
-      const fechaEscaneo = t.fechaEscaneo || t.hora;
-      reporte += `✅ Tarima ${t.numero.toString().padStart(3, ' ')}  │  ${fechaEscaneo}\n`;
+      reporte += `✅ Tarima ${t.numero.toString().padStart(3, ' ')}  │  ${t.hora}\n`;
     });
     reporte += `\n`;
     reporte += `✅ TOTAL ESCANEADAS: ${tarimasEscaneadas.length} de ${totalTarimas}\n`;
@@ -555,7 +554,7 @@
     showToast('✅ Reporte enviado a WhatsApp');
   }
 
-  // ========== REFRESCAR TODO - BORRAR FIREBASE Y MEMORIA ==========
+  // ========== REFRESCAR - SOLO BORRAR FIREBASE Y REINICIAR ==========
   async function refrescarTodo() {
     if (confirm('⚠️ ¿Estás seguro? Se borrarán TODOS los datos del embarque actual y podrás empezar uno nuevo desde cero.')) {
       
@@ -572,14 +571,12 @@
         await detenerCamara();
       }
       
-      // LIMPIAR TODAS LAS VARIABLES
       embarqueActual = null;
       tarimasEscaneadas = [];
       totalTarimas = 0;
       escaneoEnProceso = false;
       ultimoQrProcesado = '';
       
-      // LIMPIAR INTERFAZ
       embarqueInfoDiv.classList.remove('show');
       progresoSection.classList.remove('show');
       dashboardSection.style.display = 'none';
@@ -614,7 +611,7 @@
   }
 
   // ========== GUARDAR ESCANEO EN FIREBASE ==========
-  async function guardarEscaneoEnFirebase(tarimaNumero, fechaHoraEscaneo) {
+  async function guardarEscaneoEnFirebase(tarimaNumero, horaEscaneo) {
     if (!embarqueActual) return;
     try {
       const docRef = doc(db, 'embarques', embarqueActual.id);
@@ -624,8 +621,7 @@
       if (!tarimasActuales.some(t => t.numero === tarimaNumero)) {
         tarimasActuales.push({ 
           numero: tarimaNumero, 
-          hora: fechaHoraEscaneo,
-          fechaEscaneo: fechaHoraEscaneo,
+          hora: horaEscaneo,
           timestamp: new Date().toISOString() 
         });
         tarimasActuales.sort((a, b) => a.numero - b.numero);
@@ -638,7 +634,7 @@
         totalTarimas: embarqueActual.totalTarimas,
         fecha: embarqueActual.fecha,
         hora: embarqueActual.hora,
-        Embarcador: embarqueActual.Embarcador,
+        validador: embarqueActual.validador,
         inicio: embarqueActual.inicio || new Date().toISOString(),
         tarimas: tarimasActuales,
         ultimaActualizacion: new Date().toISOString(),
@@ -646,6 +642,55 @@
       }, { merge: true });
     } catch (error) { 
       console.error('Error al guardar:', error); 
+    }
+  }
+
+  // ========== CARGAR EMBARQUE EXISTENTE ==========
+  async function cargarEmbarqueExistente(embarqueId) {
+    try {
+      const docRef = doc(db, 'embarques', embarqueId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.tarimas && Array.isArray(data.tarimas)) {
+          tarimasEscaneadas = data.tarimas;
+          totalTarimas = data.totalTarimas;
+          
+          embarqueActual = {
+            id: embarqueId,
+            ruta: data.ruta,
+            viaje: data.viaje,
+            almacen: data.almacen,
+            totalTarimas: data.totalTarimas,
+            fecha: data.fecha,
+            hora: data.hora,
+            validador: data.validador,
+            inicio: data.inicio
+          };
+          
+          infoRuta.textContent = data.ruta;
+          infoViaje.textContent = data.viaje;
+          infoAlmacen.textContent = data.almacen;
+          infoTotalTarimas.textContent = data.totalTarimas;
+          infoFecha.textContent = data.fecha;
+          infoHora.textContent = data.hora;
+          embarqueInfoDiv.classList.add('show');
+          dashboardSection.style.display = 'block';
+          
+          actualizarUI();
+          showToast(`📦 Embarque recuperado - ${tarimasEscaneadas.length} tarimas ya escaneadas`);
+          
+          if (tarimasEscaneadas.length === totalTarimas && totalTarimas > 0) {
+            btnAccion.classList.remove('camara');
+            btnAccion.classList.add('enviar');
+            btnAccion.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            btnAccion.classList.add('show');
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Error al cargar embarque:', error);
     }
   }
 
@@ -680,7 +725,7 @@
     
     escaneoEnProceso = true;
     
-    if (!EmbarcadorActual || EmbarcadorActual.trim() === '') {
+    if (!validadorActual || validadorActual.trim() === '') {
       showToast('⚠️ Primero ingresa tu nombre completo', true);
       await detenerCamara();
       escaneoEnProceso = false;
@@ -710,45 +755,17 @@
     const { ruta, viaje, almacen, tarima, totalTarimas: totalTar, fecha, hora } = datos;
     const tarimaNum = parseInt(tarima);
     const totalTarNum = parseInt(totalTar);
-    const fechaHoraEscaneo = new Date().toLocaleString('es-MX', {
+    const horaActual = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const fechaHoraCompleta = new Date().toLocaleString('es-MX', {
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit'
     });
 
-    mostrarUltimoQR(ruta, viaje, almacen, tarimaNum, totalTarNum, fechaHoraEscaneo);
+    mostrarUltimoQR(ruta, viaje, almacen, tarimaNum, totalTarNum, horaActual);
     ultimoQrProcesado = qrText;
 
-    // NUEVO EMBARQUE (desde cero)
-    if (!embarqueActual) {
-      const embarqueId = `${ruta}_${viaje}_${almacen}`;
-      
-      const docRef = doc(db, 'embarques', embarqueId);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists() && docSnap.data().completado === true) {
-        const reiniciar = confirm('⚠️ Ya existe un embarque completado con estos datos. ¿Deseas reiniciarlo y empezar de nuevo?');
-        if (!reiniciar) {
-          escaneoEnProceso = false;
-          await detenerCamara();
-          return false;
-        } else {
-          await deleteDoc(docRef);
-          showToast('🗑️ Embarque anterior eliminado');
-        }
-      }
-      
-      embarqueActual = {
-        id: embarqueId,
-        ruta, viaje, almacen,
-        totalTarimas: totalTarNum,
-        fecha, hora,
-        Embarcador: EmbarcadorActual,
-        inicio: new Date().toISOString(),
-        tarimas: []
-      };
-      totalTarimas = totalTarNum;
-      tarimasEscaneadas = [];
-      
+    // Si no hay embarque actual o ya está completado, mostrar resumen para reenviar
+    if (!embarqueActual || (tarimasEscaneadas.length === totalTarimas && totalTarimas > 0)) {
       infoRuta.textContent = ruta;
       infoViaje.textContent = viaje;
       infoAlmacen.textContent = almacen;
@@ -756,41 +773,40 @@
       infoFecha.textContent = fecha;
       infoHora.textContent = hora;
       embarqueInfoDiv.classList.add('show');
-      dashboardSection.style.display = 'block';
       
-      actualizarUI();
-      showToast(`📦 Nuevo embarque iniciado - Total: ${totalTarNum} tarimas`);
-      await hablar(`Nuevo embarque de ${totalTarNum} tarimas. Escanea la primera tarima.`);
-      
-      // Registrar primera tarima escaneada
-      const nuevoEscaneo = { 
-        numero: tarimaNum, 
-        hora: fechaHoraEscaneo,
-        fechaEscaneo: fechaHoraEscaneo,
-        timestamp: new Date().toISOString() 
+      embarqueActual = {
+        id: `${ruta}_${viaje}_${almacen}`,
+        ruta, viaje, almacen,
+        totalTarimas: totalTarNum,
+        fecha, hora,
+        validador: validadorActual
       };
-      tarimasEscaneadas.push(nuevoEscaneo);
-      tarimasEscaneadas.sort((a, b) => a.numero - b.numero);
-      await guardarEscaneoEnFirebase(tarimaNum, fechaHoraEscaneo);
-      actualizarUI();
-      await anunciarProgreso();
-      showToast(`✅ Tarima ${tarimaNum} escaneada`);
+      totalTarimas = totalTarNum;
       
-      await detenerCamara();
-      
-      if (tarimasEscaneadas.length === totalTarimas) {
-        await hablar(`¡Completaste todas las ${totalTarimas} tarimas!`);
-        btnAccion.classList.remove('camara');
-        btnAccion.classList.add('enviar');
-        btnAccion.innerHTML = '<i class="fas fa-paper-plane"></i>';
-        btnAccion.classList.add('show');
+      // Si ya hay tarimas escaneadas (de Firebase), usarlas
+      if (tarimasEscaneadas.length === 0) {
+        for (let i = 1; i <= totalTarNum; i++) {
+          tarimasEscaneadas.push({ numero: i, hora: 'Completado' });
+        }
       }
       
+      actualizarUI();
+      dashboardSection.style.display = 'block';
+      
+      showToast(`📋 Embarque cargado - Listo para enviar reporte`);
+      await hablar(`Embarque de ${totalTarNum} tarimas cargado, puedes enviar el reporte`);
+      
+      btnAccion.classList.remove('camara');
+      btnAccion.classList.add('enviar');
+      btnAccion.innerHTML = '<i class="fas fa-paper-plane"></i>';
+      btnAccion.classList.add('show');
+      
+      await detenerCamara();
       escaneoEnProceso = false;
       return true;
     }
 
-    // VALIDAR EMBARQUE EXISTENTE
+    // Verificar que los datos coincidan con el embarque actual
     if (embarqueActual.ruta !== ruta || embarqueActual.viaje !== viaje || embarqueActual.almacen !== almacen) {
       showToast('❌ Este QR pertenece a otro embarque diferente', true);
       await detenerCamara();
@@ -798,6 +814,7 @@
       return false;
     }
 
+    // Verificar duplicado
     if (tarimasEscaneadas.some(t => t.numero === tarimaNum)) {
       showToast(`⚠️ La tarima ${tarimaNum} ya fue escaneada`, true);
       await detenerCamara();
@@ -814,14 +831,13 @@
 
     const nuevoEscaneo = { 
       numero: tarimaNum, 
-      hora: fechaHoraEscaneo,
-      fechaEscaneo: fechaHoraEscaneo,
+      hora: fechaHoraCompleta,
       timestamp: new Date().toISOString() 
     };
     tarimasEscaneadas.push(nuevoEscaneo);
     tarimasEscaneadas.sort((a, b) => a.numero - b.numero);
     
-    await guardarEscaneoEnFirebase(tarimaNum, fechaHoraEscaneo);
+    await guardarEscaneoEnFirebase(tarimaNum, fechaHoraCompleta);
     actualizarUI();
     await anunciarProgreso();
     showToast(`✅ Tarima ${tarimaNum} escaneada`);
@@ -842,7 +858,7 @@
 
   // ========== CÁMARA ==========
   async function iniciarCamara() {
-    if (!EmbarcadorActual || EmbarcadorActual.trim() === '') {
+    if (!validadorActual || validadorActual.trim() === '') {
       showToast('⚠️ Primero ingresa tu nombre', true);
       return;
     }
@@ -882,7 +898,8 @@
     }
   }
 
-  EmbarcadorInput.addEventListener('input', (e) => { EmbarcadorActual = e.target.value; });
+  // ========== INICIALIZAR ==========
+  validadorInput.addEventListener('input', (e) => { validadorActual = e.target.value; });
   btnAccion.addEventListener('click', async () => {
     if (btnAccion.classList.contains('camara')) await iniciarCamara();
     else if (btnAccion.classList.contains('enviar')) await enviarReporte();
