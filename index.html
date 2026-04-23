@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
   :root {
     --navy: #1a3a5c; --navy-dark: #122840; --navy-light: #e8eef5; --bg: #f2f4f7; --surface: #ffffff;
@@ -118,6 +119,8 @@
   .pdf-icon:hover { transform: scale(1.15); }
   .pdf-icon.red { color: var(--pdf-red); }
   .pdf-icon.blue { color: var(--pdf-blue); }
+  .search-icon { font-size: 15px; cursor: pointer; transition: transform 0.2s; color: var(--purple); }
+  .search-icon:hover { transform: scale(1.15); }
 
   .progress-cell { min-width: 120px; }
   .progress-wrap { display: flex; align-items: center; gap: 6px; }
@@ -131,6 +134,8 @@
   .chip.faltante { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bd); }
   .chip.faltante-confirmado { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-bd); }
   .chip.no-validado { background: var(--gray-bg); color: var(--gray); border: 1px solid var(--gray-bd); }
+  .chip.sobrante { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-bd); }
+  .chip.sobrante-retirado { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
   .chip.na { background: var(--bg); color: var(--faint); border: 1px solid var(--border); }
 
   .delete-btn { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bd); border-radius: 4px; padding: 3px 6px; font-size: 10px; cursor: pointer; transition: all 0.2s; }
@@ -152,9 +157,9 @@
 
   /* MODAL DE DETALLE - TAMAÑO REDUCIDO */
   .modal-overlay#modalOverlay .modal { 
-    max-width: 950px; 
+    max-width: 1100px; 
     max-height: 80vh;
-    width: 90%;
+    width: 95%;
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -218,6 +223,97 @@
     flex-shrink: 0;
     background: white;
     border-radius: 0 0 10px 10px;
+  }
+
+  /* MODAL PARA FALTANTES Y SOBRANTES */
+  .modal-overlay#modalFaltantesSobrantes .modal { 
+    max-width: 1000px; 
+    max-height: 80vh;
+    width: 95%;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+  
+  .modal-overlay#modalFaltantesSobrantes .modal-header {
+    background: var(--navy);
+    border-radius: 10px 10px 0 0;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  
+  .modal-overlay#modalFaltantesSobrantes .modal-title { 
+    font-family: 'Barlow Condensed', sans-serif; 
+    font-size: 15px; 
+    font-weight: 700; 
+    color: #fff; 
+    letter-spacing: 1px;
+  }
+  
+  .modal-overlay#modalFaltantesSobrantes .modal-close { 
+    background: rgba(255,255,255,0.15); 
+    border: 1px solid rgba(255,255,255,0.2); 
+    color: #fff; 
+    border-radius: 5px; 
+    width: 26px; 
+    height: 26px; 
+    cursor: pointer; 
+    font-size: 13px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    transition: background 0.15s; 
+  }
+  .modal-overlay#modalFaltantesSobrantes .modal-close:hover { background: rgba(255,255,255,0.25); }
+
+  .modal-overlay#modalFaltantesSobrantes .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--bg);
+  }
+
+  /* ESTILOS PARA SECCIONES DEL MODAL FALTANTES/SOBRANTES */
+  .fs-section {
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .fs-section-header {
+    background: var(--navy-light);
+    padding: 8px 12px;
+    font-weight: bold;
+    font-size: 13px;
+    color: var(--navy);
+    border-bottom: 1px solid var(--border);
+  }
+  .fs-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .fs-table th {
+    background: var(--surface2);
+    color: var(--navy);
+    padding: 6px 10px;
+    font-size: 10px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  .fs-table td {
+    padding: 6px 10px;
+    font-size: 11px;
+    border-bottom: 1px solid var(--border);
+  }
+  .fs-table tr:last-child td {
+    border-bottom: none;
   }
 
   /* ESTILOS PARA ENCABEZADOS DE ALMACÉN CON DATOS DE VALIDACIÓN */
@@ -334,7 +430,7 @@
   .alm-table { 
     width: 100%; 
     border-collapse: collapse; 
-    min-width: 750px; 
+    min-width: 850px; 
   }
   
   .alm-table th { 
@@ -385,6 +481,16 @@
     font-size: 12px; 
     color: var(--text); 
   }
+  .tarima-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--navy);
+    background: var(--navy-light);
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
 
   .status-badge {
     display: inline-block;
@@ -394,7 +500,7 @@
     padding: 2px 6px;
     border-radius: 12px;
     text-transform: uppercase;
-    min-width: 70px;
+    min-width: 90px;
     text-align: center;
   }
   .status-badge.pendiente { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-bd); }
@@ -402,6 +508,8 @@
   .status-badge.faltante { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bd); }
   .status-badge.faltante-confirmado { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-bd); }
   .status-badge.no-validado { background: var(--gray-bg); color: var(--gray); border: 1px solid var(--gray-bd); }
+  .status-badge.sobrante { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-bd); }
+  .status-badge.sobrante-retirado { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
 
   .btn-accion {
     background: var(--navy);
@@ -418,6 +526,8 @@
   .btn-accion:hover { background: var(--navy-dark); }
   .btn-accion.gray { background: var(--gray); }
   .btn-accion.gray:hover { background: #4b5563; }
+  .btn-accion.purple { background: var(--purple); }
+  .btn-accion.purple:hover { background: #7c3aed; }
 
   .modal-pct-wrap { display: flex; align-items: center; gap: 8px; }
   .modal-pct-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
@@ -428,6 +538,76 @@
   /* Estilos para el formato de validación de rutas (PDF) */
   .pdf-format {
     font-family: 'Verdana', Arial, sans-serif;
+  }
+
+  /* Estilos para la papeleta imprimible */
+  #contenedor-paginas { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #contenedor-paginas, #contenedor-paginas * { visibility: visible; }
+    #contenedor-paginas { position: absolute; top: 0; left: 0; width: 100%; display: block; }
+    .pagina { position: relative; width: 100%; min-height: 100vh; background: white; page-break-after: always; break-after: page; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-family: Arial, sans-serif; }
+    .logo-izquierdo { position: absolute; top: 20px; left: 20px; width: 200px; height: auto; z-index: 10; }
+    .logo-derecho { position: absolute; top: 20px; right: 20px; width: 200px; height: auto; z-index: 10; }
+    .contenido { position: relative; z-index: 1; }
+    .titulo { font-size: 32px; font-weight: bold; color: #0f3460; margin-bottom: 50px; }
+    .ruta { font-size: 100px; font-weight: bold; border-bottom: 4px solid #333; padding-bottom: 15px; margin-bottom: 40px; }
+    .viaje { font-size: 110px; font-weight: bold; background: #f5f5f5; padding: 20px 40px; border-radius: 15px; margin: 30px 0; }
+    .contador { font-size: 130px; font-weight: bold; color: #e94560; background: #fff0f0; padding: 25px 45px; border-radius: 20px; border: 3px solid #e94560; margin-top: 40px; }
+  }
+
+  /* Estilos para agrupación por tienda dentro del modal */
+  .tienda-group {
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .tienda-header {
+    background: var(--navy-light);
+    padding: 6px 10px;
+    font-weight: bold;
+    font-size: 12px;
+    color: var(--navy);
+    border-bottom: 1px solid var(--border);
+  }
+  .productos-tienda-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .productos-tienda-table th {
+    background: var(--surface2);
+    color: var(--navy);
+    padding: 4px 8px;
+    font-size: 9px;
+    text-align: left;
+    font-weight: 600;
+  }
+  .productos-tienda-table td {
+    padding: 4px 8px;
+    font-size: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .productos-tienda-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .print-icon { 
+    background: transparent !important; 
+    border: none !important; 
+    font-size: 14px; 
+    cursor: pointer; 
+    margin-left: 5px; 
+    vertical-align: middle; 
+    color: var(--navy); 
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  .print-icon:hover { 
+    opacity: 0.7; 
+    background: transparent !important; 
+    border: none !important;
+    box-shadow: none !important;
   }
 </style>
 </head>
@@ -467,6 +647,9 @@
     </div>
   </div>
 </main>
+
+<!-- Contenedor para papeletas imprimibles -->
+<div id="contenedor-paginas"></div>
 
 <!-- MODAL LOGIN -->
 <div class="modal-overlay" id="loginModal">
@@ -516,6 +699,20 @@
   </div>
 </div>
 
+<!-- MODAL FALTANTES Y SOBRANTES -->
+<div class="modal-overlay" id="modalFaltantesSobrantes">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="fsModalTitle">Faltantes y Sobrantes</div>
+        <div class="modal-meta" id="fsModalMeta"></div>
+      </div>
+      <button class="modal-close" id="fsModalClose">✕</button>
+    </div>
+    <div class="modal-body" id="fsModalBody"></div>
+  </div>
+</div>
+
 <footer>© 2026 · E.Lugo · Todos los derechos reservados</footer>
 
 <script type="module">
@@ -544,6 +741,7 @@
   let routeAlmStatus = {};
   let currentModalKey = null;
   let sesionesPorRuta = {};
+  let tarimasPorAlmacen = {};
   let currentUser = null;
   let lastActivity = Date.now();
   let activityInterval;
@@ -559,6 +757,11 @@
   const modalClose = document.getElementById('modalClose');
   const loginModal = document.getElementById('loginModal');
   const userModal = document.getElementById('userModal');
+  const fsModal = document.getElementById('modalFaltantesSobrantes');
+  const fsModalClose = document.getElementById('fsModalClose');
+  const fsModalTitle = document.getElementById('fsModalTitle');
+  const fsModalMeta = document.getElementById('fsModalMeta');
+  const fsModalBody = document.getElementById('fsModalBody');
   const newUsername = document.getElementById('newUsername');
   const newPassword = document.getElementById('newPassword');
   const newRole = document.getElementById('newRole');
@@ -719,6 +922,7 @@
     allRawItems = [];
     itemStatus = {};
     routeAlmStatus = {};
+    tarimasPorAlmacen = {};
     initialDataLoaded = false;
     renderHeader();
     renderTable();
@@ -811,7 +1015,8 @@
         const items = allRawItems.filter(it => it.ruta === r.ruta && it.viaje === r.viaje && it.almacen === alm);
         const allDone = items.length > 0 && items.every(it => 
           itemStatus[it.itemId] === 'concluido' || 
-          itemStatus[it.itemId] === 'faltante-confirmado'
+          itemStatus[it.itemId] === 'faltante-confirmado' ||
+          itemStatus[it.itemId] === 'sobrante-retirado'
         );
         const hasFaltantes = items.some(it => itemStatus[it.itemId] === 'faltante');
         const hasFaltantesConfirmados = items.some(it => itemStatus[it.itemId] === 'faltante-confirmado');
@@ -968,14 +1173,150 @@
     }
   }
 
-  // ========== CONFIRMAR FALTANTE ==========
+  // ========== CONFIRMAR FALTANTE CON TARIMA ==========
   async function confirmarFaltante(itemId) {
+    const tarima = prompt('Ingrese el número de tarima para este faltante:', '');
+    
+    if (tarima === null) {
+      showToast('Operación cancelada');
+      return;
+    }
+    
+    if (tarima.trim() === '') {
+      showToast('⚠️ Debe ingresar un número de tarima');
+      return;
+    }
+    
+    const tarimaNum = parseInt(tarima);
+    if (isNaN(tarimaNum) || tarimaNum <= 0) {
+      showToast('⚠️ Ingrese un número de tarima válido');
+      return;
+    }
+    
     try {
-      await setDoc(doc(db, 'items', itemId), { estatus: 'faltante-confirmado' }, { merge: true });
-      showToast('✅ Faltante confirmado');
+      await setDoc(doc(db, 'items', itemId), { 
+        estatus: 'faltante-confirmado',
+        tarima: tarimaNum
+      }, { merge: true });
+      showToast(`✅ Faltante surtido - Tarima: ${tarimaNum}`);
     } catch (error) {
       console.error('Error al confirmar faltante:', error);
       showToast('❌ Error');
+    }
+  }
+
+  // ========== CONFIRMAR SOBRANTE RETIRADO ==========
+  async function confirmarSobranteRetirado(itemId) {
+    try {
+      await setDoc(doc(db, 'items', itemId), { 
+        estatus: 'sobrante-retirado'
+      }, { merge: true });
+      showToast(`✅ Sobrante marcado como retirado`);
+    } catch (error) {
+      console.error('Error al confirmar sobrante retirado:', error);
+      showToast('❌ Error');
+    }
+  }
+
+  // ========== FUNCIÓN PAPELETA (CON QR) ==========
+  function generarPapeleta(ruta, viaje, totalTarimas, almacen = '') {
+    if (!totalTarimas || totalTarimas <= 0) { 
+      showToast('⚠ No hay tarimas registradas'); 
+      return; 
+    }
+    
+    const ahora = new Date();
+    const fechaQR = ahora.toLocaleDateString('es-MX');
+    const horaQR = ahora.toLocaleTimeString('es-MX');
+    
+    let viajeStr = viaje.toString().trim();
+    let viajeCompleto = viajeStr.startsWith('C000') ? viajeStr : 'C000' + viajeStr.padStart(6, '0');
+    let contenedor = document.getElementById('contenedor-paginas');
+    if (!contenedor) { 
+      const div = document.createElement('div'); 
+      div.id = 'contenedor-paginas'; 
+      document.body.appendChild(div); 
+      contenedor = div; 
+    }
+    contenedor.innerHTML = '';
+    const totalFormateado = totalTarimas.toString().padStart(2, '0');
+    
+    for (let i = 1; i <= totalTarimas; i++) {
+      let numero = i.toString().padStart(2, '0');
+      let pagina = document.createElement('div');
+      pagina.className = 'pagina';
+      
+      const qrData = {
+        ruta: ruta,
+        viaje: viajeCompleto,
+        almacen: almacen,
+        tarima: i,
+        totalTarimas: totalTarimas,
+        fecha: fechaQR,
+        hora: horaQR
+      };
+      const qrJson = JSON.stringify(qrData);
+      const qrId = `qr_${ruta}_${viaje}_${i}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+      
+      pagina.innerHTML = `
+        <div style="position: relative; width: 100%; min-height: 100vh; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-family: Arial, sans-serif;">
+          <img src="Mesa de control.png" class="logo-izquierdo" style="position: absolute; top: 20px; left: 20px; width: 200px; height: auto; z-index: 10;" onerror="this.style.display='none'">
+          <img src="logo.png" class="logo-derecho" style="position: absolute; top: 20px; right: 20px; width: 200px; height: auto; z-index: 10;" onerror="this.style.display='none'">
+          
+          <div class="contenido" style="position: relative; z-index: 1; width: 80%;">
+            <div class="titulo" style="font-size: 32px; font-weight: bold; color: #0f3460; margin-bottom: 50px;">MESA DE CONTROL</div>
+            <div class="ruta" style="font-size: 100px; font-weight: bold; border-bottom: 4px solid #333; padding-bottom: 15px; margin-bottom: 40px;">${ruta}</div>
+            <div class="viaje" style="font-size: 110px; font-weight: bold; background: #f5f5f5; padding: 20px 40px; border-radius: 15px; margin: 30px 0;">${viajeCompleto}</div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; gap: 40px;">
+              <div class="contador" style="flex: 1; font-size: 130px; font-weight: bold; color: #e94560; background: #fff0f0; padding: 25px 45px; border-radius: 20px; border: 3px solid #e94560; text-align: center;">
+                ${numero} de ${totalFormateado}
+              </div>
+              <div id="${qrId}" style="flex-shrink: 0; width: 120px; height: 120px;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+      contenedor.appendChild(pagina);
+      
+      setTimeout(() => {
+        const qrDiv = document.getElementById(qrId);
+        if (qrDiv) {
+          qrDiv.innerHTML = '';
+          new QRCode(qrDiv, {
+            text: qrJson,
+            width: 120,
+            height: 120,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        }
+      }, 50);
+    }
+    
+    setTimeout(() => { 
+      window.print(); 
+      setTimeout(() => { 
+        contenedor.innerHTML = ''; 
+      }, 1000); 
+    }, 500);
+  }
+
+  // ========== PRECARGAR TARIMAS ==========
+  async function precargarTarimas() {
+    try {
+      const snap = await getDocs(collection(db, 'sesiones_validacion'));
+      snap.forEach(doc => {
+        const data = doc.data();
+        const key = `${data.ruta}||${data.viaje}||${data.almacen}`;
+        if (!tarimasPorAlmacen[key] || new Date(data.inicio) > new Date(tarimasPorAlmacen[key].inicio)) {
+          tarimasPorAlmacen[key] = { tarimas: data.tarimas || 0, inicio: data.inicio };
+        }
+      });
+      console.log('✅ Tarimas precargadas:', Object.keys(tarimasPorAlmacen).length);
+    } catch (error) {
+      console.error('Error precargando tarimas:', error);
     }
   }
 
@@ -985,16 +1326,30 @@
     if (sesionesPorRuta[key]) return sesionesPorRuta[key];
 
     try {
-      const sesionesSnap = await getDocs(query(collection(db, 'sesiones_validacion'), where('ruta', '==', ruta), where('viaje', '==', viaje)));
+      const sesionesSnap = await getDocs(query(
+        collection(db, 'sesiones_validacion'), 
+        where('ruta', '==', ruta), 
+        where('viaje', '==', viaje)
+      ));
+      
       const sesiones = sesionesSnap.docs.map(d => d.data());
       const sesionPorAlmacen = {};
+      
       sesiones.forEach(s => {
-        const almacen = s.almacen;
+        let almacen = s.almacen;
+        if (almacen === 'CONGELADO') almacen = 'FRIO';
+        if (almacen === 'REFRIGERADO') almacen = 'REFRIGERADO';
+        if (almacen === 'SECO') almacen = 'SECO';
+        if (almacen === 'CRITICO') almacen = 'CRITICO';
+        
         if (!sesionPorAlmacen[almacen] || new Date(s.inicio) > new Date(sesionPorAlmacen[almacen].inicio)) {
           sesionPorAlmacen[almacen] = s;
         }
       });
+      
       sesionesPorRuta[key] = { todas: sesiones, porAlmacen: sesionPorAlmacen };
+      console.log(`Sesiones cargadas para ${ruta} ${viaje}:`, Object.keys(sesionPorAlmacen));
+      
       return sesionesPorRuta[key];
     } catch (error) {
       console.error('Error cargando sesiones:', error);
@@ -1012,7 +1367,146 @@
     return `${horas}:${minutos}:${segundos}`;
   }
 
-  // ========== GENERAR PDF PRODUCTOS ==========
+  // ========== FUNCIÓN PARA OBTENER TARIMAS ==========
+  function getTarimasAlmacen(ruta, viaje, almacen) {
+    const key = `${ruta}||${viaje}||${almacen}`;
+    if (tarimasPorAlmacen[key]) {
+      return parseInt(tarimasPorAlmacen[key].tarimas) || 0;
+    }
+    return 0;
+  }
+
+  // ========== MODAL DE FALTANTES Y SOBRANTES ==========
+  window.abrirModalFaltantesSobrantes = async (ruta, viaje) => {
+    const items = allRawItems.filter(it => it.ruta === ruta && it.viaje === viaje);
+    
+    const faltantes = items.filter(it => 
+      itemStatus[it.itemId] === 'faltante' || 
+      itemStatus[it.itemId] === 'faltante-confirmado'
+    );
+    
+    const sobrantes = items.filter(it => 
+      it.tipo === 'SOBRANTE' && 
+      itemStatus[it.itemId] !== 'sobrante-retirado'
+    );
+    
+    const sobrantesRetirados = items.filter(it => 
+      it.tipo === 'SOBRANTE' && 
+      itemStatus[it.itemId] === 'sobrante-retirado'
+    );
+    
+    if (fsModalTitle) fsModalTitle.textContent = `Faltantes y Sobrantes - ${ruta}`;
+    if (fsModalMeta) fsModalMeta.textContent = `Viaje: ${viaje}`;
+    
+    let html = '';
+    
+    html += `<div class="fs-section">
+      <div class="fs-section-header">⚠️ FALTANTES (${faltantes.length})</div>
+      <table class="fs-table">
+        <thead>
+          <tr><th>Código</th><th>Descripción</th><th>UDM</th><th>Tienda</th><th>Cantidad</th><th>Tarima</th><th>Estatus</th><th></th></tr>
+        </thead>
+        <tbody>`;
+    
+    if (faltantes.length === 0) {
+      html += `<tr><td colspan="8" style="text-align:center;">No hay productos faltantes</td></tr>`;
+    } else {
+      faltantes.forEach(it => {
+        const est = itemStatus[it.itemId] || 'pendiente';
+        let texto = est === 'faltante-confirmado' ? 'faltante surtido' : 'faltante';
+        let badgeClass = est === 'faltante-confirmado' ? 'faltante-confirmado' : 'faltante';
+        const tarimaMostrar = it.tarima || '—';
+        const mostrarBoton = est === 'faltante';
+        html += `<tr>
+          <td><span class="codigo-badge">${it.codigo}</span></td>
+          <td>${it.desc || ''}</td>
+          <td>${it.udm || 'N/A'}</td>
+          <td>${it.tienda || '—'}</td>
+          <td>${it.cantidad || 0}</td>
+          <td><span class="tarima-text">${tarimaMostrar}</span></td>
+          <td><span class="status-badge ${badgeClass}">${texto}</span></td>
+          <td>${mostrarBoton ? `<button class="btn-accion" onclick="confirmarFaltante('${it.itemId}')">✓</button>` : ''}</td>
+        </tr>`;
+      });
+    }
+    
+    html += `</tbody>
+      </table>
+    </div>`;
+    
+    html += `<div class="fs-section">
+      <div class="fs-section-header">➕ SOBRANTES POR RETIRAR (${sobrantes.length})</div>
+      <table class="fs-table">
+        <thead>
+          <tr><th>Código</th><th>Descripción</th><th>UDM</th><th>Tienda</th><th>Cantidad</th><th>Tarima</th><th>Estatus</th><th></th></tr>
+        </thead>
+        <tbody>`;
+    
+    if (sobrantes.length === 0) {
+      html += `<tr><td colspan="8" style="text-align:center;">No hay productos sobrantes pendientes</td></tr>`;
+    } else {
+      sobrantes.forEach(it => {
+        const tarimaMostrar = it.tarima || '—';
+        html += `<tr>
+          <td><span class="codigo-badge">${it.codigo}</span></td>
+          <td>${it.desc || ''}</td>
+          <td>${it.udm || 'N/A'}</td>
+          <td>${it.tienda || '—'}</td>
+          <td>${it.cantidad || 0}</td>
+          <td><span class="tarima-text">${tarimaMostrar}</span></td>
+          <td><span class="status-badge sobrante">SOBRANTE</span></td>
+          <td><button class="btn-accion purple" onclick="confirmarSobranteRetirado('${it.itemId}')">✓ Retirar</button></td>
+        </tr>`;
+      });
+    }
+    
+    html += `</tbody>
+      </table>
+    </div>`;
+    
+    if (sobrantesRetirados.length > 0) {
+      html += `<div class="fs-section">
+        <div class="fs-section-header">✅ SOBRANTES RETIRADOS (${sobrantesRetirados.length})</div>
+        <table class="fs-table">
+          <thead>
+            <tr><th>Código</th><th>Descripción</th><th>UDM</th><th>Tienda</th><th>Cantidad</th><th>Tarima</th><th>Estatus</th><th></th></tr>
+          </thead>
+          <tbody>`;
+      
+      sobrantesRetirados.forEach(it => {
+        const tarimaMostrar = it.tarima || '—';
+        html += `<tr>
+          <td><span class="codigo-badge">${it.codigo}</span></td>
+          <td>${it.desc || ''}</td>
+          <td>${it.udm || 'N/A'}</td>
+          <td>${it.tienda || '—'}</td>
+          <td>${it.cantidad || 0}</td>
+          <td><span class="tarima-text">${tarimaMostrar}</span></td>
+          <td><span class="status-badge sobrante-retirado">SOBRANTE RETIRADO</span></td>
+          <td>—</td>
+        </tr>`;
+      });
+      
+      html += `</tbody>
+        </table>
+      </div>`;
+    }
+    
+    if (fsModalBody) fsModalBody.innerHTML = html;
+    if (fsModal) fsModal.classList.add('show');
+  };
+
+  if (fsModalClose) {
+    fsModalClose.addEventListener('click', () => {
+      if (fsModal) fsModal.classList.remove('show');
+    });
+  }
+
+  if (fsModal) {
+    fsModal.addEventListener('click', e => { if (e.target === fsModal) fsModal.classList.remove('show'); });
+  }
+
+  // ========== GENERAR PDF PRODUCTOS (CORREGIDO) ==========
   window.generarPDFProductos = async (ruta, viaje) => {
     showToast('⏳ Generando PDF...');
     try {
@@ -1024,18 +1518,39 @@
       items.forEach(i => { if (almacenes[i.almacen]) almacenes[i.almacen].push(i); });
 
       function generarFilas(lista) {
-        if (!lista.length) return '<tr><td colspan="6" style="padding:15px; text-align:center;">Sin productos</td></tr>';
+        if (!lista.length) return '<tr><td colspan="7" style="padding:15px; text-align:center;">Sin productos</td></tr>';
+        
         const porTienda = {};
         lista.forEach(it => { const t = it.tienda || 'S/T'; if (!porTienda[t]) porTienda[t] = []; porTienda[t].push(it); });
+        
         let html = '';
-        for (const tienda in porTienda) {
-          html += `<tr style="background:#e0e7ff;"><td colspan="6" style="padding:6px;"><strong>Tienda: ${tienda}</strong></td></tr>`;
-          porTienda[tienda].forEach(item => {
-            const est = itemStatus[item.itemId] || 'pendiente';
+        const tiendasOrdenadas = Object.keys(porTienda).sort((a, b) => {
+          const numA = parseInt(a) || 0;
+          const numB = parseInt(b) || 0;
+          return numA - numB;
+        });
+        
+        for (const tienda of tiendasOrdenadas) {
+          html += `<tr style="background:#e0e7ff;"><td colspan="7" style="padding:6px;"><strong>Tienda: ${tienda}</strong></td></tr>`;
+          const productosOrdenados = [...porTienda[tienda]].sort((a, b) => (a.codigo || '').localeCompare(b.codigo || ''));
+          
+          productosOrdenados.forEach(it => {
+            const est = itemStatus[it.itemId] || 'pendiente';
             let texto = est;
-            if (est === 'faltante-confirmado') texto = 'faltante confirmado';
+            if (est === 'faltante-confirmado') texto = 'faltante surtido';
             if (est === 'no-validado') texto = 'no validado';
-            html += `<tr><td style="padding:5px;">${item.codigo}</td><td style="padding:5px;">${item.desc || ''}</td><td style="padding:5px;">${item.udm || 'N/A'}</td><td style="padding:5px;">${item.tienda || '—'}</td><td style="padding:5px;">${item.cantidad || 0}</td><td style="padding:5px;">${texto}</td></tr>`;
+            if (est === 'sobrante') texto = 'sobrante';
+            if (est === 'sobrante-retirado') texto = 'sobrante retirado';
+            const tarimaMostrar = it.tarima || '—';
+            html += `<tr>
+              <td style="padding:5px;">${it.codigo}</td>
+              <td style="padding:5px;">${it.desc || ''}</td>
+              <td style="padding:5px;">${it.udm || 'N/A'}</td>
+              <td style="padding:5px;">${it.tienda || '—'}</td>
+              <td style="padding:5px;">${it.cantidad || 0}</td>
+              <td style="padding:5px; text-align:center;">${tarimaMostrar}</td>
+              <td style="padding:5px;">${texto}</td>
+            </tr>`;
           });
         }
         return html;
@@ -1048,7 +1563,12 @@
       
       for (const [alm, lista] of Object.entries(almacenes)) {
         if (lista.length) {
-          htmlContent += `<h3>${alm}</h3><table><thead><tr><th>Código</th><th>Descripción</th><th>UDM</th><th>Tienda</th><th>Cantidad</th><th>Estatus</th></tr></thead><tbody>${generarFilas(lista)}</tbody></table>`;
+          htmlContent += `<h3>${alm}</h3>
+          <table>
+            <thead>
+              <tr><th>Código</th><th>Descripción</th><th>UDM</th><th>Tienda</th><th>Cantidad</th><th>Tarima</th><th>Estatus</th></tr></thead>
+            <tbody>${generarFilas(lista)}</tbody>
+          </table>`;
         }
       }
       htmlContent += `</body></html>`;
@@ -1062,7 +1582,7 @@
     }
   };
 
-  // ========== GENERAR PDF FORMATO DE VALIDACIÓN DE RUTAS (VERSIÓN COMPLETA) ==========
+  // ========== GENERAR PDF FORMATO DE VALIDACIÓN DE RUTAS (CORREGIDO) ==========
   window.generarPDFCalidad = async (ruta, viaje) => {
     showToast('⏳ Generando Formato de Validación de Rutas...');
     
@@ -1070,11 +1590,9 @@
       const items = allRawItems.filter(it => it.ruta === ruta && it.viaje === viaje);
       const { porAlmacen: sesionPorAlmacen } = await cargarSesionesRuta(ruta, viaje);
 
-      // Determinar tipo de ruta (de la primera sesión)
       const sesiones = Object.values(sesionPorAlmacen);
       const tipoRuta = sesiones.length > 0 ? sesiones[0].tipo : '';
       
-      // Determinar checkboxes de crítico
       const palabrasCritico = {
         tumbler: ['TUMBLER'],
         vino: ['VINO'],
@@ -1112,7 +1630,6 @@
         }
       });
 
-      // Contar faltantes y sobrantes por almacén
       const conteo = {
         SECO: { faltante: 0, sobrante: 0 },
         REFRIGERADO: { faltante: 0, sobrante: 0 },
@@ -1121,7 +1638,8 @@
       };
 
       items.forEach(item => {
-        const alm = item.almacen;
+        let alm = item.almacen;
+        if (alm === 'CONGELADO') alm = 'FRIO';
         if (conteo[alm]) {
           if (itemStatus[item.itemId] === 'faltante' || itemStatus[item.itemId] === 'faltante-confirmado') {
             conteo[alm].faltante++;
@@ -1135,391 +1653,39 @@
       const fecha = new Date().toLocaleDateString('es-MX').split('/').map(n => n.padStart(2, '0')).join('/');
       const hora = new Date().toLocaleTimeString('es-MX');
 
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Formato de Validación de Rutas - Ruta ${ruta}</title>
-          <link href="https://fonts.googleapis.com/css2?family=Verdana&display=swap" rel="stylesheet">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: 'Verdana', Arial, sans-serif; 
-              background: white; 
-              color: #000; 
-              padding: 20px;
-              font-size: 10px;
-            }
-            .container {
-              max-width: 1100px;
-              margin: 0 auto;
-              position: relative;
-            }
-            table {
-              border-collapse: collapse;
-              width: 100%;
-            }
-            td {
-              border: 1px solid #000;
-              padding: 4px;
-              vertical-align: middle;
-            }
-            .check-box {
-              display: inline-block;
-              width: 12px;
-              height: 12px;
-              border: 1px solid #000;
-              margin-right: 3px;
-              background: white;
-            }
-            .check-box.checked {
-              background: #000;
-            }
-            .bpd-box {
-              border: 1px solid #000;
-              padding: 5px;
-              margin: 10px 0;
-            }
-            .ruta-box {
-              border: 1px solid #000;
-              padding: 4px;
-              margin: 10px 0;
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-            }
-            .observaciones-box {
-              border: 1px solid #000;
-              padding: 4px;
-              margin: 10px 0;
-              width: 300px;
-              margin-left: auto;
-            }
-            .observaciones-title {
-              font-weight: bold;
-              margin-bottom: 5px;
-            }
-            .observaciones-line {
-              height: 20px;
-              border-bottom: 1px solid #000;
-              margin-bottom: 5px;
-            }
-            .tipo-ruta-box {
-              border: 1px solid #000;
-              padding: 5px;
-              margin: 10px 0;
-              display: flex;
-              align-items: center;
-              gap: 15px;
-            }
-            .critico-box {
-              border: 1px solid #000;
-              padding: 5px;
-              margin: 10px 0;
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              flex-wrap: wrap;
-            }
-            .firmas-section {
-              margin-top: 30px;
-            }
-            .firma-row {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 15px;
-            }
-            .firma-item {
-              width: 30%;
-              text-align: center;
-            }
-            .firma-line {
-              border-top: 1px solid #000;
-              width: 100%;
-              margin: 5px 0;
-            }
-            .operador-box {
-              margin-top: 20px;
-              text-align: center;
-            }
-            .operador-line {
-              border-top: 1px solid #000;
-              width: 50%;
-              margin: 5px auto;
-            }
-            .print-button-container {
-              text-align: center;
-              margin-bottom: 20px;
-            }
-            .print-button {
-              background: #1a3a5c;
-              color: white;
-              border: none;
-              padding: 10px 24px;
-              border-radius: 4px;
-              font-size: 14px;
-              cursor: pointer;
-              display: inline-block;
-            }
-            .print-button:hover {
-              background: #122840;
-            }
-            
-            @media print {
-              body { 
-                padding: 5px; 
-                margin: 0;
-                background: white;
-                font-size: 7px;
-              }
-              .no-print { 
-                display: none; 
-              }
-              button { 
-                display: none; 
-              }
-              .print-button { 
-                display: none; 
-              }
-              
-              td[style*="background-color: #D9D9D9"], td[bgcolor="#D9D9D9"] {
-                background-color: #D9D9D9 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-              
-              .check-box {
-                border: 1px solid #000 !important;
-                background-color: white !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-              .check-box.checked {
-                background-color: #000 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-              
-              * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="no-print print-button-container">
-              <button class="print-button" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
-            </div>
+      const formatearFecha = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        return d.toLocaleDateString().split('/').map(n => n.padStart(2, '0')).join('/');
+      };
 
-            <div style="position: relative; margin-bottom: 20px; width: 100%;">
-              <div style="position: absolute; top: 0; right: 0; width: 18.5%; height: 100%; border: 1px solid #000; display: flex; align-items: center; justify-content: center; background: white; z-index: 10;">
-                <img src="logo.png" alt="Logo" style="max-width: 90%; max-height: 90%;" onerror="this.style.display='none'; this.parentElement.innerHTML='LOGO'">
-              </div>
+      const formatearHora = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        return d.toLocaleTimeString();
+      };
 
-              <table style="width: 100%; border-collapse: collapse; font-family: 'Verdana', sans-serif; font-size: 10px; table-layout: fixed;">
-                <tr>
-                  <td colspan="11" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Nombre del documento</td>
-                  <td colspan="6" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Código del Documento</td>
-                  <td colspan="5" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Emisión</td>
-                  <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: #D9D9D9;" bgcolor="#D9D9D9"></td>
-                </tr>
-                
-                <tr>
-                  <td colspan="11" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">FORMATO DE VALIDACIÓN DE RUTAS</td>
-                  <td colspan="6" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">FOR-CDS-CYD-CDC-287</td>
-                  <td colspan="5" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">09/01/26</td>
-                  <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: white;" bgcolor="white"></td>
-                </tr>
-                
-                <tr>
-                  <td colspan="4" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Proceso</td>
-                  <td colspan="4" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Área</td>
-                  <td colspan="3" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Línea</td>
-                  <td colspan="6" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Versión</td>
-                  <td colspan="5" style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Próxima revisión</td>
-                  <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: #D9D9D9;" bgcolor="#D9D9D9"></td>
-                </tr>
-                
-                <tr>
-                  <td colspan="4" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">Finanzas</td>
-                  <td colspan="4" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">Mesa de Control</td>
-                  <td colspan="3" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">Almacén</td>
-                  <td colspan="6" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">04</td>
-                  <td colspan="5" style="border: 1px solid #000; text-align: center; padding: 4px; background-color: white;" bgcolor="white">08/01/29</td>
-                  <td colspan="5" style="border: 1px solid #000; border-left: 1px solid #000; background-color: white;" bgcolor="white"></td>
-                </tr>
-              </table>
-            </div>
-
-            <div style="margin: 5px 0;">
-              <div style="font-size: 10px; margin-bottom: 2px;">
-                Cumplimiento de los lineamientos de BPD´s : Aplica a todo el personal del Área de Validación se deberá colocar si cumple (✓),
-              </div>
-              <div style="font-size: 10px;">
-                no cumple (✗) o no aplica (N/A). El formato deberá realizarse cada vez que se inicie una ruta .
-              </div>
-            </div>
-
-            <div style="width: 100%; margin: 5px 0;">
-              <table style="width: 100%; border-collapse: collapse; font-family: 'Verdana', sans-serif; font-size: 10px; table-layout: fixed;">
-                <tr>
-                  <td colspan="17" style="border: none;"></td>
-                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: 1px solid #000; border-bottom: none; padding: 4px; font-weight: bold; text-align: center; background-color: #D9D9D9;" bgcolor="#D9D9D9">
-                    Observaciones
-                  </td>
-                </tr>
-                
-                <tr>
-                  <td colspan="17" style="border: none;"></td>
-                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
-                </tr>
-                
-                <tr>
-                  <td colspan="17" style="border: none;"></td>
-                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
-                </tr>
-                
-                <tr>
-                  <td colspan="3" style="border: none; padding: 4px 2px; vertical-align: bottom;">
-                    <span style="font-size: 10px;">Ruta Validada:</span>
-                  </td>
-                  <td colspan="4" style="border-left: none; border-right: none; border-top: none; border-bottom: 1px solid #000; padding: 4px 2px 0 2px; vertical-align: bottom;">
-                    <span style="font-size: 12px; font-weight: bold;">${ruta}</span>
-                  </td>
-                  <td colspan="10" style="border: none;"></td>
-                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
-                </tr>
-                
-                <tr>
-                  <td colspan="17" style="border: none;"></td>
-                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: none; height: 15px;"></td>
-                </tr>
-                
-                <tr>
-                  <td colspan="17" style="border: none;"></td>
-                  <td colspan="10" style="border-left: 1px solid #000; border-right: 1px solid #000; border-top: none; border-bottom: 1px solid #000; height: 15px;"></td>
-                </tr>
-              </table>
-            </div>
-
-            <div class="tipo-ruta-box">
-              <strong>Tipo de Ruta:</strong>
-              <span><span class="check-box ${tipoRuta === 'AEROPUERTO' ? 'checked' : ''}"></span> Aeropuerto</span>
-              <span><span class="check-box ${tipoRuta === 'PRECARGA' ? 'checked' : ''}"></span> Precarga</span>
-              <span><span class="check-box ${tipoRuta === 'QUINTA' ? 'checked' : ''}"></span> Quinta</span>
-              <span><span class="check-box ${tipoRuta === 'NO TOP' ? 'checked' : ''}"></span> Ruta No Top</span>
-            </div>
-
-            <div class="critico-box">
-              <strong>Critico:</strong>
-              <span><span class="check-box ${criticosMarcados.tumbler ? 'checked' : ''}"></span> Tumbler</span>
-              <span><span class="check-box ${criticosMarcados.vino ? 'checked' : ''}"></span> Vino</span>
-              <span><span class="check-box ${criticosMarcados.vam ? 'checked' : ''}"></span> Vam</span>
-              <span><span class="check-box ${criticosMarcados.grisinnis ? 'checked' : ''}"></span> Grisinnis</span>
-              <span><span class="check-box ${criticosMarcados.tazas ? 'checked' : ''}"></span> Tazas</span>
-              <span><span class="check-box ${criticosMarcados.tarjeta ? 'checked' : ''}"></span> Tarjeta</span>
-              <span><span class="check-box ${criticosMarcados.otros ? 'checked' : ''}"></span> Otros</span>
-              <span><span class="check-box ${criticosMarcados.sinCritico ? 'checked' : ''}"></span> Sin Critico</span>
-            </div>
-
-            <table style="margin: 15px 0;">
-              <thead>
-                <tr>
-                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Ambiente Validado</th>
-                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Fecha</th>
-                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Hora de Inicio</th>
-                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Hora de Termino</th>
-                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Nombre del Validador</th>
-                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">N° Tarimas</th>
-                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Anden</th>
-                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Faltante</th>
-                  <th style="border: 1px solid #000; background-color: #D9D9D9; font-weight: bold; text-align: center; padding: 4px;" bgcolor="#D9D9D9">Sobrante</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Seco</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? new Date(sesionPorAlmacen.SECO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? new Date(sesionPorAlmacen.SECO.inicio).toLocaleTimeString() : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO && sesionPorAlmacen.SECO.fin ? new Date(sesionPorAlmacen.SECO.fin).toLocaleTimeString() : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.validador : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.tarimas : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.anden : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.SECO.faltante || ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.SECO.sobrante || ''}</td>
-                </tr>
-                <tr>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Refrigerado</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? new Date(sesionPorAlmacen.REFRIGERADO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? new Date(sesionPorAlmacen.REFRIGERADO.inicio).toLocaleTimeString() : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO && sesionPorAlmacen.REFRIGERADO.fin ? new Date(sesionPorAlmacen.REFRIGERADO.fin).toLocaleTimeString() : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.validador : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.tarimas : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.anden : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.REFRIGERADO.faltante || ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.REFRIGERADO.sobrante || ''}</td>
-                </tr>
-                <tr>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Conge</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? new Date(sesionPorAlmacen.FRIO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? new Date(sesionPorAlmacen.FRIO.inicio).toLocaleTimeString() : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO && sesionPorAlmacen.FRIO.fin ? new Date(sesionPorAlmacen.FRIO.fin).toLocaleTimeString() : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.validador : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.tarimas : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.anden : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.FRIO.faltante || ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.FRIO.sobrante || ''}</td>
-                </tr>
-                <tr>
-                  <td style="border: 1px solid #000; padding: 4px; font-weight: bold; background-color: white;" bgcolor="white">Crítico</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? new Date(sesionPorAlmacen.CRITICO.inicio).toLocaleDateString().split('/').map(n => n.padStart(2,'0')).join('/') : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? new Date(sesionPorAlmacen.CRITICO.inicio).toLocaleTimeString() : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO && sesionPorAlmacen.CRITICO.fin ? new Date(sesionPorAlmacen.CRITICO.fin).toLocaleTimeString() : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.validador : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.tarimas : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; background-color: white;" bgcolor="white">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.anden : ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.CRITICO.faltante || ''}</td>
-                  <td style="border: 1px solid #000; padding: 4px; text-align: center; background-color: white;" bgcolor="white">${conteo.CRITICO.sobrante || ''}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div style="height: 60px;"></div>
-
-            <div class="firmas-section">
-              <div class="firma-row">
-                <div class="firma-item">
-                  <div class="firma-line"></div>
-                  <strong>Firma del TEAM</strong>
-                </div>
-                <div class="firma-item">
-                  <div class="firma-line"></div>
-                  <strong>Firma del TEAM</strong>
-                </div>
-                <div class="firma-item">
-                  <div class="firma-line"></div>
-                  <strong>Firma del TEAM</strong>
-                </div>
-              </div>
-
-              <div style="height: 10px;"></div>
-
-              <div class="operador-box">
-                <div class="operador-line"></div>
-                <strong>Nombre y Firma de Operador Maniobra</strong>
-              </div>
-
-              <div style="margin-top: 10px; font-size: 6.5px; text-align: center; border-top: 1px solid #000; padding-top: 3px;">
-                Las copias impresas de este documento son consideradas COPIA NO CONTROLADA, a menos que cuenten con un sello de DOCUMENTO CONTROLADO.
-              </div>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
+      const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Formato de Validación de Rutas - Ruta ${ruta}</title>
+      <link href="https://fonts.googleapis.com/css2?family=Verdana&display=swap" rel="stylesheet">
+      <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Verdana',Arial,sans-serif;background:white;color:#000;padding:20px;font-size:10px;}.container{max-width:1100px;margin:0 auto;position:relative;}table{border-collapse:collapse;width:100%;}td{border:1px solid #000;padding:4px;vertical-align:middle;}.check-box{display:inline-block;width:12px;height:12px;border:1px solid #000;margin-right:3px;background:white;}.check-box.checked{background:#000;}.tipo-ruta-box{border:1px solid #000;padding:5px;margin:10px 0;display:flex;align-items:center;gap:15px;}.critico-box{border:1px solid #000;padding:5px;margin:10px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}.firmas-section{margin-top:30px;}.firma-row{display:flex;justify-content:space-between;margin-bottom:15px;}.firma-item{width:30%;text-align:center;}.firma-line{border-top:1px solid #000;width:100%;margin:5px 0;}.operador-box{margin-top:20px;text-align:center;}.operador-line{border-top:1px solid #000;width:50%;margin:5px auto;}.print-button-container{text-align:center;margin-bottom:20px;}.print-button{background:#1a3a5c;color:white;border:none;padding:10px 24px;border-radius:4px;font-size:14px;cursor:pointer;display:inline-block;}@media print{body{padding:5px;margin:0;background:white;font-size:7px;}.no-print{display:none;}button{display:none;}.print-button{display:none;}td[style*="background-color: #D9D9D9"],td[bgcolor="#D9D9D9"]{background-color:#D9D9D9 !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.check-box{border:1px solid #000 !important;background-color:white !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}.check-box.checked{background-color:#000 !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}}</style>
+      </head><body><div class="container"><div class="no-print print-button-container"><button class="print-button" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button></div>
+      <div style="position:relative;margin-bottom:20px;width:100%;"><div style="position:absolute;top:0;right:0;width:18.5%;height:100%;border:1px solid #000;display:flex;align-items:center;justify-content:center;background:white;z-index:10;"><img src="logo.png" alt="Logo" style="max-width:90%;max-height:90%;" onerror="this.style.display='none';this.parentElement.innerHTML='LOGO'"></div>
+      <table style="width:100%;border-collapse:collapse;font-family:'Verdana',sans-serif;font-size:10px;table-layout:fixed;"><tr><td colspan="11" style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;" bgcolor="#D9D9D9">Nombre del documento</td><td colspan="6" style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;" bgcolor="#D9D9D9">Código del Documento</td><td colspan="5" style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;" bgcolor="#D9D9D9">Emisión</td><td colspan="5" style="border:1px solid #000;border-left:1px solid #000;background-color:#D9D9D9;" bgcolor="#D9D9D9"></td></tr>
+      <tr><td colspan="11" style="border:1px solid #000;text-align:center;padding:4px;background-color:white;" bgcolor="white">FORMATO DE VALIDACIÓN DE RUTAS</td><td colspan="6" style="border:1px solid #000;text-align:center;padding:4px;background-color:white;" bgcolor="white">FOR-CDS-CYD-CDC-287</td><td colspan="5" style="border:1px solid #000;text-align:center;padding:4px;background-color:white;" bgcolor="white">09/01/26</td><td colspan="5" style="border:1px solid #000;border-left:1px solid #000;background-color:white;" bgcolor="white"></td></tr>
+      <tr><td colspan="4" style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;" bgcolor="#D9D9D9">Proceso</td><td colspan="4" style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;" bgcolor="#D9D9D9">Área</td><td colspan="3" style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;" bgcolor="#D9D9D9">Línea</td><td colspan="6" style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;" bgcolor="#D9D9D9">Versión</td><td colspan="5" style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;" bgcolor="#D9D9D9">Próxima revisión</td><td colspan="5" style="border:1px solid #000;border-left:1px solid #000;background-color:#D9D9D9;" bgcolor="#D9D9D9"></td></tr>
+      <tr><td colspan="4" style="border:1px solid #000;text-align:center;padding:4px;background-color:white;" bgcolor="white">Finanzas</td><td colspan="4" style="border:1px solid #000;text-align:center;padding:4px;background-color:white;" bgcolor="white">Mesa de Control</td><td colspan="3" style="border:1px solid #000;text-align:center;padding:4px;background-color:white;" bgcolor="white">Almacén</td><td colspan="6" style="border:1px solid #000;text-align:center;padding:4px;background-color:white;" bgcolor="white">04</td><td colspan="5" style="border:1px solid #000;text-align:center;padding:4px;background-color:white;" bgcolor="white">08/01/29</td><td colspan="5" style="border:1px solid #000;border-left:1px solid #000;background-color:white;" bgcolor="white"></td></tr>
+      </table></div>
+      <div style="margin:5px 0;"><div style="font-size:10px;margin-bottom:2px;">Cumplimiento de los lineamientos de BPD´s : Aplica a todo el personal del Área de Validación se deberá colocar si cumple (✓),</div><div style="font-size:10px;">no cumple (✗) o no aplica (N/A). El formato deberá realizarse cada vez que se inicie una ruta .</div></div>
+      <div class="tipo-ruta-box"><strong>Tipo de Ruta:</strong><span><span class="check-box ${tipoRuta === 'AEROPUERTO' ? 'checked' : ''}"></span> Aeropuerto</span><span><span class="check-box ${tipoRuta === 'PRECARGA' ? 'checked' : ''}"></span> Precarga</span><span><span class="check-box ${tipoRuta === 'QUINTA' ? 'checked' : ''}"></span> Quinta</span><span><span class="check-box ${tipoRuta === 'NO TOP' ? 'checked' : ''}"></span> Ruta No Top</span></div>
+      <div class="critico-box"><strong>Critico:</strong><span><span class="check-box ${criticosMarcados.tumbler ? 'checked' : ''}"></span> Tumbler</span><span><span class="check-box ${criticosMarcados.vino ? 'checked' : ''}"></span> Vino</span><span><span class="check-box ${criticosMarcados.vam ? 'checked' : ''}"></span> Vam</span><span><span class="check-box ${criticosMarcados.grisinnis ? 'checked' : ''}"></span> Grisinnis</span><span><span class="check-box ${criticosMarcados.tazas ? 'checked' : ''}"></span> Tazas</span><span><span class="check-box ${criticosMarcados.tarjeta ? 'checked' : ''}"></span> Tarjeta</span><span><span class="check-box ${criticosMarcados.otros ? 'checked' : ''}"></span> Otros</span><span><span class="check-box ${criticosMarcados.sinCritico ? 'checked' : ''}"></span> Sin Critico</span></div>
+      <table style="margin:15px 0;"><thead><tr><th style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;">Ambiente Validado</th><th style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;">Fecha</th><th style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;">Hora de Inicio</th><th style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;">Hora de Termino</th><th style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;">Nombre del Validador</th><th style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;">N° Tarimas</th><th style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;">Anden</th><th style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;">Faltante</th><th style="border:1px solid #000;background-color:#D9D9D9;font-weight:bold;text-align:center;padding:4px;">Sobrante</th></tr></thead>
+      <tbody>
+        <tr><td style="border:1px solid #000;padding:4px;font-weight:bold;">Seco</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.SECO ? formatearFecha(sesionPorAlmacen.SECO.inicio) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.SECO ? formatearHora(sesionPorAlmacen.SECO.inicio) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.SECO && sesionPorAlmacen.SECO.fin ? formatearHora(sesionPorAlmacen.SECO.fin) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.validador : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.tarimas : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.SECO ? sesionPorAlmacen.SECO.anden : ''}</td><td style="border:1px solid #000;padding:4px;text-align:center;">${conteo.SECO.faltante || ''}</td><td style="border:1px solid #000;padding:4px;text-align:center;">${conteo.SECO.sobrante || ''}</td></tr>
+        <tr><td style="border:1px solid #000;padding:4px;font-weight:bold;">Refrigerado</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.REFRIGERADO ? formatearFecha(sesionPorAlmacen.REFRIGERADO.inicio) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.REFRIGERADO ? formatearHora(sesionPorAlmacen.REFRIGERADO.inicio) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.REFRIGERADO && sesionPorAlmacen.REFRIGERADO.fin ? formatearHora(sesionPorAlmacen.REFRIGERADO.fin) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.validador : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.tarimas : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.REFRIGERADO ? sesionPorAlmacen.REFRIGERADO.anden : ''}</td><td style="border:1px solid #000;padding:4px;text-align:center;">${conteo.REFRIGERADO.faltante || ''}</td><td style="border:1px solid #000;padding:4px;text-align:center;">${conteo.REFRIGERADO.sobrante || ''}</td></tr>
+        <tr><td style="border:1px solid #000;padding:4px;font-weight:bold;">Conge</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.FRIO ? formatearFecha(sesionPorAlmacen.FRIO.inicio) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.FRIO ? formatearHora(sesionPorAlmacen.FRIO.inicio) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.FRIO && sesionPorAlmacen.FRIO.fin ? formatearHora(sesionPorAlmacen.FRIO.fin) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.validador : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.tarimas : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.FRIO ? sesionPorAlmacen.FRIO.anden : ''}</td><td style="border:1px solid #000;padding:4px;text-align:center;">${conteo.FRIO.faltante || ''}</td><td style="border:1px solid #000;padding:4px;text-align:center;">${conteo.FRIO.sobrante || ''}</td></tr>
+        <tr><td style="border:1px solid #000;padding:4px;font-weight:bold;">Crítico</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.CRITICO ? formatearFecha(sesionPorAlmacen.CRITICO.inicio) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.CRITICO ? formatearHora(sesionPorAlmacen.CRITICO.inicio) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.CRITICO && sesionPorAlmacen.CRITICO.fin ? formatearHora(sesionPorAlmacen.CRITICO.fin) : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.validador : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.tarimas : ''}</td><td style="border:1px solid #000;padding:4px;">${sesionPorAlmacen.CRITICO ? sesionPorAlmacen.CRITICO.anden : ''}</td><td style="border:1px solid #000;padding:4px;text-align:center;">${conteo.CRITICO.faltante || ''}</td><td style="border:1px solid #000;padding:4px;text-align:center;">${conteo.CRITICO.sobrante || ''}</td></tr>
+      </tbody>追赶
+      <div style="height:60px;"></div><div class="firmas-section"><div class="firma-row"><div class="firma-item"><div class="firma-line"></div><strong>Firma del TEAM</strong></div><div class="firma-item"><div class="firma-line"></div><strong>Firma del TEAM</strong></div><div class="firma-item"><div class="firma-line"></div><strong>Firma del TEAM</strong></div></div><div style="height:10px;"></div><div class="operador-box"><div class="operador-line"></div><strong>Nombre y Firma de Operador Maniobra</strong></div><div style="margin-top:10px;font-size:6.5px;text-align:center;border-top:1px solid #000;padding-top:3px;">Las copias impresas de este documento son consideradas COPIA NO CONTROLADA, a menos que cuenten con un sello de DOCUMENTO CONTROLADO.</div></div></div></body></html>`;
 
       const ventana = window.open('', '_blank');
       ventana.document.write(htmlContent);
@@ -1572,7 +1738,9 @@
             udm: data.udm, 
             almacen: data.almacen, 
             tienda: data.tienda, 
-            cantidad: data.cantidad 
+            cantidad: data.cantidad,
+            tarima: data.tarima,
+            tipo: data.tipo
           };
           if (index >= 0) allRawItems[index] = item;
           else allRawItems.push(item);
@@ -1589,13 +1757,19 @@
       }
     });
 
-    onSnapshot(collection(db, 'sesiones_validacion'), () => {
-      sesionesPorRuta = {};
-      if (currentModalKey) {
-        const [r, v] = currentModalKey.split('||');
-        const route = allRoutes.find(rte => rte.ruta === r && rte.viaje === v);
-        if (route) renderModal(route);
-      }
+    onSnapshot(collection(db, 'sesiones_validacion'), (snap) => {
+      snap.docChanges().forEach(change => {
+        const data = change.doc.data();
+        const key = `${data.ruta}||${data.viaje}||${data.almacen}`;
+        if (change.type === 'removed') {
+          delete tarimasPorAlmacen[key];
+        } else {
+          if (!tarimasPorAlmacen[key] || new Date(data.inicio) > new Date(tarimasPorAlmacen[key].inicio)) {
+            tarimasPorAlmacen[key] = { tarimas: data.tarimas || 0, inicio: data.inicio };
+          }
+        }
+      });
+      if (currentUser) renderTable();
     });
   }
 
@@ -1630,9 +1804,14 @@
           if (st === 'faltante-confirmado') chipClass = 'faltante-confirmado';
           else if (st === 'no-validado') chipClass = 'no-validado';
           let texto = st;
-          if (st === 'faltante-confirmado') texto = 'faltante confirmado';
+          if (st === 'faltante-confirmado') texto = 'faltante surtido';
           else if (st === 'no-validado') texto = 'no validado';
-          return `<td><span class="chip ${chipClass}">${texto}</span></td>`;
+          const tarimas = getTarimasAlmacen(r.ruta, r.viaje, type);
+          let printBtn = '';
+          if (st === 'concluido' && tarimas > 0) {
+            printBtn = `<button class="print-icon" onclick="event.stopPropagation(); generarPapeleta('${r.ruta}', '${r.viaje}', ${tarimas}, '${type}')" title="Imprimir papeleta">🖨️</button>`;
+          }
+          return `<td><span class="chip ${chipClass}">${texto}</span>${printBtn}</td>`;
         }).join('');
         
         const puedeEliminar = currentUser && (currentUser.rol === 'administrador' || currentUser.rol === 'administrativo');
@@ -1644,14 +1823,15 @@
             <span class="action-icons">
               <span class="pdf-icon red" onclick="event.stopPropagation(); generarPDFProductos('${r.ruta}', '${r.viaje}')" title="Descargar lista de productos">📄</span>
               <span class="pdf-icon blue" onclick="event.stopPropagation(); generarPDFCalidad('${r.ruta}', '${r.viaje}')" title="Descargar formato de validación">📋</span>
+              <span class="search-icon" onclick="event.stopPropagation(); abrirModalFaltantesSobrantes('${r.ruta}', '${r.viaje}')" title="Ver faltantes y sobrantes">🔍</span>
             </span>
-          </td>
+            </td>
           <td class="progress-cell">
             <div class="progress-wrap">
               <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
               <span class="progress-pct" style="color:${pctColor}">${pct}%</span>
             </div>
-          </td>
+            </td>
           ${cols}
           <td>${botonEliminar}</td>
         </tr>`;
@@ -1663,7 +1843,6 @@
     const q = searchInput ? searchInput.value.toLowerCase() : '';
     if (!q) return allRoutes;
     
-    // Filtrar por cualquier parte del texto que contenga el término de búsqueda
     return allRoutes.filter(r => 
       r.ruta.toLowerCase().includes(q) || 
       r.viaje.toLowerCase().includes(q) ||
@@ -1676,7 +1855,7 @@
     let validadas = 0, tItems = 0, vItems = 0;
     routes.forEach(r => {
       const items = allRawItems.filter(it => it.ruta === r.ruta && it.viaje === r.viaje);
-      const done = items.filter(it => itemStatus[it.itemId] === 'concluido' || itemStatus[it.itemId] === 'faltante-confirmado').length;
+      const done = items.filter(it => itemStatus[it.itemId] === 'concluido' || itemStatus[it.itemId] === 'faltante-confirmado' || itemStatus[it.itemId] === 'sobrante-retirado').length;
       tItems += items.length;
       vItems += done;
       if (items.length && done === items.length) validadas++;
@@ -1690,16 +1869,16 @@
   function calcRoutePct(route) {
     const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje);
     if (!items.length) return 0;
-    const done = items.filter(it => itemStatus[it.itemId] === 'concluido' || itemStatus[it.itemId] === 'faltante-confirmado').length;
+    const done = items.filter(it => itemStatus[it.itemId] === 'concluido' || itemStatus[it.itemId] === 'faltante-confirmado' || itemStatus[it.itemId] === 'sobrante-retirado').length;
     return Math.round(done / items.length * 100);
   }
 
-  // ========== MODAL CON TOGGLE POR ALMACÉN ==========
+  // ========== MODAL CON TOGGLE POR ALMACÉN Y ORDEN POR TIENDA (EXCLUYE SOBRANTES) ==========
   window.openModal = async (r, v) => {
     const route = allRoutes.find(rte => rte.ruta === r && rte.viaje === v);
     if (route) {
       currentModalKey = `${r}||${v}`;
-      const items = allRawItems.filter(it => it.ruta === r && it.viaje === v);
+      const items = allRawItems.filter(it => it.ruta === r && it.viaje === v && it.tipo !== 'SOBRANTE');
       const almacenes = [...new Set(items.map(it => it.almacen))];
       almacenes.forEach(alm => { almacenesVisibles[alm] = true; });
       
@@ -1746,7 +1925,7 @@
     
     if (modalTitle) modalTitle.textContent = `Ruta ${route.ruta}`;
     if (modalMeta) modalMeta.textContent = `Viaje: ${route.viajeOriginal || route.viaje}`;
-    const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje);
+    const items = allRawItems.filter(it => it.ruta === route.ruta && it.viaje === route.viaje && it.tipo !== 'SOBRANTE');
     const { porAlmacen: sesionPorAlmacen } = await cargarSesionesRuta(route.ruta, route.viaje);
     const done = items.filter(it => itemStatus[it.itemId] === 'concluido' || itemStatus[it.itemId] === 'faltante-confirmado').length;
     const pct = items.length ? Math.round(done / items.length * 100) : 0;
@@ -1754,14 +1933,20 @@
     if (modalPctVal) modalPctVal.textContent = pct + '%';
 
     const byAlm = {};
-    items.forEach(it => { if (!byAlm[it.almacen]) byAlm[it.almacen] = []; byAlm[it.almacen].push(it); });
+    items.forEach(it => { 
+      if (!byAlm[it.almacen]) byAlm[it.almacen] = []; 
+      byAlm[it.almacen].push(it); 
+    });
+    
     const almKeys = ['SECO', 'REFRIGERADO', 'CONGELADO', 'CRITICO'].filter(a => byAlm[a]);
 
     let modalHTML = '';
 
     for (const alm of almKeys) {
       const almItems = byAlm[alm];
-      const sesion = sesionPorAlmacen[alm];
+      let sesionKey = alm;
+      if (alm === 'CONGELADO') sesionKey = 'FRIO';
+      const sesion = sesionPorAlmacen[sesionKey];
       
       let dotColor = '#1a3a5c';
       if (alm === 'CONGELADO') dotColor = '#0e7c7c';
@@ -1770,7 +1955,6 @@
       
       const visible = almacenesVisibles[alm] !== false;
       
-      // Formatear datos de sesión para el encabezado
       let fechaStr = '', inicioStr = '', finStr = '', tiempoStr = '', validadorStr = '', tarimasStr = '', andenStr = '';
       
       if (sesion && sesion.inicio) {
@@ -1783,6 +1967,56 @@
         validadorStr = sesion.validador || '—';
         tarimasStr = sesion.tarimas || '—';
         andenStr = sesion.anden || '—';
+      }
+      
+      const porTienda = {};
+      almItems.forEach(it => {
+        const tienda = it.tienda || 'SIN TIENDA';
+        if (!porTienda[tienda]) porTienda[tienda] = [];
+        porTienda[tienda].push(it);
+      });
+      
+      const tiendasOrdenadas = Object.keys(porTienda).sort((a, b) => {
+        const numA = parseInt(a) || 0;
+        const numB = parseInt(b) || 0;
+        return numA - numB;
+      });
+      
+      let productosHTML = '';
+      
+      for (const tienda of tiendasOrdenadas) {
+        const productosTienda = porTienda[tienda];
+        productosTienda.sort((a, b) => (a.codigo || '').localeCompare(b.codigo || ''));
+        
+        productosHTML += `
+          <div class="tienda-group">
+            <div class="tienda-header">🏪 Tienda: ${tienda}</div>
+            <table class="productos-tienda-table">
+              <thead>
+                <tr><th>Código</th><th>Descripción</th><th>UDM</th><th>Cantidad</th><th>Tarima</th><th>Estatus</th><th></th></tr>
+              </thead>
+              <tbody>
+                ${productosTienda.map(it => {
+                  const st = itemStatus[it.itemId] || 'pendiente';
+                  const texto = st === 'faltante-confirmado' ? 'faltante surt' : st === 'no-validado' ? 'no validado' : st;
+                  let badgeClass = st;
+                  if (st === 'no-validado') badgeClass = 'no-validado';
+                  const mostrarBotonFaltante = st === 'faltante';
+                  const tarimaMostrar = it.tarima || '—';
+                  return `<tr>
+                    <td><span class="codigo-badge">${it.codigo}</span></td>
+                    <td><span class="desc-text" title="${it.desc}">${it.desc}</span></td>
+                    <td><span class="udm-text">${it.udm}</span></td>
+                    <td><span class="cantidad-text">${it.cantidad || 0}</span></td>
+                    <td><span class="tarima-text">${tarimaMostrar}</span></td>
+                    <td><span class="status-badge ${badgeClass}">${texto}</span></td>
+                    <td>${mostrarBotonFaltante ? `<button class="btn-accion" onclick="confirmarFaltante('${it.itemId}')">✓</button>` : ''}</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
       }
       
       modalHTML += `<div class="alm-section">
@@ -1808,50 +2042,13 @@
           </div>
         </div>
         <div id="alm-wrap-${alm}" class="alm-table-wrap ${visible ? '' : 'hidden'}">
-          <table class="alm-table">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>UDM</th>
-                <th>Tienda</th>
-                <th>Cantidad</th>
-                <th>Estatus</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${almItems.map(it => filaProductoModal(it)).join('')}
-            </tbody>
-          </table>
+          ${productosHTML}
         </div>
       </div>`;
     }
     if (modalBody) modalBody.innerHTML = modalHTML;
     
     window.toggleAlmacen = toggleAlmacen;
-  }
-
-  function filaProductoModal(it) {
-    const st = itemStatus[it.itemId] || 'pendiente';
-    const texto = st === 'faltante-confirmado' ? 'faltante conf' : 
-                  st === 'no-validado' ? 'no validado' : st;
-    let badgeClass = st;
-    if (st === 'no-validado') badgeClass = 'no-validado';
-    
-    const mostrarBotonFaltante = st === 'faltante';
-    
-    return `<tr>
-      <td><span class="codigo-badge">${it.codigo}</span></td>
-      <td><span class="desc-text" title="${it.desc}">${it.desc}</span></td>
-      <td><span class="udm-text">${it.udm}</span></td>
-      <td><span class="udm-text">${it.tienda || '—'}</span></td>
-      <td><span class="cantidad-text">${it.cantidad || 0}</span></td>
-      <td><span class="status-badge ${badgeClass}">${texto}</span></td>
-      <td>
-        ${mostrarBotonFaltante ? `<button class="btn-accion" onclick="confirmarFaltante('${it.itemId}')">✓</button>` : ''}
-      </td>
-    </tr>`;
   }
 
   // ========== GESTIÓN DE USUARIOS ==========
@@ -1911,7 +2108,10 @@
   // ========== EXPORTAR FUNCIONES ==========
   window.deleteRoute = deleteRoute;
   window.confirmarFaltante = confirmarFaltante;
+  window.confirmarSobranteRetirado = confirmarSobranteRetirado;
   window.marcarAlmacenNoValidado = marcarAlmacenNoValidado;
+  window.generarPapeleta = generarPapeleta;
+  window.abrirModalFaltantesSobrantes = abrirModalFaltantesSobrantes;
 
   // ========== INICIALIZACIÓN ==========
   (async function init() {
@@ -1927,9 +2127,9 @@
     
     renderHeader();
     listenFirestore();
+    await precargarTarimas();
     iniciarMonitorInactividad();
     
-    // Forzar renderizado inmediato después del login
     if (tieneSesion) {
       setTimeout(() => {
         renderTable();
@@ -1968,8 +2168,8 @@
               if (loginModal) loginModal.classList.remove('show');
               mostrarContenido(true);
               renderHeader();
+              await precargarTarimas();
               
-              // Forzar recarga de datos y renderizado
               setTimeout(() => {
                 renderTable();
               }, 300);
