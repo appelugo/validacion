@@ -77,14 +77,14 @@
 
   main { padding: 16px 16px 0; flex: 1; min-width: 0; max-width: 600px; margin: 0 auto; width: 100%; }
 
-  .validador-section {
+  .Embarcador-section {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 16px;
   }
-  .validador-label {
+  .Embarcador-label {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -92,7 +92,7 @@
     color: var(--muted);
     margin-bottom: 6px;
   }
-  .validador-input {
+  .Embarcador-input {
     width: 100%;
     background: var(--surface);
     border: 2px solid var(--border);
@@ -103,7 +103,7 @@
     border-radius: 10px;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .validador-input:focus {
+  .Embarcador-input:focus {
     outline: none;
     border-color: var(--navy);
     box-shadow: 0 0 0 3px var(--navy-light);
@@ -317,9 +317,9 @@
 </header>
 
 <main>
-  <div class="validador-section">
-    <div class="validador-label">NOMBRE DEL VALIDADOR</div>
-    <input type="text" id="validadorInput" class="validador-input" placeholder="Nombre y Apellido" autocomplete="off">
+  <div class="Embarcador-section">
+    <div class="Embarcador-label">NOMBRE DEL Embarcador</div>
+    <input type="text" id="EmbarcadorInput" class="Embarcador-input" placeholder="Nombre y Apellido" autocomplete="off">
   </div>
 
   <div id="qrSection" class="qr-section">
@@ -397,12 +397,12 @@
   let embarqueActual = null;
   let tarimasEscaneadas = [];
   let totalTarimas = 0;
-  let validadorActual = '';
+  let EmbarcadorActual = '';
   let vozFemenina = null;
   let escaneoEnProceso = false;
   let ultimoQrProcesado = '';
 
-  const validadorInput = document.getElementById('validadorInput');
+  const EmbarcadorInput = document.getElementById('EmbarcadorInput');
   const qrSection = document.getElementById('qrSection');
   const ultimoQr = document.getElementById('ultimoQr');
   const ultRuta = document.getElementById('ultRuta');
@@ -523,8 +523,8 @@
     reporte += `FECHA:       ${embarqueActual.fecha}\n`;
     reporte += `HORA INICIO: ${embarqueActual.hora}\n\n`;
     
-    reporte += `👤 VALIDADOR\n`;
-    reporte += `${embarqueActual.validador}\n\n`;
+    reporte += `👤 Embarcador\n`;
+    reporte += `${embarqueActual.Embarcador}\n\n`;
     
     reporte += `📦 TARIMAS ESCANEADAS\n`;
     tarimasEscaneadas.forEach(t => {
@@ -638,7 +638,7 @@
         totalTarimas: embarqueActual.totalTarimas,
         fecha: embarqueActual.fecha,
         hora: embarqueActual.hora,
-        validador: embarqueActual.validador,
+        Embarcador: embarqueActual.Embarcador,
         inicio: embarqueActual.inicio || new Date().toISOString(),
         tarimas: tarimasActuales,
         ultimaActualizacion: new Date().toISOString(),
@@ -680,7 +680,7 @@
     
     escaneoEnProceso = true;
     
-    if (!validadorActual || validadorActual.trim() === '') {
+    if (!EmbarcadorActual || EmbarcadorActual.trim() === '') {
       showToast('⚠️ Primero ingresa tu nombre completo', true);
       await detenerCamara();
       escaneoEnProceso = false;
@@ -742,7 +742,7 @@
         ruta, viaje, almacen,
         totalTarimas: totalTarNum,
         fecha, hora,
-        validador: validadorActual,
+        Embarcador: EmbarcadorActual,
         inicio: new Date().toISOString(),
         tarimas: []
       };
@@ -842,7 +842,7 @@
 
   // ========== CÁMARA ==========
   async function iniciarCamara() {
-    if (!validadorActual || validadorActual.trim() === '') {
+    if (!EmbarcadorActual || EmbarcadorActual.trim() === '') {
       showToast('⚠️ Primero ingresa tu nombre', true);
       return;
     }
@@ -882,7 +882,7 @@
     }
   }
 
-  validadorInput.addEventListener('input', (e) => { validadorActual = e.target.value; });
+  EmbarcadorInput.addEventListener('input', (e) => { EmbarcadorActual = e.target.value; });
   btnAccion.addEventListener('click', async () => {
     if (btnAccion.classList.contains('camara')) await iniciarCamara();
     else if (btnAccion.classList.contains('enviar')) await enviarReporte();
