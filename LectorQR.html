@@ -132,7 +132,6 @@
   .action-button.camara { background: var(--navy); }
   .action-button.enviar { background: var(--green); display: none; }
   .action-button.enviar.show { display: flex; }
-  .action-button.camara.hide { display: none; }
   .action-button.refresh {
     bottom: 110px;
     background: var(--orange);
@@ -506,7 +505,7 @@
     setTimeout(() => ultimoQr.classList.remove('show'), 5000);
   }
 
-  // ========== GENERAR REPORTE SOLO CON EMOJIS Y TEXTO ==========
+  // ========== GENERAR REPORTE PROFESIONAL SIN LÍNEAS ==========
   function generarReporte() {
     if (!embarqueActual) return '';
     
@@ -517,30 +516,26 @@
     
     let reporte = `📦 REPORTE DE EMBARQUE - CONTROL DE TARIMAS 📦\n\n`;
     reporte += `📋 DATOS DEL EMBARQUE\n`;
-    reporte += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-    reporte += `📦 RUTA:        ${embarqueActual.ruta}\n`;
-    reporte += `🚚 VIAJE:       ${embarqueActual.viaje}\n`;
-    reporte += `🏢 ALMACÉN:     ${embarqueActual.almacen}\n`;
-    reporte += `📅 FECHA:       ${embarqueActual.fecha}\n`;
-    reporte += `⏰ HORA INICIO: ${embarqueActual.hora}\n\n`;
+    reporte += `RUTA:        ${embarqueActual.ruta}\n`;
+    reporte += `VIAJE:       ${embarqueActual.viaje}\n`;
+    reporte += `ALMACÉN:     ${embarqueActual.almacen}\n`;
+    reporte += `FECHA:       ${embarqueActual.fecha}\n`;
+    reporte += `HORA INICIO: ${embarqueActual.hora}\n\n`;
     
     reporte += `👤 VALIDADOR\n`;
-    reporte += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     reporte += `${embarqueActual.validador}\n\n`;
     
     reporte += `📦 TARIMAS ESCANEADAS\n`;
-    reporte += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     tarimasEscaneadas.forEach(t => {
-      reporte += `✅ Tarima ${t.numero.toString().padStart(3, ' ')}  │  ${t.hora}\n`;
+      const fechaEscaneo = t.fechaEscaneo || t.hora;
+      reporte += `✅ Tarima ${t.numero.toString().padStart(3, ' ')}  │  ${fechaEscaneo}\n`;
     });
-    reporte += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    reporte += `\n`;
     reporte += `✅ TOTAL ESCANEADAS: ${tarimasEscaneadas.length} de ${totalTarimas}\n`;
     reporte += `📊 EFECTIVIDAD: ${Math.round((tarimasEscaneadas.length / totalTarimas) * 100)}%\n\n`;
     
     reporte += `🟢 ESTADO: COMPLETADO ✅\n\n`;
-    reporte += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-    reporte += `📅 REPORTE GENERADO: ${fechaActual}\n\n`;
-    reporte += `✅ Este documento certifica que el embarque ha sido validado y todas las tarimas han sido escaneadas correctamente. ✅\n`;
+    reporte += `📅 REPORTE GENERADO: ${fechaActual}`;
     
     return reporte;
   }
@@ -559,7 +554,7 @@
     showToast('✅ Reporte enviado a WhatsApp');
   }
 
-  // ========== REFRESCAR / BORRAR DATOS ==========
+  // ========== REFRESCAR / BORRAR DATOS DE FIREBASE ==========
   async function refrescarTodo() {
     if (confirm('⚠️ ¿Estás seguro? Se borrarán todos los datos del embarque actual de Firebase y se reiniciará la aplicación.')) {
       if (embarqueActual && embarqueActual.id) {
@@ -635,13 +630,15 @@
     const { ruta, viaje, almacen, tarima, totalTarimas: totalTar, fecha, hora } = datos;
     const tarimaNum = parseInt(tarima);
     const totalTarNum = parseInt(totalTar);
-    const horaActual = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const fechaHoraEscaneo = new Date().toLocaleString('es-MX', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
 
-    mostrarUltimoQR(ruta, viaje, almacen, tarimaNum, totalTarNum, horaActual);
+    mostrarUltimoQR(ruta, viaje, almacen, tarimaNum, totalTarNum, fechaHoraEscaneo);
 
     // Si no hay embarque actual o ya está completado, mostrar info y permitir reenviar
     if (!embarqueActual || (tarimasEscaneadas.length === totalTarimas && totalTarimas > 0)) {
-      // Mostrar información del embarque del QR escaneado
       infoRuta.textContent = ruta;
       infoViaje.textContent = viaje;
       infoAlmacen.textContent = almacen;
@@ -650,7 +647,6 @@
       infoHora.textContent = hora;
       embarqueInfoDiv.classList.add('show');
       
-      // Crear embarque temporal para poder enviar reporte
       embarqueActual = {
         id: `${ruta}_${viaje}_${almacen}`,
         ruta, viaje, almacen,
@@ -661,9 +657,8 @@
       totalTarimas = totalTarNum;
       tarimasEscaneadas = [];
       
-      // Crear todas las tarimas como escaneadas (simular completado)
       for (let i = 1; i <= totalTarNum; i++) {
-        tarimasEscaneadas.push({ numero: i, hora: 'Escaneado' });
+        tarimasEscaneadas.push({ numero: i, hora: 'Escaneado', fechaEscaneo: 'Completado' });
       }
       
       actualizarUI();
@@ -671,7 +666,6 @@
       showToast(`📋 Embarque cargado - Listo para enviar reporte`);
       await hablar(`Embarque de ${totalTarNum} tarimas cargado, puedes enviar el reporte`);
       
-      // Cambiar botón a enviar
       btnAccion.classList.remove('camara');
       btnAccion.classList.add('enviar');
       btnAccion.innerHTML = '<i class="fas fa-paper-plane"></i>';
@@ -682,7 +676,6 @@
       return true;
     }
 
-    // Verificar que los datos coincidan con el embarque actual
     if (embarqueActual.ruta !== ruta || embarqueActual.viaje !== viaje || embarqueActual.almacen !== almacen) {
       showToast('❌ QR de otro embarque diferente', true);
       await detenerCamara();
@@ -690,7 +683,6 @@
       return false;
     }
 
-    // Verificar duplicado
     if (tarimasEscaneadas.some(t => t.numero === tarimaNum)) {
       showToast(`⚠️ La tarima ${tarimaNum} ya fue escaneada`, true);
       await detenerCamara();
@@ -705,11 +697,16 @@
       return false;
     }
 
-    const nuevoEscaneo = { numero: tarimaNum, hora: horaActual, timestamp: new Date().toISOString() };
+    const nuevoEscaneo = { 
+      numero: tarimaNum, 
+      hora: fechaHoraEscaneo,
+      fechaEscaneo: fechaHoraEscaneo,
+      timestamp: new Date().toISOString() 
+    };
     tarimasEscaneadas.push(nuevoEscaneo);
     tarimasEscaneadas.sort((a, b) => a.numero - b.numero);
     
-    await guardarEscaneoEnFirebase(tarimaNum, horaActual);
+    await guardarEscaneoEnFirebase(tarimaNum, fechaHoraEscaneo);
     actualizarUI();
     await anunciarProgreso();
     showToast(`✅ Tarima ${tarimaNum} escaneada`);
@@ -728,7 +725,7 @@
     return true;
   }
 
-  async function guardarEscaneoEnFirebase(tarimaNumero, horaEscaneo) {
+  async function guardarEscaneoEnFirebase(tarimaNumero, fechaHoraEscaneo) {
     if (!embarqueActual) return;
     try {
       const docRef = doc(db, 'embarques', embarqueActual.id);
@@ -736,7 +733,12 @@
       let tarimasActuales = docSnap.exists() ? (docSnap.data().tarimas || []) : [];
       
       if (!tarimasActuales.some(t => t.numero === tarimaNumero)) {
-        tarimasActuales.push({ numero: tarimaNumero, hora: horaEscaneo, timestamp: new Date().toISOString() });
+        tarimasActuales.push({ 
+          numero: tarimaNumero, 
+          hora: fechaHoraEscaneo,
+          fechaEscaneo: fechaHoraEscaneo,
+          timestamp: new Date().toISOString() 
+        });
         tarimasActuales.sort((a, b) => a.numero - b.numero);
       }
       
