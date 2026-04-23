@@ -378,7 +378,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyB1APqzO0tsh1Ow58-e8VBYeTYbdmLxsNI",
@@ -400,6 +400,7 @@
   let validadorActual = '';
   let vozFemenina = null;
   let escaneoEnProceso = false;
+  let ultimoQrProcesado = '';
 
   const validadorInput = document.getElementById('validadorInput');
   const qrSection = document.getElementById('qrSection');
@@ -505,7 +506,7 @@
     setTimeout(() => ultimoQr.classList.remove('show'), 5000);
   }
 
-  // ========== GENERAR REPORTE PROFESIONAL SIN LÍNEAS ==========
+  // ========== GENERAR REPORTE PROFESIONAL ==========
   function generarReporte() {
     if (!embarqueActual) return '';
     
@@ -554,22 +555,31 @@
     showToast('✅ Reporte enviado a WhatsApp');
   }
 
-  // ========== REFRESCAR / BORRAR DATOS DE FIREBASE ==========
+  // ========== REFRESCAR TODO - BORRAR FIREBASE Y MEMORIA ==========
   async function refrescarTodo() {
-    if (confirm('⚠️ ¿Estás seguro? Se borrarán todos los datos del embarque actual de Firebase y se reiniciará la aplicación.')) {
+    if (confirm('⚠️ ¿Estás seguro? Se borrarán TODOS los datos del embarque actual y podrás empezar uno nuevo desde cero.')) {
+      
       if (embarqueActual && embarqueActual.id) {
         try {
           await deleteDoc(doc(db, 'embarques', embarqueActual.id));
           showToast('🗑️ Datos eliminados de Firebase');
-        } catch(e) { console.warn(e); }
+        } catch(e) { 
+          console.warn('Error al eliminar:', e); 
+        }
       }
       
-      if (camaraActiva) await detenerCamara();
+      if (camaraActiva) {
+        await detenerCamara();
+      }
       
+      // LIMPIAR TODAS LAS VARIABLES
       embarqueActual = null;
       tarimasEscaneadas = [];
       totalTarimas = 0;
+      escaneoEnProceso = false;
+      ultimoQrProcesado = '';
       
+      // LIMPIAR INTERFAZ
       embarqueInfoDiv.classList.remove('show');
       progresoSection.classList.remove('show');
       dashboardSection.style.display = 'none';
@@ -578,6 +588,7 @@
       progresoFill.textContent = '0%';
       escaneadasCount.textContent = '0';
       totalCount.textContent = '0';
+      ultimoQr.classList.remove('show');
       
       infoRuta.textContent = '---';
       infoViaje.textContent = '---';
@@ -586,18 +597,87 @@
       infoFecha.textContent = '---';
       infoHora.textContent = '---';
       
+      ultRuta.textContent = '---';
+      ultViaje.textContent = '---';
+      ultAlmacen.textContent = '---';
+      ultTarima.textContent = '---';
+      ultTotal.textContent = '---';
+      ultHora.textContent = '---';
+      
       btnAccion.classList.remove('enviar', 'show');
       btnAccion.classList.add('camara');
       btnAccion.innerHTML = '<i class="fas fa-camera"></i>';
       
-      showToast('🔄 Todo reiniciado correctamente');
-      hablar('Sistema reiniciado');
+      showToast('🔄 Todo reiniciado correctamente. Puedes escanear un nuevo embarque.');
+      hablar('Sistema reiniciado. Puedes comenzar un nuevo embarque.');
     }
+  }
+
+  // ========== GUARDAR ESCANEO EN FIREBASE ==========
+  async function guardarEscaneoEnFirebase(tarimaNumero, fechaHoraEscaneo) {
+    if (!embarqueActual) return;
+    try {
+      const docRef = doc(db, 'embarques', embarqueActual.id);
+      const docSnap = await getDoc(docRef);
+      let tarimasActuales = docSnap.exists() ? (docSnap.data().tarimas || []) : [];
+      
+      if (!tarimasActuales.some(t => t.numero === tarimaNumero)) {
+        tarimasActuales.push({ 
+          numero: tarimaNumero, 
+          hora: fechaHoraEscaneo,
+          fechaEscaneo: fechaHoraEscaneo,
+          timestamp: new Date().toISOString() 
+        });
+        tarimasActuales.sort((a, b) => a.numero - b.numero);
+      }
+      
+      await setDoc(docRef, {
+        ruta: embarqueActual.ruta,
+        viaje: embarqueActual.viaje,
+        almacen: embarqueActual.almacen,
+        totalTarimas: embarqueActual.totalTarimas,
+        fecha: embarqueActual.fecha,
+        hora: embarqueActual.hora,
+        validador: embarqueActual.validador,
+        inicio: embarqueActual.inicio || new Date().toISOString(),
+        tarimas: tarimasActuales,
+        ultimaActualizacion: new Date().toISOString(),
+        completado: tarimasActuales.length === embarqueActual.totalTarimas
+      }, { merge: true });
+    } catch (error) { 
+      console.error('Error al guardar:', error); 
+    }
+  }
+
+  // ========== ACTUALIZAR UI ==========
+  function actualizarUI() {
+    const escaneadas = tarimasEscaneadas.length;
+    escaneadasCount.textContent = escaneadas;
+    totalCount.textContent = totalTarimas;
+    const porcentaje = totalTarimas > 0 ? (escaneadas / totalTarimas) * 100 : 0;
+    progresoFill.style.width = `${porcentaje}%`;
+    progresoFill.textContent = `${Math.round(porcentaje)}%`;
+    
+    if (totalTarimas > 0) {
+      let tarimasHTML = '';
+      for (let i = 1; i <= totalTarimas; i++) {
+        const escaneada = tarimasEscaneadas.some(t => t.numero === i);
+        tarimasHTML += `<div class="tarima-card ${escaneada ? 'escaneada' : ''}">
+          <div class="tarima-num">${i}</div>
+          <div class="tarima-check-icon">${escaneada ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-circle"></i>'}</div>
+        </div>`;
+      }
+      tarimasGrid.innerHTML = tarimasHTML;
+    }
+    progresoSection.classList.add('show');
   }
 
   // ========== PROCESAR QR ==========
   async function procesarQR(qrText) {
     if (escaneoEnProceso) return false;
+    
+    if (qrText === ultimoQrProcesado) return false;
+    
     escaneoEnProceso = true;
     
     if (!validadorActual || validadorActual.trim() === '') {
@@ -636,9 +716,39 @@
     });
 
     mostrarUltimoQR(ruta, viaje, almacen, tarimaNum, totalTarNum, fechaHoraEscaneo);
+    ultimoQrProcesado = qrText;
 
-    // Si no hay embarque actual o ya está completado, mostrar info y permitir reenviar
-    if (!embarqueActual || (tarimasEscaneadas.length === totalTarimas && totalTarimas > 0)) {
+    // NUEVO EMBARQUE (desde cero)
+    if (!embarqueActual) {
+      const embarqueId = `${ruta}_${viaje}_${almacen}`;
+      
+      const docRef = doc(db, 'embarques', embarqueId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists() && docSnap.data().completado === true) {
+        const reiniciar = confirm('⚠️ Ya existe un embarque completado con estos datos. ¿Deseas reiniciarlo y empezar de nuevo?');
+        if (!reiniciar) {
+          escaneoEnProceso = false;
+          await detenerCamara();
+          return false;
+        } else {
+          await deleteDoc(docRef);
+          showToast('🗑️ Embarque anterior eliminado');
+        }
+      }
+      
+      embarqueActual = {
+        id: embarqueId,
+        ruta, viaje, almacen,
+        totalTarimas: totalTarNum,
+        fecha, hora,
+        validador: validadorActual,
+        inicio: new Date().toISOString(),
+        tarimas: []
+      };
+      totalTarimas = totalTarNum;
+      tarimasEscaneadas = [];
+      
       infoRuta.textContent = ruta;
       infoViaje.textContent = viaje;
       infoAlmacen.textContent = almacen;
@@ -646,38 +756,43 @@
       infoFecha.textContent = fecha;
       infoHora.textContent = hora;
       embarqueInfoDiv.classList.add('show');
-      
-      embarqueActual = {
-        id: `${ruta}_${viaje}_${almacen}`,
-        ruta, viaje, almacen,
-        totalTarimas: totalTarNum,
-        fecha, hora,
-        validador: validadorActual
-      };
-      totalTarimas = totalTarNum;
-      tarimasEscaneadas = [];
-      
-      for (let i = 1; i <= totalTarNum; i++) {
-        tarimasEscaneadas.push({ numero: i, hora: 'Escaneado', fechaEscaneo: 'Completado' });
-      }
+      dashboardSection.style.display = 'block';
       
       actualizarUI();
+      showToast(`📦 Nuevo embarque iniciado - Total: ${totalTarNum} tarimas`);
+      await hablar(`Nuevo embarque de ${totalTarNum} tarimas. Escanea la primera tarima.`);
       
-      showToast(`📋 Embarque cargado - Listo para enviar reporte`);
-      await hablar(`Embarque de ${totalTarNum} tarimas cargado, puedes enviar el reporte`);
-      
-      btnAccion.classList.remove('camara');
-      btnAccion.classList.add('enviar');
-      btnAccion.innerHTML = '<i class="fas fa-paper-plane"></i>';
-      btnAccion.classList.add('show');
+      // Registrar primera tarima escaneada
+      const nuevoEscaneo = { 
+        numero: tarimaNum, 
+        hora: fechaHoraEscaneo,
+        fechaEscaneo: fechaHoraEscaneo,
+        timestamp: new Date().toISOString() 
+      };
+      tarimasEscaneadas.push(nuevoEscaneo);
+      tarimasEscaneadas.sort((a, b) => a.numero - b.numero);
+      await guardarEscaneoEnFirebase(tarimaNum, fechaHoraEscaneo);
+      actualizarUI();
+      await anunciarProgreso();
+      showToast(`✅ Tarima ${tarimaNum} escaneada`);
       
       await detenerCamara();
+      
+      if (tarimasEscaneadas.length === totalTarimas) {
+        await hablar(`¡Completaste todas las ${totalTarimas} tarimas!`);
+        btnAccion.classList.remove('camara');
+        btnAccion.classList.add('enviar');
+        btnAccion.innerHTML = '<i class="fas fa-paper-plane"></i>';
+        btnAccion.classList.add('show');
+      }
+      
       escaneoEnProceso = false;
       return true;
     }
 
+    // VALIDAR EMBARQUE EXISTENTE
     if (embarqueActual.ruta !== ruta || embarqueActual.viaje !== viaje || embarqueActual.almacen !== almacen) {
-      showToast('❌ QR de otro embarque diferente', true);
+      showToast('❌ Este QR pertenece a otro embarque diferente', true);
       await detenerCamara();
       escaneoEnProceso = false;
       return false;
@@ -725,56 +840,7 @@
     return true;
   }
 
-  async function guardarEscaneoEnFirebase(tarimaNumero, fechaHoraEscaneo) {
-    if (!embarqueActual) return;
-    try {
-      const docRef = doc(db, 'embarques', embarqueActual.id);
-      const docSnap = await getDoc(docRef);
-      let tarimasActuales = docSnap.exists() ? (docSnap.data().tarimas || []) : [];
-      
-      if (!tarimasActuales.some(t => t.numero === tarimaNumero)) {
-        tarimasActuales.push({ 
-          numero: tarimaNumero, 
-          hora: fechaHoraEscaneo,
-          fechaEscaneo: fechaHoraEscaneo,
-          timestamp: new Date().toISOString() 
-        });
-        tarimasActuales.sort((a, b) => a.numero - b.numero);
-      }
-      
-      await setDoc(docRef, {
-        ruta: embarqueActual.ruta, viaje: embarqueActual.viaje,
-        almacen: embarqueActual.almacen, totalTarimas: embarqueActual.totalTarimas,
-        fecha: embarqueActual.fecha, hora: embarqueActual.hora,
-        validador: embarqueActual.validador, inicio: embarqueActual.inicio || new Date().toISOString(),
-        tarimas: tarimasActuales, ultimaActualizacion: new Date().toISOString(),
-        completado: tarimasActuales.length === embarqueActual.totalTarimas
-      }, { merge: true });
-    } catch (error) { console.error('Error al guardar:', error); }
-  }
-
-  function actualizarUI() {
-    const escaneadas = tarimasEscaneadas.length;
-    escaneadasCount.textContent = escaneadas;
-    totalCount.textContent = totalTarimas;
-    const porcentaje = totalTarimas > 0 ? (escaneadas / totalTarimas) * 100 : 0;
-    progresoFill.style.width = `${porcentaje}%`;
-    progresoFill.textContent = `${Math.round(porcentaje)}%`;
-    
-    if (totalTarimas > 0) {
-      let tarimasHTML = '';
-      for (let i = 1; i <= totalTarimas; i++) {
-        const escaneada = tarimasEscaneadas.some(t => t.numero === i);
-        tarimasHTML += `<div class="tarima-card ${escaneada ? 'escaneada' : ''}">
-          <div class="tarima-num">${i}</div>
-          <div class="tarima-check-icon">${escaneada ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-circle"></i>'}</div>
-        </div>`;
-      }
-      tarimasGrid.innerHTML = tarimasHTML;
-    }
-    progresoSection.classList.add('show');
-  }
-
+  // ========== CÁMARA ==========
   async function iniciarCamara() {
     if (!validadorActual || validadorActual.trim() === '') {
       showToast('⚠️ Primero ingresa tu nombre', true);
